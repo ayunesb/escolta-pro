@@ -98,7 +98,8 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
         });
 
         if (error) {
-          toast.error('Failed to submit request. Please try again.');
+          console.error('Booking submission error:', error);
+          toast.error(error.message || 'Failed to submit request. Please try again.');
           return;
         }
         

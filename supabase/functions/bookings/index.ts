@@ -95,7 +95,7 @@ serve(async (req) => {
       start_ts: start ? new Date(start).toISOString() : null,
       end_ts: end ? new Date(end).toISOString() : null,
       pickup_address: location || null,
-      status: "requested",
+      status: "draft",
       notes: null,
       armed_required: armed || false,
       vehicle_required: with_vehicle || false,
