@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Plus, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 
 interface Staff {
   id: string;
@@ -163,6 +164,9 @@ const CompanyStaffPage = ({ navigate }: CompanyStaffPageProps) => {
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <GuardBottomNav currentPath="/company-staff" navigate={navigate} />
     </div>
   );
 };

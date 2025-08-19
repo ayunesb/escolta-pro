@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Upload, Eye, FileText } from 'lucide-react';
+import { ArrowLeft, User, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import FileUpload from '@/components/ui/file-upload';
+import BottomNav from '@/components/mobile/BottomNav';
 
 interface ProfileEditPageProps {
   navigate: (path: string) => void;
@@ -15,80 +17,64 @@ interface ProfileEditPageProps {
 const ProfileEditPage = ({ navigate }: ProfileEditPageProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   
   // Form data
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [idDocFile, setIdDocFile] = useState<File | null>(null);
+  const [phone, setPhone] = useState('');
+  
+  // Document URLs
   const [idDocUrl, setIdDocUrl] = useState('');
-  const [porFile, setPorFile] = useState<File | null>(null);
-  const [porUrl, setPorUrl] = useState('');
+  const [proofOfResidenceUrl, setProofOfResidenceUrl] = useState('');
 
   useEffect(() => {
     if (user) {
       setEmail(user.email || '');
+      // Load existing profile data
+      loadProfileData();
     }
   }, [user]);
 
-  const uploadFile = async (file: File, path: string): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `${path}/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('profiles')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      return null;
-    }
-
-    // Get signed URL
-    const { data: signedUrlData } = await supabase.storage
-      .from('profiles')
-      .createSignedUrl(filePath, 3600); // 1 hour expiry
-
-    return signedUrlData?.signedUrl || null;
-  };
-
-  const handleFileUpload = async (
-    file: File, 
-    type: 'id' | 'por'
-  ) => {
+  const loadProfileData = async () => {
     if (!user) return;
 
-    const progressKey = type;
-    setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
-    const path = `users/${user.id}`;
-    
-    // Simulate progress for better UX
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-      progress = Math.min(progress + 10, 90);
-      setUploadProgress(prev => ({ ...prev, [progressKey]: progress }));
-    }, 100);
-
     try {
-      const url = await uploadFile(file, path);
-      clearInterval(progressInterval);
-      setUploadProgress(prev => ({ ...prev, [progressKey]: 100 }));
-      
-      if (url) {
-        if (type === 'id') {
-          setIdDocUrl(url);
-        } else {
-          setPorUrl(url);
-        }
-        toast.success('File uploaded successfully');
-      } else {
-        toast.error('Failed to upload file');
+      // Load profile data
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile) {
+        setFirstName(profile.first_name || '');
+        setLastName(profile.last_name || '');
+        setPhone(profile.phone_e164 || '');
+      }
+
+      // Load document URLs
+      const { data: documents } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('owner_type', 'profile')
+        .eq('owner_id', user.id);
+
+      if (documents) {
+        documents.forEach(doc => {
+          switch (doc.doc_type) {
+            case 'id':
+            case 'passport':
+              setIdDocUrl(doc.file_path);
+              break;
+            case 'proof_of_residence':
+              setProofOfResidenceUrl(doc.file_path);
+              break;
+          }
+        });
       }
     } catch (error) {
-      clearInterval(progressInterval);
-      setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
-      toast.error('Failed to upload file');
+      console.error('Error loading profile data:', error);
     }
   };
 
@@ -101,10 +87,12 @@ const ProfileEditPage = ({ navigate }: ProfileEditPageProps) => {
     try {
       const { error } = await supabase.functions.invoke('client_profile_upsert', {
         body: {
-          name,
+          first_name: firstName,
+          last_name: lastName,
           email,
+          phone,
           id_doc_url: idDocUrl,
-          proof_of_residence_url: porUrl
+          proof_of_residence_url: proofOfResidenceUrl
         }
       });
 
@@ -121,8 +109,19 @@ const ProfileEditPage = ({ navigate }: ProfileEditPageProps) => {
     }
   };
 
+  const handleDocumentUpload = async (url: string, docType: string) => {
+    switch (docType) {
+      case 'id':
+        setIdDocUrl(url);
+        break;
+      case 'proof_of_residence':
+        setProofOfResidenceUrl(url);
+        break;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       <div className="safe-top px-mobile py-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -142,178 +141,103 @@ const ProfileEditPage = ({ navigate }: ProfileEditPageProps) => {
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-mobile-base">Basic Information</CardTitle>
+              <CardTitle className="text-mobile-base">Personal Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="input-dark"
-                  placeholder="Enter your full name"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="input-dark"
+                    placeholder="Enter first name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="input-dark"
+                    placeholder="Enter last name"
+                    required
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="input-dark"
-                  placeholder="Enter your email"
+                  placeholder="Enter email address"
                   required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="input-dark"
+                  placeholder="Enter phone number"
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* ID Document */}
+          {/* Required Documents */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-mobile-base">ID Document</CardTitle>
+              <CardTitle className="text-mobile-base">Required Documents</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Upload ID/Passport</Label>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex items-center gap-2"
-                      onClick={() => document.getElementById('id-doc')?.click()}
-                    >
-                      <Upload className="h-4 w-4" />
-                      Choose File
-                    </Button>
-                    {idDocFile && (
-                      <span className="text-mobile-sm text-muted-foreground">
-                        {idDocFile.name}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <input
-                    id="id-doc"
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setIdDocFile(file);
-                        handleFileUpload(file, 'id');
-                      }
-                    }}
-                  />
-                  
-                  {uploadProgress.id !== undefined && uploadProgress.id < 100 && (
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-accent h-2 rounded-full transition-all"
-                        style={{ width: `${uploadProgress.id}%` }}
-                      />
-                    </div>
-                  )}
-                  
-                  {idDocUrl && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2 w-fit"
-                      onClick={() => window.open(idDocUrl, '_blank')}
-                    >
-                      <Eye className="h-4 w-4" />
-                      Preview
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <CardContent className="space-y-6">
+              <FileUpload
+                label="Government ID or Passport"
+                bucketName="licenses"
+                storagePath={`profiles/users/${user?.id}`}
+                currentFileUrl={idDocUrl}
+                onUploadComplete={(url) => handleDocumentUpload(url, 'id')}
+                accept=".pdf,.jpg,.jpeg,.png"
+                required
+              />
 
-          {/* Proof of Residence */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-mobile-base">Proof of Residence</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Upload Proof of Residence</Label>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex items-center gap-2"
-                      onClick={() => document.getElementById('por-doc')?.click()}
-                    >
-                      <Upload className="h-4 w-4" />
-                      Choose File
-                    </Button>
-                    {porFile && (
-                      <span className="text-mobile-sm text-muted-foreground">
-                        {porFile.name}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <input
-                    id="por-doc"
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setPorFile(file);
-                        handleFileUpload(file, 'por');
-                      }
-                    }}
-                  />
-                  
-                  {uploadProgress.por !== undefined && uploadProgress.por < 100 && (
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-accent h-2 rounded-full transition-all"
-                        style={{ width: `${uploadProgress.por}%` }}
-                      />
-                    </div>
-                  )}
-                  
-                  {porUrl && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2 w-fit"
-                      onClick={() => window.open(porUrl, '_blank')}
-                    >
-                      <Eye className="h-4 w-4" />
-                      Preview
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <FileUpload
+                label="Proof of Residence"
+                bucketName="licenses"
+                storagePath={`profiles/users/${user?.id}`}
+                currentFileUrl={proofOfResidenceUrl}
+                onUploadComplete={(url) => handleDocumentUpload(url, 'proof_of_residence')}
+                accept=".pdf,.jpg,.jpeg,.png"
+                required
+              />
             </CardContent>
           </Card>
 
           {/* Submit Button */}
           <Button 
             type="submit"
-            disabled={loading || !name || !email}
+            disabled={loading || !firstName || !lastName || !email}
             className="w-full h-button rounded-button bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
           >
+            <Save className="h-4 w-4 mr-2" />
             {loading ? 'Saving...' : 'Save Profile'}
           </Button>
         </form>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav currentPath="/profile-edit" navigate={navigate} />
     </div>
   );
 };

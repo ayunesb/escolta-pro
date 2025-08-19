@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Plus, Car, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 
 interface Vehicle {
   id: string;
@@ -158,6 +159,9 @@ const CompanyVehiclesPage = ({ navigate }: CompanyVehiclesPageProps) => {
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <GuardBottomNav currentPath="/company-vehicles" navigate={navigate} />
     </div>
   );
 };

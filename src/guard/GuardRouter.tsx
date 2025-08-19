@@ -10,6 +10,7 @@ import CompanyVehiclesPage from './pages/CompanyVehiclesPage';
 import CompanyStaffPage from './pages/CompanyStaffPage';
 import CompanyStaffNewPage from './pages/CompanyStaffNewPage';
 import CompanyStaffDetailPage from './pages/CompanyStaffDetailPage';
+import VehicleFormPage from './pages/VehicleFormPage';
 import FreelancerApplyPage from './pages/FreelancerApplyPage';
 
 const GuardRouter = () => {
@@ -47,7 +48,7 @@ const GuardRouter = () => {
   const pathParts = basePath.split('/');
 
   // Role-based route protection
-  const requiresCompanyAdmin = ['/company', '/company-permits', '/company-vehicles', '/company-staff', '/company-staff-new'].includes(basePath) || basePath.startsWith('/company-staff/');
+  const requiresCompanyAdmin = ['/company', '/company-permits', '/company-vehicles', '/company-vehicles-new', '/company-staff', '/company-staff-new'].includes(basePath) || basePath.startsWith('/company-staff/') || basePath.startsWith('/company-vehicles/');
   
   if (requiresCompanyAdmin && !hasRole('company_admin')) {
     navigate('/home');
@@ -72,12 +73,18 @@ const GuardRouter = () => {
       return <CompanyStaffPage navigate={navigate} />;
     case '/company-staff-new':
       return <CompanyStaffNewPage navigate={navigate} />;
+    case '/company-vehicles-new':
+      return <VehicleFormPage navigate={navigate} />;
     case '/apply':
       return <FreelancerApplyPage navigate={navigate} />;
     default:
       if (basePath.startsWith('/company-staff/')) {
         const staffId = pathParts[2];
         return <CompanyStaffDetailPage navigate={navigate} staffId={staffId} />;
+      }
+      if (basePath.startsWith('/company-vehicles/')) {
+        const vehicleId = pathParts[2];
+        return <VehicleFormPage navigate={navigate} vehicleId={vehicleId} />;
       }
       // Redirect to home for unknown routes
       navigate('/home');

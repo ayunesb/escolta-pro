@@ -7,6 +7,7 @@ import { ArrowLeft, Upload, Eye, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 
 interface CompanyStaffNewPageProps {
   navigate: (path: string) => void;
@@ -418,6 +419,9 @@ const CompanyStaffNewPage = ({ navigate }: CompanyStaffNewPageProps) => {
           </Button>
         </form>
       </div>
+
+      {/* Bottom Navigation */}
+      <GuardBottomNav currentPath="/company-staff-new" navigate={navigate} />
     </div>
   );
 };
