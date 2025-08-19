@@ -232,13 +232,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "bookings_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "v_is_admin"
-            referencedColumns: ["profile_id"]
-          },
         ]
       }
       companies: {
@@ -435,13 +428,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "guards_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "v_is_admin"
-            referencedColumns: ["profile_id"]
-          },
-          {
             foreignKeyName: "guards_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
@@ -495,13 +481,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incidents_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_is_admin"
-            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -589,13 +568,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "v_is_admin"
-            referencedColumns: ["profile_id"]
-          },
         ]
       }
       org_members: {
@@ -634,13 +606,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_members_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "v_is_admin"
-            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -917,21 +882,7 @@ export type Database = {
       }
     }
     Views: {
-      v_is_admin: {
-        Row: {
-          is_admin: boolean | null
-          profile_id: string | null
-        }
-        Insert: {
-          is_admin?: never
-          profile_id?: string | null
-        }
-        Update: {
-          is_admin?: never
-          profile_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       has_role: {
