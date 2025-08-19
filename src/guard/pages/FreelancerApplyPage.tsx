@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Shield, Upload } from 'lucide-react';
+import { ArrowLeft, Shield, Upload, Car } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import FileUpload from '@/components/ui/file-upload';
+import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 
 interface FreelancerApplyPageProps {
   navigate: (path: string) => void;
@@ -16,14 +19,37 @@ const FreelancerApplyPage = ({ navigate }: FreelancerApplyPageProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [armed, setArmed] = useState(false);
+  const [withVehicle, setWithVehicle] = useState(false);
+  
+  // Document URLs
+  const [idDocUrl, setIdDocUrl] = useState('');
+  const [gunPermitUrl, setGunPermitUrl] = useState('');
+  const [driverLicenseUrl, setDriverLicenseUrl] = useState('');
+  const [photoFormalUrl, setPhotoFormalUrl] = useState('');
+  const [photoCasualUrl, setPhotoCasualUrl] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!name || !email || !address) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await supabase.functions.invoke('freelancer_apply', {
-        body: { name, email, address }
+        body: {
+          name,
+          email,
+          phone,
+          address,
+          armed,
+          with_vehicle: withVehicle
+        }
       });
 
       if (error) {
@@ -86,6 +112,17 @@ const FreelancerApplyPage = ({ navigate }: FreelancerApplyPageProps) => {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="input-dark"
+                  placeholder="Enter phone number"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="address">Address</Label>
                 <Input
                   id="address"
@@ -94,6 +131,29 @@ const FreelancerApplyPage = ({ navigate }: FreelancerApplyPageProps) => {
                   className="input-dark"
                   required
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Capabilities */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-mobile-base">Capabilities</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <Label>Armed Personnel</Label>
+                </div>
+                <Switch checked={armed} onCheckedChange={setArmed} />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Car className="h-4 w-4 text-muted-foreground" />
+                  <Label>With Vehicle</Label>
+                </div>
+                <Switch checked={withVehicle} onCheckedChange={setWithVehicle} />
               </div>
             </CardContent>
           </Card>
@@ -107,6 +167,9 @@ const FreelancerApplyPage = ({ navigate }: FreelancerApplyPageProps) => {
           </Button>
         </form>
       </div>
+
+      {/* Bottom Navigation */}
+      <GuardBottomNav currentPath="/apply" navigate={navigate} />
     </div>
   );
 };

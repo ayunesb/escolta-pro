@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Building } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 
 interface CompanyPageProps {
   navigate: (path: string) => void;
@@ -189,6 +190,9 @@ const CompanyPage = ({ navigate }: CompanyPageProps) => {
           </Button>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <GuardBottomNav currentPath="/company" navigate={navigate} />
     </div>
   );
 };
