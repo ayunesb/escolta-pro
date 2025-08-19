@@ -5,6 +5,14 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  build: {
+    rollupOptions: {
+      input: {
+        client: path.resolve(__dirname, 'client.html'),
+        guard: path.resolve(__dirname, 'guard.html'),
+      }
+    }
+  },
   server: {
     host: "::",
     port: 8080,
