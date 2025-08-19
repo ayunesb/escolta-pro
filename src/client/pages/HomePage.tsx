@@ -12,6 +12,9 @@ interface Guard {
   skills: any;
   rating: number;
   city?: string;
+  hourly_rate_mxn_cents?: number;
+  armed_hourly_surcharge_mxn_cents?: number;
+  company_id?: string;
 }
 
 interface HomePageProps {
@@ -27,7 +30,7 @@ const HomePage = ({ navigate }: HomePageProps) => {
       try {
         const { data, error } = await supabase
           .from('guards')
-          .select('id, photo_url, skills, rating, city')
+          .select('id, photo_url, skills, rating, city, hourly_rate_mxn_cents, armed_hourly_surcharge_mxn_cents, company_id')
           .eq('active', true)
           .limit(6);
         
@@ -45,6 +48,14 @@ const HomePage = ({ navigate }: HomePageProps) => {
 
     fetchGuards();
   }, []);
+
+  const formatPrice = (cents: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 0,
+    }).format(cents / 100);
+  };
 
   const valueProps = [
     {
@@ -158,11 +169,27 @@ const HomePage = ({ navigate }: HomePageProps) => {
                       {guard.rating.toFixed(1)}
                     </span>
                   </div>
-                  {guard.city && (
-                    <Badge variant="secondary" className="text-xs">
-                      {guard.city}
-                    </Badge>
+                  
+                  {guard.hourly_rate_mxn_cents && (
+                    <div className="text-xs font-semibold text-accent mb-1">
+                      {formatPrice(guard.hourly_rate_mxn_cents)}/hr
+                    </div>
                   )}
+                  
+                  <div className="space-y-1">
+                    {guard.city && (
+                      <Badge variant="secondary" className="text-xs">
+                        {guard.city}
+                      </Badge>
+                    )}
+                    
+                    {guard.company_id && (
+                      <div className="flex items-center justify-center gap-1">
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                        <span className="text-xs text-muted-foreground">Verified</span>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

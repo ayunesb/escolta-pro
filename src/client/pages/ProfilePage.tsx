@@ -12,9 +12,13 @@ interface Guard {
   skills: any;
   rating: number;
   city?: string;
-  hourly_rate?: number;
+  hourly_rate_mxn_cents?: number;
+  armed_hourly_surcharge_mxn_cents?: number;
+  vehicle_hourly_rate_mxn_cents?: number;
+  armored_hourly_surcharge_mxn_cents?: number;
   dress_codes?: string[];
   status?: string;
+  company_id?: string;
 }
 
 interface ProfilePageProps {
@@ -36,7 +40,7 @@ const ProfilePage = ({ navigate, id }: ProfilePageProps) => {
       try {
         const { data, error } = await supabase
           .from('guards')
-          .select('*')
+          .select('*, companies(name)')
           .eq('id', id)
           .single();
         
@@ -82,6 +86,14 @@ const ProfilePage = ({ navigate, id }: ProfilePageProps) => {
 
   const skills = guard.skills || {};
   const skillsList = Object.entries(skills).filter(([_, value]) => value === true).map(([key]) => key);
+  
+  const formatPrice = (cents: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 0,
+    }).format(cents / 100);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -134,18 +146,38 @@ const ProfilePage = ({ navigate, id }: ProfilePageProps) => {
               </div>
             )}
 
-            {guard.status === 'verified' && (
-              <Badge className="bg-success text-white mb-4">
+            {guard.company_id && (
+              <Badge className="bg-green-500 text-white mb-4">
                 <CheckCircle className="h-3 w-3 mr-1" />
-                Verified
+                Company Verified
               </Badge>
             )}
 
-            {guard.hourly_rate && (
-              <div className="text-mobile-xl font-semibold text-accent">
-                $MXN {guard.hourly_rate}/hour
-              </div>
-            )}
+            <div className="space-y-2">
+              {guard.hourly_rate_mxn_cents && (
+                <div className="text-mobile-xl font-semibold text-accent">
+                  {formatPrice(guard.hourly_rate_mxn_cents)}/hr
+                </div>
+              )}
+              
+              {guard.armed_hourly_surcharge_mxn_cents && guard.armed_hourly_surcharge_mxn_cents > 0 && (
+                <div className="text-mobile-sm text-muted-foreground">
+                  +{formatPrice(guard.armed_hourly_surcharge_mxn_cents)}/hr armed
+                </div>
+              )}
+              
+              {guard.vehicle_hourly_rate_mxn_cents && guard.vehicle_hourly_rate_mxn_cents > 0 && (
+                <div className="text-mobile-sm text-muted-foreground">
+                  Vehicle: {formatPrice(guard.vehicle_hourly_rate_mxn_cents)}/hr
+                </div>
+              )}
+              
+              {guard.armored_hourly_surcharge_mxn_cents && guard.armored_hourly_surcharge_mxn_cents > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  Armored Vehicle Available
+                </Badge>
+              )}
+            </div>
           </CardContent>
         </Card>
 
