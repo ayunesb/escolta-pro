@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Clock, User } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, User, Shield, Car } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -16,6 +16,10 @@ interface BookingData {
   startTime: string;
   duration: number;
   protectorId?: string;
+  armedRequired?: boolean;
+  withVehicle?: boolean;
+  vehicleType?: string;
+  armoredLevel?: string;
 }
 
 const QuotePage = ({ navigate }: QuotePageProps) => {
@@ -46,9 +50,38 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
     );
   }
 
-  const subtotal = baseRate * bookingData.duration;
+  // Calculate pricing based on options
+  const baseAmount = baseRate * bookingData.duration;
+  const armedSurcharge = bookingData.armedRequired ? Math.round(baseAmount * 0.3) : 0;
+  const vehicleSurcharge = bookingData.withVehicle ? calculateVehicleSurcharge(bookingData.vehicleType, bookingData.armoredLevel, bookingData.duration) : 0;
+  const subtotal = baseAmount + armedSurcharge + vehicleSurcharge;
   const serviceFee = Math.round(subtotal * 0.1);
   const total = subtotal + serviceFee;
+
+  function calculateVehicleSurcharge(vehicleType?: string, armoredLevel?: string, duration?: number) {
+    if (!vehicleType || !duration) return 0;
+    
+    let baseVehicleRate = 50; // Base vehicle rate per hour
+    
+    // Vehicle type multipliers
+    switch (vehicleType) {
+      case 'SUV': baseVehicleRate *= 1.5; break;
+      case 'Van': baseVehicleRate *= 2; break;
+      case 'Bike': baseVehicleRate *= 0.7; break;
+      default: break; // Sedan stays at base rate
+    }
+    
+    // Armored level multipliers
+    switch (armoredLevel) {
+      case 'NIJ II': baseVehicleRate *= 2; break;
+      case 'NIJ IIIA': baseVehicleRate *= 2.5; break;
+      case 'NIJ III': baseVehicleRate *= 3; break;
+      case 'NIJ IV': baseVehicleRate *= 4; break;
+      default: break; // None stays at base rate
+    }
+    
+    return Math.round(baseVehicleRate * duration);
+  }
 
   const handleConfirm = async () => {
     const isStubMode = new URLSearchParams(window.location.search).get('stub') === '1' || 
@@ -129,11 +162,28 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="text-mobile-sm">{bookingData.duration} hours</span>
             </div>
-            {bookingData.protectorId && (
-              <Badge variant="secondary" className="w-fit">
-                Specific Protector Selected
-              </Badge>
-            )}
+            
+            {/* Service Options */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {bookingData.armedRequired && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  Armed Protection
+                </Badge>
+              )}
+              {bookingData.withVehicle && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Car className="h-3 w-3" />
+                  {bookingData.vehicleType}
+                  {bookingData.armoredLevel !== 'None' && ` (${bookingData.armoredLevel})`}
+                </Badge>
+              )}
+              {bookingData.protectorId && (
+                <Badge variant="secondary">
+                  Specific Protector Selected
+                </Badge>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -148,12 +198,36 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
                 Base rate ({bookingData.duration}h × $MXN {baseRate})
               </span>
               <span className="text-mobile-sm font-medium">
-                $MXN {subtotal.toLocaleString()}
+                $MXN {baseAmount.toLocaleString()}
               </span>
             </div>
+            
+            {bookingData.armedRequired && (
+              <div className="flex justify-between">
+                <span className="text-mobile-sm text-muted-foreground">
+                  Armed protection surcharge
+                </span>
+                <span className="text-mobile-sm font-medium">
+                  $MXN {armedSurcharge.toLocaleString()}
+                </span>
+              </div>
+            )}
+            
+            {bookingData.withVehicle && vehicleSurcharge > 0 && (
+              <div className="flex justify-between">
+                <span className="text-mobile-sm text-muted-foreground">
+                  Vehicle service ({bookingData.vehicleType}
+                  {bookingData.armoredLevel !== 'None' && `, ${bookingData.armoredLevel}`})
+                </span>
+                <span className="text-mobile-sm font-medium">
+                  $MXN {vehicleSurcharge.toLocaleString()}
+                </span>
+              </div>
+            )}
+            
             <div className="flex justify-between">
               <span className="text-mobile-sm text-muted-foreground">
-                Service fee
+                Service fee (10%)
               </span>
               <span className="text-mobile-sm font-medium">
                 $MXN {serviceFee.toLocaleString()}

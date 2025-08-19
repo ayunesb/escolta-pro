@@ -16,6 +16,8 @@ const GuardApp = () => (
           <Toaster />
           <Sonner />
           <GuardRouter />
+          {/* Overlays portal container */}
+          <div id="overlays" />
         </TooltipProvider>
       </AuthProvider>
     </ThemeProvider>

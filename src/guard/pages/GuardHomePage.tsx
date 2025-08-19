@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Shield, Calendar, MapPin, User, Settings } from 'lucide-react';
+import { Shield, Calendar, MapPin, User, Settings, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 
 interface Assignment {
   id: string;
@@ -221,6 +222,9 @@ const GuardHomePage = ({ navigate }: GuardHomePageProps) => {
           )}
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <GuardBottomNav currentPath="/home" navigate={navigate} />
     </div>
   );
 };

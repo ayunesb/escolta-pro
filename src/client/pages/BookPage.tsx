@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { X, ArrowLeft } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X, ArrowLeft, Shield, Car } from 'lucide-react';
 import BottomSheet from '@/components/mobile/BottomSheet';
 
 interface BookPageProps {
@@ -17,6 +19,10 @@ const BookPage = ({ navigate, pid }: BookPageProps) => {
   const [startTime, setStartTime] = useState('');
   const [duration, setDuration] = useState('4');
   const [selectedProtector, setSelectedProtector] = useState<string | null>(pid);
+  const [armedRequired, setArmedRequired] = useState(false);
+  const [withVehicle, setWithVehicle] = useState(false);
+  const [vehicleType, setVehicleType] = useState<string>('');
+  const [armoredLevel, setArmoredLevel] = useState<string>('None');
 
   // Set default date to today
   useEffect(() => {
@@ -36,7 +42,11 @@ const BookPage = ({ navigate, pid }: BookPageProps) => {
       date,
       startTime,
       duration: parseInt(duration),
-      protectorId: selectedProtector
+      protectorId: selectedProtector,
+      armedRequired,
+      withVehicle,
+      vehicleType: withVehicle ? vehicleType : undefined,
+      armoredLevel: withVehicle ? armoredLevel : undefined
     };
     
     sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
@@ -130,27 +140,99 @@ const BookPage = ({ navigate, pid }: BookPageProps) => {
           <Label htmlFor="duration" className="text-mobile-base font-medium">
             Duration (hours)
           </Label>
-          <select
-            id="duration"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            className="input-dark w-full"
-            required
-          >
-            <option value="2">2 hours</option>
-            <option value="4">4 hours</option>
-            <option value="6">6 hours</option>
-            <option value="8">8 hours</option>
-            <option value="12">12 hours</option>
-            <option value="24">24 hours</option>
-          </select>
+          <Select value={duration} onValueChange={setDuration}>
+            <SelectTrigger className="input-dark">
+              <SelectValue placeholder="Select duration" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2">2 hours</SelectItem>
+              <SelectItem value="4">4 hours</SelectItem>
+              <SelectItem value="6">6 hours</SelectItem>
+              <SelectItem value="8">8 hours</SelectItem>
+              <SelectItem value="12">12 hours</SelectItem>
+              <SelectItem value="24">24 hours</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+      </div>
+
+      {/* Armed Protection Toggle */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Shield className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <Label className="text-mobile-base font-medium">Armed protector required?</Label>
+              <p className="text-xs text-muted-foreground">Certified armed security personnel</p>
+            </div>
+          </div>
+          <Switch 
+            checked={armedRequired} 
+            onCheckedChange={setArmedRequired}
+          />
+        </div>
+      </div>
+
+      {/* Vehicle Required Toggle */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Car className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <Label className="text-mobile-base font-medium">Vehicle required?</Label>
+              <p className="text-xs text-muted-foreground">Professional transport service</p>
+            </div>
+          </div>
+          <Switch 
+            checked={withVehicle} 
+            onCheckedChange={setWithVehicle}
+          />
+        </div>
+
+        {/* Vehicle Options */}
+        {withVehicle && (
+          <div className="space-y-4 pl-8">
+            <div className="space-y-2">
+              <Label className="text-mobile-sm font-medium">Vehicle Type</Label>
+              <Select value={vehicleType} onValueChange={setVehicleType}>
+                <SelectTrigger className="input-dark">
+                  <SelectValue placeholder="Select vehicle type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sedan">Sedan</SelectItem>
+                  <SelectItem value="SUV">SUV</SelectItem>
+                  <SelectItem value="Van">Van</SelectItem>
+                  <SelectItem value="Bike">Motorcycle</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-mobile-sm font-medium">Armored Level</Label>
+              <Select value={armoredLevel} onValueChange={setArmoredLevel}>
+                <SelectTrigger className="input-dark">
+                  <SelectValue placeholder="Select armor level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="None">None</SelectItem>
+                  <SelectItem value="NIJ II">NIJ Level II</SelectItem>
+                  <SelectItem value="NIJ IIIA">NIJ Level IIIA</SelectItem>
+                  <SelectItem value="NIJ III">NIJ Level III</SelectItem>
+                  <SelectItem value="NIJ IV">NIJ Level IV</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Higher NIJ levels may increase availability time and price.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="sticky bottom-0 bg-background pt-6 mt-8">
         <Button 
           onClick={handleNext}
-          disabled={!location || !date || !startTime || !duration}
+          disabled={!location || !date || !startTime || !duration || (withVehicle && !vehicleType)}
           className="w-full h-button rounded-button bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
         >
           Next - Get Quote

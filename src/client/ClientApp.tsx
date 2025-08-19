@@ -16,6 +16,8 @@ const ClientApp = () => (
           <Toaster />
           <Sonner />
           <ClientRouter />
+          {/* Overlays portal container */}
+          <div id="overlays" />
         </TooltipProvider>
       </AuthProvider>
     </ThemeProvider>
