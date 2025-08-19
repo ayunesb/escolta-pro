@@ -150,10 +150,13 @@ export type Database = {
           protectees: number | null
           protectors: number | null
           quote_amount: number | null
+          service_fee_mxn_cents: number | null
           start_ts: string | null
           status: string
+          subtotal_mxn_cents: number | null
           surge_mult: number | null
           tier: string
+          total_mxn_cents: number | null
           updated_at: string | null
           vehicle_required: boolean | null
           vehicle_type: string | null
@@ -178,10 +181,13 @@ export type Database = {
           protectees?: number | null
           protectors?: number | null
           quote_amount?: number | null
+          service_fee_mxn_cents?: number | null
           start_ts?: string | null
           status?: string
+          subtotal_mxn_cents?: number | null
           surge_mult?: number | null
           tier?: string
+          total_mxn_cents?: number | null
           updated_at?: string | null
           vehicle_required?: boolean | null
           vehicle_type?: string | null
@@ -206,10 +212,13 @@ export type Database = {
           protectees?: number | null
           protectors?: number | null
           quote_amount?: number | null
+          service_fee_mxn_cents?: number | null
           start_ts?: string | null
           status?: string
+          subtotal_mxn_cents?: number | null
           surge_mult?: number | null
           tier?: string
+          total_mxn_cents?: number | null
           updated_at?: string | null
           vehicle_required?: boolean | null
           vehicle_type?: string | null
@@ -362,6 +371,7 @@ export type Database = {
       guards: {
         Row: {
           active: boolean | null
+          armed_hourly_surcharge_mxn_cents: number | null
           availability_status: string | null
           city: string | null
           company_id: string | null
@@ -369,6 +379,7 @@ export type Database = {
           home_lat: number | null
           home_lng: number | null
           hourly_rate: number | null
+          hourly_rate_mxn_cents: number | null
           id: string
           org_id: string | null
           photo_url: string | null
@@ -379,6 +390,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          armed_hourly_surcharge_mxn_cents?: number | null
           availability_status?: string | null
           city?: string | null
           company_id?: string | null
@@ -386,6 +398,7 @@ export type Database = {
           home_lat?: number | null
           home_lng?: number | null
           hourly_rate?: number | null
+          hourly_rate_mxn_cents?: number | null
           id: string
           org_id?: string | null
           photo_url?: string | null
@@ -396,6 +409,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          armed_hourly_surcharge_mxn_cents?: number | null
           availability_status?: string | null
           city?: string | null
           company_id?: string | null
@@ -403,6 +417,7 @@ export type Database = {
           home_lat?: number | null
           home_lng?: number | null
           hourly_rate?: number | null
+          hourly_rate_mxn_cents?: number | null
           id?: string
           org_id?: string | null
           photo_url?: string | null
@@ -844,6 +859,7 @@ export type Database = {
         Row: {
           active: boolean | null
           armored: boolean | null
+          armored_hourly_surcharge_mxn_cents: number | null
           company_id: string | null
           docs: Json | null
           guard_id: string | null
@@ -852,10 +868,12 @@ export type Database = {
           owned_by: string
           plates: string | null
           type: string | null
+          vehicle_hourly_rate_mxn_cents: number | null
         }
         Insert: {
           active?: boolean | null
           armored?: boolean | null
+          armored_hourly_surcharge_mxn_cents?: number | null
           company_id?: string | null
           docs?: Json | null
           guard_id?: string | null
@@ -864,10 +882,12 @@ export type Database = {
           owned_by: string
           plates?: string | null
           type?: string | null
+          vehicle_hourly_rate_mxn_cents?: number | null
         }
         Update: {
           active?: boolean | null
           armored?: boolean | null
+          armored_hourly_surcharge_mxn_cents?: number | null
           company_id?: string | null
           docs?: Json | null
           guard_id?: string | null
@@ -876,6 +896,7 @@ export type Database = {
           owned_by?: string
           plates?: string | null
           type?: string | null
+          vehicle_hourly_rate_mxn_cents?: number | null
         }
         Relationships: [
           {

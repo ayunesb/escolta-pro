@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Clock, User, Shield, Car } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { t, getPreferredLanguage, formatMXN, Lang } from '@/lib/i18n';
+import { LanguageToggle } from '@/components/ui/language-toggle';
 
 interface QuotePageProps {
   navigate: (path: string) => void;
@@ -25,7 +27,13 @@ interface BookingData {
 const QuotePage = ({ navigate }: QuotePageProps) => {
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [baseRate] = useState(150); // MXN per hour base rate
+  const [lang] = useState<Lang>(getPreferredLanguage());
+  
+  // MXN pricing in centavos (server will use actual DB rates)
+  const hourly_rate_mxn_cents = 80000; // $800 MXN/hr
+  const armed_hourly_surcharge_mxn_cents = 20000; // $200 MXN/hr
+  const vehicle_hourly_rate_mxn_cents = 350000; // $3,500 MXN/hr
+  const armored_hourly_surcharge_mxn_cents = 150000; // $1,500 MXN/hr
 
   useEffect(() => {
     const data = sessionStorage.getItem('bookingData');
@@ -50,38 +58,17 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
     );
   }
 
-  // Calculate pricing based on options
-  const baseAmount = baseRate * bookingData.duration;
-  const armedSurcharge = bookingData.armedRequired ? Math.round(baseAmount * 0.3) : 0;
-  const vehicleSurcharge = bookingData.withVehicle ? calculateVehicleSurcharge(bookingData.vehicleType, bookingData.armoredLevel, bookingData.duration) : 0;
-  const subtotal = baseAmount + armedSurcharge + vehicleSurcharge;
-  const serviceFee = Math.round(subtotal * 0.1);
-  const total = subtotal + serviceFee;
+  // Calculate pricing based on MXN rates (in centavos)
+  const hours = bookingData.duration;
+  const base = hourly_rate_mxn_cents * hours;
+  const armedFee = bookingData.armedRequired ? armed_hourly_surcharge_mxn_cents * hours : 0;
+  const vehicleBase = bookingData.withVehicle ? vehicle_hourly_rate_mxn_cents * hours : 0;
+  const armoredFee = (bookingData.withVehicle && bookingData.armoredLevel && bookingData.armoredLevel !== 'None') 
+    ? armored_hourly_surcharge_mxn_cents * hours : 0;
 
-  function calculateVehicleSurcharge(vehicleType?: string, armoredLevel?: string, duration?: number) {
-    if (!vehicleType || !duration) return 0;
-    
-    let baseVehicleRate = 50; // Base vehicle rate per hour
-    
-    // Vehicle type multipliers
-    switch (vehicleType) {
-      case 'SUV': baseVehicleRate *= 1.5; break;
-      case 'Van': baseVehicleRate *= 2; break;
-      case 'Bike': baseVehicleRate *= 0.7; break;
-      default: break; // Sedan stays at base rate
-    }
-    
-    // Armored level multipliers
-    switch (armoredLevel) {
-      case 'NIJ II': baseVehicleRate *= 2; break;
-      case 'NIJ IIIA': baseVehicleRate *= 2.5; break;
-      case 'NIJ III': baseVehicleRate *= 3; break;
-      case 'NIJ IV': baseVehicleRate *= 4; break;
-      default: break; // None stays at base rate
-    }
-    
-    return Math.round(baseVehicleRate * duration);
-  }
+  const subtotal = base + armedFee + vehicleBase + armoredFee;
+  const serviceFee = Math.round(subtotal * 0.10);
+  const total = subtotal + serviceFee;
 
   const handleConfirm = async () => {
     const isStubMode = new URLSearchParams(window.location.search).get('stub') === '1' || 
@@ -93,16 +80,20 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
       if (isStubMode) {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success("Request submitted. We'll contact you shortly.");
+        toast.success(t('request_submitted', lang));
       } else {
-        // Call actual Edge Function
-        const { error } = await supabase.functions.invoke('bookings', {
+        // Call actual Edge Function with new payload
+        const { error, data: response } = await supabase.functions.invoke('bookings', {
           body: {
             location: bookingData.location,
             start: `${bookingData.date}T${bookingData.startTime}:00`,
             end: new Date(new Date(`${bookingData.date}T${bookingData.startTime}:00`).getTime() + bookingData.duration * 60 * 60 * 1000).toISOString(),
             duration_hours: bookingData.duration,
-            pid: bookingData.protectorId
+            protector_id: bookingData.protectorId,
+            vehicle_id: null, // Will be assigned later
+            armed: bookingData.armedRequired || false,
+            with_vehicle: bookingData.withVehicle || false,
+            armored_level: bookingData.armoredLevel || 'None'
           }
         });
 
@@ -111,7 +102,7 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
           return;
         }
         
-        toast.success("Request submitted. We'll contact you shortly.");
+        toast.success(t('request_submitted', lang));
       }
       
       // Clear booking data and navigate to bookings
@@ -137,15 +128,15 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
             <ArrowLeft className="h-6 w-6 text-foreground" />
           </button>
           <h2 className="text-mobile-lg font-semibold text-foreground">
-            Quote
+            {t('instant_quote', lang)}
           </h2>
-          <div className="w-6" />
+          <LanguageToggle />
         </div>
 
         {/* Booking Summary */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-mobile-base">Booking Summary</CardTitle>
+            <CardTitle className="text-mobile-base">{t('booking_summary', lang)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-3">
@@ -168,19 +159,19 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
               {bookingData.armedRequired && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Shield className="h-3 w-3" />
-                  Armed Protection
+                  {t('armed_surcharge', lang)}
                 </Badge>
               )}
               {bookingData.withVehicle && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Car className="h-3 w-3" />
-                  {bookingData.vehicleType}
-                  {bookingData.armoredLevel !== 'None' && ` (${bookingData.armoredLevel})`}
+                  {t(bookingData.vehicleType?.toLowerCase() || 'suv', lang)}
+                  {bookingData.armoredLevel !== 'None' && ` (${t(bookingData.armoredLevel?.toLowerCase()?.replace(/\s+/g, '_') || 'none', lang)})`}
                 </Badge>
               )}
               {bookingData.protectorId && (
                 <Badge variant="secondary">
-                  Specific Protector Selected
+                  {t('protector_base', lang)}
                 </Badge>
               )}
             </div>
@@ -190,54 +181,64 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
         {/* Price Breakdown */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-mobile-base">Price Breakdown</CardTitle>
+            <CardTitle className="text-mobile-base">{t('price_breakdown', lang)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span className="text-mobile-sm text-muted-foreground">
-                Base rate ({bookingData.duration}h × $MXN {baseRate})
+                {t('protector_base', lang)} ({hours}h × {formatMXN(hourly_rate_mxn_cents)})
               </span>
               <span className="text-mobile-sm font-medium">
-                $MXN {baseAmount.toLocaleString()}
+                {formatMXN(base)}
               </span>
             </div>
             
             {bookingData.armedRequired && (
               <div className="flex justify-between">
                 <span className="text-mobile-sm text-muted-foreground">
-                  Armed protection surcharge
+                  {t('armed_surcharge', lang)} ({hours}h × {formatMXN(armed_hourly_surcharge_mxn_cents)})
                 </span>
                 <span className="text-mobile-sm font-medium">
-                  $MXN {armedSurcharge.toLocaleString()}
+                  {formatMXN(armedFee)}
                 </span>
               </div>
             )}
             
-            {bookingData.withVehicle && vehicleSurcharge > 0 && (
+            {bookingData.withVehicle && vehicleBase > 0 && (
               <div className="flex justify-between">
                 <span className="text-mobile-sm text-muted-foreground">
-                  Vehicle service ({bookingData.vehicleType}
-                  {bookingData.armoredLevel !== 'None' && `, ${bookingData.armoredLevel}`})
+                  {t('vehicle_service', lang)} ({hours}h × {formatMXN(vehicle_hourly_rate_mxn_cents)})
                 </span>
                 <span className="text-mobile-sm font-medium">
-                  $MXN {vehicleSurcharge.toLocaleString()}
+                  {formatMXN(vehicleBase)}
+                </span>
+              </div>
+            )}
+            
+            {bookingData.withVehicle && bookingData.armoredLevel !== 'None' && armoredFee > 0 && (
+              <div className="flex justify-between">
+                <span className="text-mobile-sm text-muted-foreground">
+                  {t('armored_surcharge', lang)} ({hours}h × {formatMXN(armored_hourly_surcharge_mxn_cents)})
+                </span>
+                <span className="text-mobile-sm font-medium">
+                  {formatMXN(armoredFee)}
                 </span>
               </div>
             )}
             
             <div className="flex justify-between">
               <span className="text-mobile-sm text-muted-foreground">
-                Service fee (10%)
+                {t('service_fee_10', lang)}
               </span>
               <span className="text-mobile-sm font-medium">
-                $MXN {serviceFee.toLocaleString()}
+                {formatMXN(serviceFee)}
               </span>
             </div>
             <div className="border-t pt-3">
               <div className="flex justify-between">
-                <span className="text-mobile-base font-semibold">Total</span>
+                <span className="text-mobile-base font-semibold">{t('total', lang)}</span>
                 <span className="text-mobile-base font-semibold text-accent">
-                  $MXN {total.toLocaleString()}
+                  {formatMXN(total)}
                 </span>
               </div>
             </div>
@@ -257,7 +258,7 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
           disabled={loading}
           className="w-full h-button rounded-button bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
         >
-          {loading ? 'Submitting...' : `Confirm Request - $MXN ${total.toLocaleString()}`}
+          {loading ? t('loading', lang) : `${t('confirm_request', lang)} - ${formatMXN(total)}`}
         </Button>
       </div>
     </div>

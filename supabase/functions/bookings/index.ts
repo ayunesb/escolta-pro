@@ -22,7 +22,7 @@ serve(async (req) => {
     });
 
     const body = await req.json();
-    const { location, start, end, duration_hours, pid } = body || {};
+    const { location, start, end, duration_hours, pid, protector_id, vehicle_id, armed, with_vehicle, armored_level } = body || {};
 
     const {
       data: { user },
@@ -38,7 +38,57 @@ serve(async (req) => {
     }
 
     console.log("bookings: creating booking for user", user.id);
-    console.log("bookings: payload", { location, start, end, duration_hours });
+    console.log("bookings: payload", { location, start, end, duration_hours, protector_id, vehicle_id, armed, with_vehicle });
+
+    // Fetch pricing from database to prevent client tampering
+    let hourly_rate_mxn_cents = 80000; // Default $800 MXN/hr
+    let armed_hourly_surcharge_mxn_cents = 20000; // Default $200 MXN/hr
+    let vehicle_hourly_rate_mxn_cents = 0;
+    let armored_hourly_surcharge_mxn_cents = 0;
+
+    // Get protector pricing if specific protector selected
+    if (protector_id) {
+      const { data: guard } = await supabase
+        .from('guards')
+        .select('hourly_rate_mxn_cents, armed_hourly_surcharge_mxn_cents')
+        .eq('id', protector_id)
+        .single();
+      
+      if (guard) {
+        hourly_rate_mxn_cents = guard.hourly_rate_mxn_cents || 80000;
+        armed_hourly_surcharge_mxn_cents = guard.armed_hourly_surcharge_mxn_cents || 20000;
+      }
+    }
+
+    // Get vehicle pricing if vehicle selected
+    if (with_vehicle && vehicle_id) {
+      const { data: vehicle } = await supabase
+        .from('vehicles')
+        .select('vehicle_hourly_rate_mxn_cents, armored_hourly_surcharge_mxn_cents')
+        .eq('id', vehicle_id)
+        .single();
+      
+      if (vehicle) {
+        vehicle_hourly_rate_mxn_cents = vehicle.vehicle_hourly_rate_mxn_cents || 350000;
+        armored_hourly_surcharge_mxn_cents = vehicle.armored_hourly_surcharge_mxn_cents || 150000;
+      }
+    } else if (with_vehicle) {
+      // Use default vehicle pricing if no specific vehicle selected
+      vehicle_hourly_rate_mxn_cents = 350000; // $3,500 MXN/hr
+      armored_hourly_surcharge_mxn_cents = 150000; // $1,500 MXN/hr
+    }
+
+    // Calculate pricing (server-side truth)
+    const hours = duration_hours || 4;
+    const base = hourly_rate_mxn_cents * hours;
+    const armedFee = armed ? armed_hourly_surcharge_mxn_cents * hours : 0;
+    const vehicleBase = with_vehicle ? vehicle_hourly_rate_mxn_cents * hours : 0;
+    const armoredFee = (with_vehicle && armored_level && armored_level !== 'None') 
+      ? armored_hourly_surcharge_mxn_cents * hours : 0;
+
+    const subtotal_mxn_cents = base + armedFee + vehicleBase + armoredFee;
+    const service_fee_mxn_cents = Math.round(subtotal_mxn_cents * 0.10);
+    const total_mxn_cents = subtotal_mxn_cents + service_fee_mxn_cents;
 
     const payload: any = {
       client_id: user.id,
@@ -47,6 +97,13 @@ serve(async (req) => {
       pickup_address: location || null,
       status: "requested",
       notes: null,
+      armed_required: armed || false,
+      vehicle_required: with_vehicle || false,
+      vehicle_type: vehicle_id ? 'assigned' : (with_vehicle ? 'suv' : null),
+      currency: 'MXN',
+      subtotal_mxn_cents,
+      service_fee_mxn_cents,
+      total_mxn_cents,
     };
 
     console.log("bookings: inserting payload", payload);
@@ -67,7 +124,13 @@ serve(async (req) => {
 
     console.log("bookings: successfully created booking", data?.id);
 
-    return new Response(JSON.stringify({ ok: true, booking_id: data?.id }), {
+    return new Response(JSON.stringify({ 
+      ok: true, 
+      booking_id: data?.id,
+      subtotal_mxn_cents,
+      service_fee_mxn_cents,
+      total_mxn_cents
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
