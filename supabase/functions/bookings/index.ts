@@ -37,6 +37,9 @@ serve(async (req) => {
       });
     }
 
+    console.log("bookings: creating booking for user", user.id);
+    console.log("bookings: payload", { location, start, end, duration_hours });
+
     const payload: any = {
       client_id: user.id,
       start_ts: start ? new Date(start).toISOString() : null,
@@ -45,6 +48,8 @@ serve(async (req) => {
       status: "requested",
       notes: null,
     };
+
+    console.log("bookings: inserting payload", payload);
 
     const { data, error } = await supabase
       .from("bookings")
@@ -59,6 +64,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("bookings: successfully created booking", data?.id);
 
     return new Response(JSON.stringify({ ok: true, booking_id: data?.id }), {
       status: 200,
