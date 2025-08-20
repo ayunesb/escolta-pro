@@ -25,7 +25,7 @@ interface Booking {
 
 export const BookingsDashboard = () => {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
-  const { matches, isMatching, findMatches, assignGuard } = useBookingMatching();
+  const { matchingGuards, isMatching, matchingProgress, findMatchingGuards, resetMatching } = useBookingMatching();
 
   // Fetch bookings
   const { data: bookings = [], isLoading } = useQuery({
@@ -42,6 +42,43 @@ export const BookingsDashboard = () => {
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // Handle finding matches for a booking
+  const handleFindMatches = async (bookingId: string, criteria: any) => {
+    setSelectedBooking(bookingId);
+    
+    await findMatchingGuards({
+      city: 'Mexico City', // This should come from booking data
+      armed_required: criteria.armedRequired,
+      vehicle_required: criteria.vehicleRequired,
+      start_ts: criteria.startTime.toISOString(),
+      min_hours: criteria.duration
+    });
+  };
+
+  // Handle assigning a guard to a booking
+  const handleAssignGuard = async (bookingId: string, guardId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ 
+          assigned_user_id: guardId,
+          status: 'assigned'
+        })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+      
+      // Reset matching state
+      resetMatching();
+      setSelectedBooking(null);
+      
+      // Refresh bookings data
+      // This would trigger a refetch of the bookings query
+    } catch (error) {
+      console.error('Error assigning guard:', error);
+    }
+  };
 
   // Get booking statistics
   const stats = {
@@ -170,7 +207,7 @@ export const BookingsDashboard = () => {
                 booking={booking}
                 onSelect={setSelectedBooking}
                 showMatchButton
-                onFindMatches={findMatches}
+                onFindMatches={handleFindMatches}
               />
             ))}
         </TabsContent>
@@ -189,28 +226,20 @@ export const BookingsDashboard = () => {
       </Tabs>
 
       {/* Guard Matches Modal/Section */}
-      {selectedBooking && matches.length > 0 && (
+      {selectedBooking && matchingGuards.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Available Guards</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {matches.map((match) => (
+            {matchingGuards.map((guard) => (
               <BookingMatchCard
-                key={match.guardId}
-                guard={{
-                  id: match.guardId,
-                  name: `Guard ${match.guardId.slice(0, 8)}`,
-                  rating: 4.5,
-                  distance: match.distance,
-                  skills: ['Security', 'Armed'],
-                  armed: true,
-                  hasVehicle: true,
-                  hourlyRate: 800,
-                  availability: match.availability ? 'available' : 'busy'
-                }}
-                matchScore={match.score}
-                onAssign={(guardId) => assignGuard(selectedBooking, guardId)}
+                key={guard.id}
+                guard={guard}
+                isArmed={true} // This should come from booking data
+                hours={4} // This should come from booking data
+                onSelect={(guardId) => handleAssignGuard(selectedBooking, guardId)}
+                isSelected={false}
               />
             ))}
           </CardContent>
