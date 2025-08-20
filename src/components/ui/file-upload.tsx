@@ -130,7 +130,7 @@ const FileUpload = ({
         )}
       </div>
 
-      <div className="border-2 border-dashed border-border rounded-lg p-4">
+      <div className="relative border-2 border-dashed border-border rounded-lg p-4">
         {!selectedFile && !currentFileUrl && (
           <div className="text-center">
             <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
