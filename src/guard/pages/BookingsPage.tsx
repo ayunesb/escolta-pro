@@ -30,26 +30,15 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
   async function load(scope:'available'|'mine') {
     setBusy(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toast({ title: 'Error', description: 'Not authenticated' });
-        return;
+      const { data, error } = await supabase.functions.invoke('bookings_guard_list', {
+        body: { scope }
+      });
+
+      if (error) {
+        throw error;
       }
 
-      const url = `https://isnezquuwepqcjkaupjh.supabase.co/functions/v1/bookings_guard_list?scope=${scope}`;
-      const res = await fetch(url, { 
-        headers: { 
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        } 
-      });
-      
-      if (!res.ok) {
-        throw new Error(await res.text());
-      }
-      
-      const json = await res.json();
-      setItems(Array.isArray(json) ? json : []);
+      setItems(Array.isArray(data) ? data : []);
     } catch (e: any) {
       console.error('Load error:', e);
       toast({ title: 'Error', description: e.message || 'Failed to load' });
@@ -65,24 +54,12 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
   async function accept(booking_id: string) {
     setBusy(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toast({ title: 'Error', description: 'Not authenticated' });
-        return;
-      }
-
-      const url = `https://isnezquuwepqcjkaupjh.supabase.co/functions/v1/booking_accept`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ booking_id })
+      const { data, error } = await supabase.functions.invoke('booking_accept', {
+        body: { booking_id }
       });
-      
-      if (!res.ok) {
-        throw new Error(await res.text());
+
+      if (error) {
+        throw error;
       }
       
       toast({ title: 'Assigned', description: 'You accepted this job.' });

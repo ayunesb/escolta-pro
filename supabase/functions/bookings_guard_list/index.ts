@@ -21,8 +21,15 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const url = new URL(req.url);
-    const scope = url.searchParams.get("scope") ?? "available"; // "available"|"mine"
+    // Get scope from request body for POST requests, or query params for GET
+    let scope = "available";
+    if (req.method === "POST") {
+      const body = await req.json();
+      scope = body.scope || "available";
+    } else {
+      const url = new URL(req.url);
+      scope = url.searchParams.get("scope") || "available";
+    }
 
     // current user
     const {

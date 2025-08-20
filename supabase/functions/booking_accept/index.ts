@@ -70,34 +70,51 @@ serve(async (req) => {
 
     // TODO: optional capability checks (armed/vehicle)
 
-    // claim it atomically
-    const { data, error } = await supabase
+    // First, check if user already has this booking assigned (idempotency)
+    const { data: existingAssignment } = await supabase
       .from("bookings")
-      .update({ status: "assigned", assigned_user_id: user.id })
+      .select("*")
       .eq("id", booking_id)
-      .eq("status", "matching") // avoid race condition
-      .select()
+      .eq("assigned_user_id", user.id)
+      .eq("status", "assigned")
       .maybeSingle();
 
-    if (error) {
-      console.error("booking_accept: error updating booking", error);
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 409,
+    if (existingAssignment) {
+      console.log("booking_accept: booking already assigned to this user", booking_id);
+      return new Response(JSON.stringify(existingAssignment), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (!data) {
-      console.error("booking_accept: booking no longer available or already assigned");
+    // Attempt atomic update
+    const { data: updateResult, error: updateError } = await supabase
+      .from("bookings")
+      .update({ status: "assigned", assigned_user_id: user.id })
+      .eq("id", booking_id)
+      .eq("status", "matching") // only update if still matching
+      .select()
+      .maybeSingle();
+
+    if (updateError) {
+      console.error("booking_accept: database error during update", updateError);
+      return new Response(JSON.stringify({ error: "Database error occurred" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!updateResult) {
+      console.error("booking_accept: booking no longer in matching status or race condition occurred");
       return new Response(JSON.stringify({ error: "Booking no longer available" }), {
-        status: 400,
+        status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     console.log("booking_accept: successfully assigned booking", booking_id, "to user", user.id);
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify(updateResult), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
