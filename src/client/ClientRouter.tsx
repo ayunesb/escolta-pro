@@ -5,6 +5,8 @@ import HomePage from './pages/HomePage';
 import BookPage from './pages/BookPage';
 import QuotePage from './pages/QuotePage';
 import BookingsPage from './pages/BookingsPage';
+import BookingSuccessPage from './pages/BookingSuccessPage';
+import BookingCancelledPage from './pages/BookingCancelledPage';
 import AccountPage from './pages/AccountPage';
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
@@ -66,6 +68,11 @@ const ClientRouter = () => {
       return <QuotePage navigate={navigate} />;
     case '/bookings':
       return <BookingsPage navigate={navigate} />;
+    case '/booking-success':
+      const bookingId = queryParams.get('booking_id');
+      return <BookingSuccessPage navigate={navigate} bookingId={bookingId} />;
+    case '/booking-cancelled':
+      return <BookingCancelledPage navigate={navigate} />;
     case '/account':
       return <AccountPage navigate={navigate} />;
     case '/profile':

@@ -309,72 +309,72 @@ const HomePage = ({ navigate }: HomePageProps) => {
             </div>
           )}
 
-          {/* Featured Guards (for clients and super admin) */}
-          {homeContent.showGuards && (
-            <div className="py-6">
-              <h2 className="text-mobile-lg font-semibold text-foreground mb-4">
-                {hasRole('super_admin') ? 'All Guards' : 'Featured Protectors'}
-              </h2>
-              {loading ? (
-                <OptimizedSkeleton type="guard-card" count={4} className="grid grid-cols-2 gap-4" />
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  {guards.map((guard) => (
-                    <Card 
-                      key={guard.id}
-                      className="cursor-pointer card-hover"
-                      onClick={() => navigate(`/profile?id=${guard.id}`)}
-                    >
-                      <CardContent className="p-3 text-center">
-                        <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                          {guard.photo_url ? (
-                            <LazyImage
-                              src={guard.photo_url}
-                              alt="Guard profile"
-                              className="w-full h-full rounded-full object-cover"
-                              priority={false}
-                              fallback={
-                                <Shield className="h-8 w-8 text-muted-foreground" />
-                              }
-                            />
-                          ) : (
+      {/* Featured Guards (for clients and super admin) */}
+      {homeContent.showGuards && (
+        <div className="py-6">
+          <h2 className="text-mobile-lg font-semibold text-foreground mb-4">
+            {hasRole('super_admin') ? 'All Guards' : 'Featured Protectors'}
+          </h2>
+          {loading ? (
+            <OptimizedSkeleton type="guard-card" count={4} className="grid grid-cols-2 gap-4" />
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {guards.map((guard) => (
+                <Card 
+                  key={guard.id}
+                  className="cursor-pointer card-hover"
+                  onClick={() => hasRole('client') ? navigate(`/book?pid=${guard.id}`) : navigate(`/profile?id=${guard.id}`)}
+                >
+                  <CardContent className="p-3 text-center">
+                    <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-3 flex items-center justify-center overflow-hidden">
+                      {guard.photo_url ? (
+                        <LazyImage
+                          src={guard.photo_url}
+                          alt="Guard profile"
+                          className="w-full h-full rounded-full object-cover"
+                          priority={false}
+                          fallback={
                             <Shield className="h-8 w-8 text-muted-foreground" />
-                          )}
+                          }
+                        />
+                      ) : (
+                        <Shield className="h-8 w-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                      <span className="text-xs text-foreground">
+                        {guard.rating.toFixed(1)}
+                      </span>
+                    </div>
+                    
+                    {guard.hourly_rate_mxn_cents && (
+                      <div className="text-xs font-semibold text-accent mb-1">
+                        {formatPrice(guard.hourly_rate_mxn_cents)}/hr
+                      </div>
+                    )}
+                    
+                    <div className="space-y-1">
+                      {guard.city && (
+                        <Badge variant="secondary" className="text-xs">
+                          {guard.city}
+                        </Badge>
+                      )}
+                      
+                      {guard.company_id && (
+                        <div className="flex items-center justify-center gap-1">
+                          <ArrowRight className="h-3 w-3 text-green-500" />
+                          <span className="text-xs text-muted-foreground">Verified</span>
                         </div>
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                          <span className="text-xs text-foreground">
-                            {guard.rating.toFixed(1)}
-                          </span>
-                        </div>
-                        
-                        {guard.hourly_rate_mxn_cents && (
-                          <div className="text-xs font-semibold text-accent mb-1">
-                            {formatPrice(guard.hourly_rate_mxn_cents)}/hr
-                          </div>
-                        )}
-                        
-                        <div className="space-y-1">
-                          {guard.city && (
-                            <Badge variant="secondary" className="text-xs">
-                              {guard.city}
-                            </Badge>
-                          )}
-                          
-                          {guard.company_id && (
-                            <div className="flex items-center justify-center gap-1">
-                              <ArrowRight className="h-3 w-3 text-green-500" />
-                              <span className="text-xs text-muted-foreground">Verified</span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
+        </div>
+      )}
         </div>
       </PullToRefresh>
 

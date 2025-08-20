@@ -97,8 +97,8 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
     setLoading(true);
     
     try {
-      // Create booking via edge function
-      const { data, error } = await supabase.functions.invoke('bookings', {
+      // Create booking with payment via edge function
+      const { data, error } = await supabase.functions.invoke('create_booking_payment', {
         body: {
           pickup_address: bookingData.location,
           start_ts: new Date(`${bookingData.date}T${bookingData.startTime}`).toISOString(),
@@ -107,9 +107,7 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
           vehicle_required: bookingData.withVehicle,
           vehicle_type: bookingData.vehicleType,
           notes: `Armor level: ${bookingData.armoredLevel || 'None'}`,
-          subtotal_mxn_cents: pricing.subtotal,
-          service_fee_mxn_cents: pricing.serviceFee,
-          total_mxn_cents: pricing.total
+          total_mxn_cents: pricing.total,
         }
       });
 
@@ -117,19 +115,18 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
         throw error;
       }
 
-      // Clear booking data and show success
-      sessionStorage.removeItem('bookingData');
-      toast({
-        title: t('request_submitted', currentLang),
-        description: "We'll match you with available protectors shortly."
-      });
+      // Redirect to Stripe checkout
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No payment URL received');
+      }
       
-      navigate('/bookings');
     } catch (error: any) {
-      console.error('Booking creation error:', error);
+      console.error('Booking payment error:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create booking',
+        description: error.message || 'Failed to create booking payment',
         variant: 'destructive'
       });
     } finally {
