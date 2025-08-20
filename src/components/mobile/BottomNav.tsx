@@ -1,4 +1,4 @@
-import { Home, Calendar, FileText, User } from 'lucide-react';
+import { Home, Calendar, FileText, User, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHaptics } from '@/hooks/use-haptics';
@@ -12,7 +12,7 @@ const BottomNav = ({ currentPath, navigate }: BottomNavProps) => {
   const { hasRole } = useAuth();
   const haptics = useHaptics();
 
-  // Client navigation tabs (4 tabs)
+  // Client navigation tabs (5 tabs)
   const tabs = [
     { 
       id: 'home', 
@@ -34,6 +34,13 @@ const BottomNav = ({ currentPath, navigate }: BottomNavProps) => {
       icon: FileText, 
       label: 'Bookings',
       testId: 'nav-bookings'
+    },
+    { 
+      id: 'billing', 
+      path: '/billing', 
+      icon: Receipt, 
+      label: 'Billing',
+      testId: 'nav-billing'
     },
     { 
       id: 'account', 

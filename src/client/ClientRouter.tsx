@@ -9,6 +9,7 @@ import AccountPage from './pages/AccountPage';
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
 import { BookingDetailPage } from './pages/BookingDetailPage';
+import BillingPage from './pages/BillingPage';
 
 const ClientRouter = () => {
   const { user, loading } = useAuth();
@@ -63,6 +64,8 @@ const ClientRouter = () => {
       return <ProfilePage navigate={navigate} id={queryParams.get('id')} />;
     case '/profile-edit':
       return <ProfileEditPage navigate={navigate} />;
+    case '/billing':
+      return <BillingPage navigate={navigate} />;
     default:
       // Handle dynamic routes
       if (pathSegments[1] === 'booking' && pathSegments[2]) {

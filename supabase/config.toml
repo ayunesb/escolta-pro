@@ -1,1 +1,16 @@
 project_id = "isnezquuwepqcjkaupjh"
+
+[functions.create_payment_intent]
+verify_jwt = true
+
+[functions.stripe_webhook]
+verify_jwt = false
+
+[functions.get_payment_methods]
+verify_jwt = true
+
+[functions.save_payment_method]
+verify_jwt = true
+
+[functions.delete_payment_method]
+verify_jwt = true
