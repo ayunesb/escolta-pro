@@ -29,3 +29,9 @@ verify_jwt = true
 
 [functions.production_health]
 verify_jwt = false
+
+[functions.connect_onboarding_link]
+verify_jwt = true
+
+[functions.payouts_list]
+verify_jwt = true

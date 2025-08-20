@@ -687,6 +687,7 @@ export type Database = {
       payouts: {
         Row: {
           amount: number
+          company_id: string | null
           guard_id: string
           id: string
           period_end: string | null
@@ -695,6 +696,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          company_id?: string | null
           guard_id: string
           id?: string
           period_end?: string | null
@@ -703,6 +705,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          company_id?: string | null
           guard_id?: string
           id?: string
           period_end?: string | null
@@ -710,6 +713,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payouts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payouts_guard_id_fkey"
             columns: ["guard_id"]
@@ -764,6 +774,7 @@ export type Database = {
           phone_e164: string | null
           photo_url: string | null
           role: string
+          stripe_account_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -777,6 +788,7 @@ export type Database = {
           phone_e164?: string | null
           photo_url?: string | null
           role: string
+          stripe_account_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -790,6 +802,7 @@ export type Database = {
           phone_e164?: string | null
           photo_url?: string | null
           role?: string
+          stripe_account_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
