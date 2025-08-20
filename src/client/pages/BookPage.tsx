@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, ArrowLeft, Shield, Car } from 'lucide-react';
 import BottomSheet from '@/components/mobile/BottomSheet';
+import HapticButton from '@/components/mobile/HapticButton';
 
 interface BookPageProps {
   navigate: (path: string) => void;
@@ -229,13 +230,15 @@ const BookPage = ({ navigate, pid }: BookPageProps) => {
       </div>
 
       <div className="sticky bottom-0 bg-background pt-6 mt-8">
-        <Button 
+        <HapticButton 
           onClick={handleNext}
           disabled={!location || !date || !startTime || !duration || (withVehicle && !vehicleType)}
-          className="w-full h-button rounded-button bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+          hapticPattern="medium"
+          className="w-full"
+          size="lg"
         >
           Next - Get Quote
-        </Button>
+        </HapticButton>
       </div>
     </BottomSheet>
   );

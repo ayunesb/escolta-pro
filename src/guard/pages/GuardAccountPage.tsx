@@ -5,6 +5,7 @@ import { ArrowLeft, User, Edit3, FileText, Shield, LogOut, Settings, Building } 
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
+import HapticButton from '@/components/mobile/HapticButton';
 
 interface GuardAccountPageProps {
   navigate: (path: string) => void;
@@ -73,9 +74,9 @@ const GuardAccountPage = ({ navigate }: GuardAccountPageProps) => {
             Professional
           </h2>
           
-          <Card className="cursor-pointer hover:bg-accent/5 transition-colors">
+          <Card className="cursor-pointer card-hover">
             <CardContent 
-              className="flex items-center gap-4 p-4"
+              className="flex items-center gap-4 p-4 touch-target"
               onClick={() => navigate('/assignments')}
             >
               <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
@@ -207,14 +208,15 @@ const GuardAccountPage = ({ navigate }: GuardAccountPageProps) => {
         </div>
 
         {/* Sign Out */}
-        <Button 
+        <HapticButton 
           onClick={handleSignOut}
           variant="outline"
-          className="w-full h-button rounded-button border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          hapticPattern="warning"
+          className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out
-        </Button>
+        </HapticButton>
       </div>
     </div>
   );

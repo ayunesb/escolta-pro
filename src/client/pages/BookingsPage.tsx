@@ -8,6 +8,7 @@ import { formatMXN } from '@/utils/pricing';
 import { MapPin, Clock, Shield, Car, RefreshCw, Eye } from 'lucide-react';
 import BottomNav from '@/components/mobile/BottomNav';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
+import HapticButton from '@/components/mobile/HapticButton';
 import { t, getPreferredLanguage, type Lang } from '@/lib/i18n';
 
 interface BookingsPageProps {
@@ -102,14 +103,15 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
           <h1 className="text-mobile-xl font-bold text-foreground">
             {t('bookings', currentLang)}
           </h1>
-          <Button
+          <HapticButton
             variant="ghost"
             size="sm"
             onClick={loadBookings}
+            hapticPattern="light"
             className="p-2"
           >
             <RefreshCw className="h-4 w-4" />
-          </Button>
+          </HapticButton>
         </div>
 
         <PullToRefresh onRefresh={loadBookings} className="min-h-96">
@@ -123,12 +125,13 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
                 <p className="text-mobile-sm text-muted-foreground text-center mb-4">
                   {t('book_first_service', currentLang)}
                 </p>
-                <Button 
+                <HapticButton 
                   onClick={() => navigate('/book')}
+                  hapticPattern="medium"
                   className="bg-accent hover:bg-accent/90 text-accent-foreground"
                 >
                   {t('book_protector', currentLang)}
-                </Button>
+                </HapticButton>
               </CardContent>
             </Card>
           ) : (
@@ -203,27 +206,29 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
                     {/* Action buttons based on status */}
                     {booking.status === 'matching' && (
                       <div className="mt-4">
-                        <Button 
+                        <HapticButton 
                           variant="outline" 
                           size="sm" 
                           className="w-full"
                           disabled
+                          hapticPattern="light"
                         >
                           {t('finding_guards', currentLang)}
-                        </Button>
+                        </HapticButton>
                       </div>
                     )}
 
                     {['assigned', 'enroute', 'onsite', 'in_progress'].includes(booking.status) && (
                       <div className="mt-4">
-                        <Button 
+                        <HapticButton 
                           variant="outline" 
                           size="sm" 
                           className="w-full"
                           onClick={() => navigate(`/booking/${booking.id}`)}
+                          hapticPattern="light"
                         >
                           {t('track_service', currentLang)}
-                        </Button>
+                        </HapticButton>
                       </div>
                     )}
                   </CardContent>
