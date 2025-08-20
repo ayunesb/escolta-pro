@@ -10,20 +10,8 @@ interface GuardBottomNavProps {
 const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
   const { hasRole } = useAuth();
   
-  // Dynamic tabs based on role
+  // For regular guards: only bookings and account
   const tabs = [
-    {
-      id: 'home',
-      label: 'Home',
-      icon: Shield,
-      path: '/home'
-    },
-    {
-      id: 'assignments',
-      label: 'Assignments',
-      icon: Calendar,
-      path: '/assignments'
-    },
     {
       id: 'bookings',
       label: 'Bookings',
@@ -68,7 +56,7 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
         <div className="flex items-center justify-center w-nav-pill max-w-mobile h-16 px-4">
           {tabs.map((tab) => {
             const isActive = currentPath === tab.path || 
-              (tab.path === '/home' && (currentPath === '/' || currentPath === '/home'));
+              (tab.path === '/bookings' && (currentPath === '/' || currentPath === '/home'));
             
             return (
               <button

@@ -52,16 +52,14 @@ const GuardRouter = () => {
   const requiresCompanyAdmin = ['/company', '/company-permits', '/company-vehicles', '/company-vehicles-new', '/company-staff', '/company-staff-new'].includes(basePath) || basePath.startsWith('/company-staff/') || basePath.startsWith('/company-vehicles/');
   
   if (requiresCompanyAdmin && !hasRole('company_admin')) {
-    navigate('/home');
-    return <GuardHomePage navigate={navigate} />;
+    navigate('/bookings');
+    return <BookingsPage navigate={navigate} />;
   }
 
   switch (basePath) {
     case '/home':
     case '/':
-      return <GuardHomePage navigate={navigate} />;
-    case '/assignments':
-      return <AssignmentsPage navigate={navigate} />;
+      return <BookingsPage navigate={navigate} />;
     case '/bookings':
       return <BookingsPage navigate={navigate} />;
     case '/account':
@@ -89,9 +87,9 @@ const GuardRouter = () => {
         const vehicleId = pathParts[2];
         return <VehicleFormPage navigate={navigate} vehicleId={vehicleId} />;
       }
-      // Redirect to home for unknown routes
-      navigate('/home');
-      return <GuardHomePage navigate={navigate} />;
+      // Redirect to bookings for unknown routes
+      navigate('/bookings');
+      return <BookingsPage navigate={navigate} />;
   }
 };
 
