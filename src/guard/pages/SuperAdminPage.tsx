@@ -3,9 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LanguageToggle } from '@/components/ui/language-toggle';
+import ThemeToggle from '@/components/ui/theme-toggle';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { formatMXN } from '@/utils/pricing';
+import { t, getPreferredLanguage } from '@/lib/i18n';
 import { Shield, Building, CheckCircle, XCircle, Eye, User } from 'lucide-react';
 
 interface SuperAdminPageProps {
@@ -45,6 +48,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
   const [pendingGuards, setPendingGuards] = useState<PendingGuard[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [currentLang] = useState(getPreferredLanguage());
 
   useEffect(() => {
     loadPendingItems();
@@ -223,23 +227,29 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
     <div className="min-h-screen bg-background">
       <div className="safe-top px-mobile py-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-mobile-xl font-bold text-foreground">
-            Super Admin
-          </h1>
-          <Badge variant="secondary" className="bg-accent/10 text-accent">
-            Admin
-          </Badge>
+          <div>
+            <h1 className="text-mobile-xl font-bold text-foreground">
+              {t('super_admin', currentLang)}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+            <Badge variant="secondary" className="bg-accent/10 text-accent">
+              {t('admin', currentLang)}
+            </Badge>
+          </div>
         </div>
 
         <Tabs defaultValue="companies" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="companies" className="flex items-center gap-2">
               <Building className="h-4 w-4" />
-              Companies ({pendingCompanies.length})
+              {t('companies', currentLang)} ({pendingCompanies.length})
             </TabsTrigger>
             <TabsTrigger value="guards" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Guards ({pendingGuards.length})
+              {t('guards', currentLang)} ({pendingGuards.length})
             </TabsTrigger>
           </TabsList>
 
@@ -248,9 +258,9 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Building className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-mobile-lg font-medium mb-2">No Pending Companies</h3>
+                  <h3 className="text-mobile-lg font-medium mb-2">{t('no_pending_companies', currentLang)}</h3>
                   <p className="text-mobile-sm text-muted-foreground text-center">
-                    All company applications have been reviewed.
+                    {t('all_reviewed', currentLang)}
                   </p>
                 </CardContent>
               </Card>
@@ -288,7 +298,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Approve
+                          {t('approve', currentLang)}
                         </Button>
                         <Button
                           size="sm"
@@ -298,7 +308,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
                           className="flex-1"
                         >
                           <XCircle className="h-4 w-4 mr-2" />
-                          Suspend
+                          {t('suspend', currentLang)}
                         </Button>
                       </div>
                     </CardContent>
@@ -313,9 +323,9 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-mobile-lg font-medium mb-2">No Pending Guards</h3>
+                  <h3 className="text-mobile-lg font-medium mb-2">{t('no_pending_guards', currentLang)}</h3>
                   <p className="text-mobile-sm text-muted-foreground text-center">
-                    All guard applications have been reviewed.
+                    {t('all_reviewed', currentLang)}
                   </p>
                 </CardContent>
               </Card>
@@ -379,7 +389,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Approve
+                          {t('approve', currentLang)}
                         </Button>
                         <Button
                           size="sm"
@@ -389,7 +399,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
                           className="flex-1"
                         >
                           <XCircle className="h-4 w-4 mr-2" />
-                          Suspend
+                          {t('suspend', currentLang)}
                         </Button>
                       </div>
                     </CardContent>

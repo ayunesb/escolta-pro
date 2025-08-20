@@ -3,6 +3,8 @@ import { Star, MapPin, Shield, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { LanguageToggle } from '@/components/ui/language-toggle';
+import ThemeToggle from '@/components/ui/theme-toggle';
 import { supabase } from '@/integrations/supabase/client';
 import BottomNav from '@/components/mobile/BottomNav';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
@@ -11,6 +13,7 @@ import SwipeGestures from '@/components/mobile/SwipeGestures';
 import { LazyImage } from '@/components/performance/LazyImage';
 import { OptimizedSkeleton } from '@/components/performance/OptimizedSkeleton';
 import { useImagePreloader, useDebounce } from '@/hooks/use-performance';
+import { t, getPreferredLanguage } from '@/lib/i18n';
 
 interface Guard {
   id: string;

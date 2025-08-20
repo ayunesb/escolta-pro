@@ -22,6 +22,8 @@ export const dict: Record<Lang, Record<string, string>> = {
     company: 'Company',
     vehicles: 'Vehicles',
     staff: 'Staff',
+    admin: 'Admin',
+    super_admin: 'Super Admin',
     
     // Booking Form
     location: 'Location',
@@ -117,13 +119,12 @@ export const dict: Record<Lang, Record<string, string>> = {
     rating: 'Rating',
     service_area: 'Service Area',
     
-    // Language
+     // Language
     language: 'Language',
     english: 'English',
     spanish: 'Spanish',
     
     // Admin
-    super_admin: 'Super Admin',
     companies: 'Companies',
     guards: 'Guards',
     approve: 'Approve',
@@ -156,6 +157,8 @@ export const dict: Record<Lang, Record<string, string>> = {
     company: 'Empresa',
     vehicles: 'Vehículos',
     staff: 'Personal',
+    admin: 'Administrador',
+    super_admin: 'Super Administrador',
     
     // Booking Form
     location: 'Ubicación',
@@ -257,7 +260,6 @@ export const dict: Record<Lang, Record<string, string>> = {
     spanish: 'Español',
     
     // Admin
-    super_admin: 'Super Administrador',
     companies: 'Empresas',
     guards: 'Escoltas',
     approve: 'Aprobar',
