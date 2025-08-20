@@ -33,6 +33,18 @@ export const useAssignmentTracking = (assignmentId?: string) => {
         filter: `id=eq.${assignmentId}`
       }, (payload) => {
         const newData = payload.new as any;
+        const gpsTrail: Array<{ lat: number; lng: number; timestamp: string }> = 
+          Array.isArray(newData.gps_trail) ? 
+            newData.gps_trail
+              .filter((item): item is { lat: number; lng: number; timestamp: string } => 
+                item !== null && 
+                typeof item === 'object' && 
+                'lat' in item && 'lng' in item &&
+                typeof (item as any).lat === 'number' && 
+                typeof (item as any).lng === 'number' &&
+                typeof (item as any).timestamp === 'string'
+              ) : [];
+
         setAssignment({
           id: newData.id,
           bookingId: newData.booking_id,
@@ -42,12 +54,7 @@ export const useAssignmentTracking = (assignmentId?: string) => {
           checkOutTs: newData.check_out_ts,
           onSiteTs: newData.on_site_ts,
           inProgressTs: newData.in_progress_ts,
-          gpsTrail: Array.isArray(newData.gps_trail) ? 
-            newData.gps_trail.filter((item: any) => 
-              item && typeof item === 'object' && 
-              typeof item.lat === 'number' && 
-              typeof item.lng === 'number'
-            ) : []
+          gpsTrail
         });
       })
       .subscribe();
@@ -78,6 +85,18 @@ export const useAssignmentTracking = (assignmentId?: string) => {
       return;
     }
 
+    const gpsTrail: Array<{ lat: number; lng: number; timestamp: string }> = 
+      Array.isArray(data.gps_trail) ? 
+        data.gps_trail
+          .filter((item): item is { lat: number; lng: number; timestamp: string } => 
+            item !== null && 
+            typeof item === 'object' && 
+            'lat' in item && 'lng' in item &&
+            typeof (item as any).lat === 'number' && 
+            typeof (item as any).lng === 'number' &&
+            typeof (item as any).timestamp === 'string'
+          ) : [];
+
     setAssignment({
       id: data.id,
       bookingId: data.booking_id,
@@ -87,12 +106,7 @@ export const useAssignmentTracking = (assignmentId?: string) => {
       checkOutTs: data.check_out_ts,
       onSiteTs: data.on_site_ts,
       inProgressTs: data.in_progress_ts,
-      gpsTrail: Array.isArray(data.gps_trail) ? 
-        data.gps_trail.filter((item: any) => 
-          item && typeof item === 'object' && 
-          typeof item.lat === 'number' && 
-          typeof item.lng === 'number'
-        ) : []
+      gpsTrail
     });
   };
 
