@@ -2,6 +2,8 @@ import { createRoot } from 'react-dom/client'
 import ClientApp from './client/ClientApp'
 import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { QueryContextProvider } from './contexts/QueryContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css'
 
 // Production performance monitoring
@@ -70,7 +72,11 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
     <AccessibilityProvider>
-      <ClientApp />
-    </AccessibilityProvider>
+      <QueryContextProvider>
+        <ThemeProvider defaultTheme="dark" storageKey="blindado-client-theme">
+          <ClientApp />
+        </ThemeProvider>
+      </QueryContextProvider>
+    </AccessibilityProvider>  
   </ErrorBoundary>
 );
