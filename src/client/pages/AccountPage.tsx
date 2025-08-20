@@ -185,7 +185,7 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate('/profile/edit')}
+                onClick={() => navigate('/profile-edit')}
               >
                 <Settings className="h-4 w-4 mr-2" />
                 {t('edit_profile', currentLang)}
@@ -243,7 +243,7 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => navigate('/guard-profile/edit')}
+                  onClick={() => navigate('/profile-edit')}
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   {t('edit_guard_settings', currentLang)}
@@ -261,7 +261,7 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
               <Button
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => navigate('/documents')}
+                onClick={() => navigate('/profile-edit')}
               >
                 <FileText className="h-4 w-4 mr-2" />
                 {t('documents_verification', currentLang)}
@@ -270,7 +270,7 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
               <Button
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => navigate('/profile/photo')}
+                onClick={() => navigate('/profile-edit')}
               >
                 <Camera className="h-4 w-4 mr-2" />
                 {t('update_profile_photo', currentLang)}
