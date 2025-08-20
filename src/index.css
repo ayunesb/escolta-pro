@@ -91,6 +91,22 @@
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
   }
+
+  /* High contrast mode for accessibility */
+  .high-contrast {
+    --border: 0 0% 20% !important;
+    --input: 0 0% 15% !important;
+    --muted: 0 0% 15% !important;
+    --card: 0 0% 8% !important;
+  }
+
+  .high-contrast.dark {
+    --background: 0 0% 0% !important;
+    --foreground: 0 0% 100% !important;
+    --border: 0 0% 30% !important;
+    --card: 0 0% 5% !important;
+    --muted: 0 0% 10% !important;
+  }
 }
 
 @layer base {
@@ -220,22 +236,55 @@
     scroll-snap-align: center;
   }
 
-  /* Smooth Transitions */
-  .theme-transition {
-    @apply transition-all duration-300 ease-in-out;
+  /* Enhanced Focus Management for Accessibility */
+  .focus-visible *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
-  /* Body scroll lock for modals */
-  .body-scroll-lock {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
-  /* Card hover effects for mobile */
-  .card-hover {
-    @apply transition-all duration-200 active:scale-95;
+  /* High contrast support */
+  @media (prefers-contrast: high) {
+    :root {
+      --border: 0 0% 20% !important;
+      --input: 0 0% 15% !important;
+    }
+  }
+
+  /* Production-ready print styles */
+  @media print {
+    * {
+      background: white !important;
+      color: black !important;
+      box-shadow: none !important;
+    }
+    
+    .no-print {
+      display: none !important;
+    }
+  }
+
+  /* Enhanced scroll behavior */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* Safe area support for all devices */
+  @supports (padding: max(0px)) {
+    .safe-area-inset {
+      padding-left: max(var(--mobile-padding), env(safe-area-inset-left));
+      padding-right: max(var(--mobile-padding), env(safe-area-inset-right));
+      padding-top: max(var(--mobile-padding), env(safe-area-inset-top));
+      padding-bottom: max(var(--mobile-padding), env(safe-area-inset-bottom));
+    }
   }
 }
 

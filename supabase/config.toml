@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.real_time_sync]
 verify_jwt = true
+
+[functions.production_health]
+verify_jwt = false
