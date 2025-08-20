@@ -1,17 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [userType, setUserType] = useState<'client' | 'freelancer' | 'company_admin'>('client');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { user, signIn, signUp } = useAuth();
+
+  // Redirect authenticated users to appropriate app
+  useEffect(() => {
+    if (user) {
+      // Redirect based on current URL or default to client
+      if (window.location.pathname.includes('admin')) {
+        window.location.href = '/admin.html';
+      } else if (window.location.pathname.includes('guard')) {
+        window.location.href = '/guard.html';
+      } else {
+        window.location.href = '/client.html';
+      }
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +37,7 @@ const AuthPage = () => {
 
     try {
       const { error } = isSignUp 
-        ? await signUp(email, password)
+        ? await signUp(email, password, firstName, lastName, userType)
         : await signIn(email, password);
 
       if (error) {
@@ -47,6 +65,47 @@ const AuthPage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="input-dark"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="input-dark"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="userType">I want to</Label>
+                  <Select value={userType} onValueChange={(value: 'client' | 'freelancer' | 'company_admin') => setUserType(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select account type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="client">Hire security services</SelectItem>
+                      <SelectItem value="freelancer">Work as a freelancer guard</SelectItem>
+                      <SelectItem value="company_admin">Manage a security company</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
