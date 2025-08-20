@@ -82,7 +82,7 @@ const PullToRefresh = ({
   return (
     <div 
       ref={containerRef}
-      className={cn("h-full overflow-auto", className)}
+      className={cn("h-full overflow-auto theme-transition", className)}
       style={{
         transform: showRefreshIndicator ? `translateY(${Math.min(pullDistance, 60)}px)` : 'none',
         transition: isPulling ? 'none' : 'transform 0.3s ease-out'
@@ -90,22 +90,22 @@ const PullToRefresh = ({
     >
       {/* Pull to refresh indicator */}
       <div 
-        className="absolute top-0 left-0 right-0 flex items-center justify-center z-10 bg-background/80 backdrop-blur-sm"
+        className="absolute top-0 left-0 right-0 flex items-center justify-center z-10 bg-card/90 backdrop-blur-sm border-b border-border"
         style={{
           height: '60px',
           transform: `translateY(-60px)`,
           opacity: indicatorOpacity
         }}
       >
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="flex items-center gap-3 text-muted-foreground">
           <RefreshCw 
             className={cn(
-              "h-4 w-4 transition-transform",
+              "h-5 w-5 transition-all duration-300",
               isRefreshing && "animate-spin",
-              shouldTrigger && !isRefreshing && "rotate-180"
+              shouldTrigger && !isRefreshing && "rotate-180 text-accent"
             )} 
           />
-          <span className="text-sm font-medium">
+          <span className="text-mobile-sm font-medium">
             {isRefreshing ? refreshingText : shouldTrigger ? "Release to refresh" : "Pull to refresh"}
           </span>
         </div>

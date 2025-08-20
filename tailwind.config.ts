@@ -69,11 +69,13 @@ export default {
 				'touch': 'var(--touch-target)',
 				'mobile': 'var(--mobile-padding)',
 			},
-			height: {
-				'button': 'var(--button-height)',
-				'card': 'var(--card-height)',
-				'hero': '40px',
-			},
+      height: {
+        'button': 'var(--button-height)',
+        'button-sm': 'var(--button-height-sm)',
+        'card': 'var(--card-height)',
+        'hero': '40px',
+        'touch': 'var(--touch-target)',
+      },
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
@@ -81,13 +83,14 @@ export default {
 				'mobile': '12px',
 				'button': '32px',
 			},
-			fontSize: {
-				'hero': ['var(--hero-font-size)', 'var(--hero-line-height)'],
-				'mobile-xl': ['24px', '28px'],
-				'mobile-lg': ['20px', '24px'],
-				'mobile-base': ['16px', '20px'],
-				'mobile-sm': ['14px', '18px'],
-			},
+      fontSize: {
+        'hero': ['var(--hero-font-size)', 'var(--hero-line-height)'],
+        'title': ['var(--title-font-size)', 'var(--title-line-height)'],
+        'mobile-xl': ['24px', '28px'],    /* 20pt equivalent */
+        'mobile-lg': ['20px', '24px'],    /* 16pt equivalent */
+        'mobile-base': ['16px', '20px'],  /* 14pt equivalent */
+        'mobile-sm': ['14px', '18px'],    /* 12pt equivalent */
+      },
 			fontWeight: {
 				'hero': '700',
 			},

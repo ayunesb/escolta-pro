@@ -1,6 +1,7 @@
 import { Home, Calendar, FileText, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useHaptics } from '@/hooks/use-haptics';
 
 interface BottomNavProps {
   currentPath: string;
@@ -9,6 +10,7 @@ interface BottomNavProps {
 
 const BottomNav = ({ currentPath, navigate }: BottomNavProps) => {
   const { hasRole } = useAuth();
+  const haptics = useHaptics();
 
   // Client navigation tabs (4 tabs)
   const tabs = [
@@ -52,7 +54,10 @@ const BottomNav = ({ currentPath, navigate }: BottomNavProps) => {
             <button
               key={tab.id}
               data-testid={tab.testId}
-              onClick={() => navigate(tab.path)}
+              onClick={() => {
+                haptics.tap();
+                navigate(tab.path);
+              }}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center touch-target px-1 py-2 transition-colors",
                 isActive 

@@ -38,15 +38,18 @@
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
     
-    /* Mobile-specific design tokens */
-    --touch-target: 44px; /* Minimum touch target */
-    --mobile-padding: 16px;
-    --mobile-gap: 12px;
-    --hero-font-size: 40px;
-    --hero-line-height: 44px;
-    --button-height: 48px; /* Mobile friendly */
-    --card-height: 92px;
-    --radius: 12px; /* More rounded for mobile */
+    /* Mobile-specific design tokens - 10/10 Standards */
+    --touch-target: 48px;      /* 48px minimum touch target */
+    --mobile-padding: 20px;    /* Increased for better spacing */
+    --mobile-gap: 16px;        /* Improved spacing */
+    --hero-font-size: 36px;    /* 24pt equivalent */
+    --hero-line-height: 40px;  
+    --title-font-size: 30px;   /* 20pt equivalent */
+    --title-line-height: 34px;
+    --button-height: 56px;     /* Primary action buttons */
+    --button-height-sm: 48px;  /* Secondary action buttons */
+    --card-height: 120px;      /* Taller for better touch targets */
+    --radius: 12px;            /* Mobile-friendly radius */
     
     /* Safe area handling */
     --safe-area-top: env(safe-area-inset-top);
@@ -56,34 +59,34 @@
   }
 
   .dark {
-    /* Blindado Brand Colors - Dark Mode */
-    --background: 222 84% 4%;
-    --foreground: 210 40% 98%;
+    /* Blindado Brand Colors - Dark Mode (True Black for OLED) */
+    --background: 0 0% 0%;        /* True black background */
+    --foreground: 0 0% 98%;       /* High contrast white text */
     
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 4%;              /* Near-black cards */
+    --card-foreground: 0 0% 98%;
     
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
     
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 84% 4%;
+    --primary: 0 0% 98%;          /* White primary in dark mode */
+    --primary-foreground: 0 0% 0%;
     
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 12%;        /* Dark secondary */
+    --secondary-foreground: 0 0% 98%;
     
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 8%;             /* Subtle backgrounds */
+    --muted-foreground: 0 0% 65%;
     
-    --accent: 24 95% 53%; /* Blindado Orange/Red */
-    --accent-foreground: 0 0% 100%;
+    --accent: 24 95% 53%;         /* Blindado Orange/Red */
+    --accent-foreground: 0 0% 0%;
     
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
     
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 212 27% 84%;
+    --border: 0 0% 12%;           /* Subtle borders */
+    --input: 0 0% 8%;
+    --ring: 0 0% 84%;
     
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
@@ -92,7 +95,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border transition-colors duration-200;
   }
 
   html {
@@ -111,9 +114,11 @@
     -webkit-text-size-adjust: 100%;
     /* Remove tap highlights */
     -webkit-tap-highlight-color: transparent;
+    /* Smooth theme transitions */
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* Mobile typography scale */
+  /* Mobile Typography Scale - 10/10 Professional */
   .text-hero {
     font-size: var(--hero-font-size);
     line-height: var(--hero-line-height);
@@ -121,26 +126,33 @@
     letter-spacing: -0.025em;
   }
 
+  .text-title {
+    font-size: var(--title-font-size);
+    line-height: var(--title-line-height);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
   .text-mobile-xl {
-    font-size: 24px;
+    font-size: 24px;           /* 20pt equivalent */
     line-height: 28px;
     font-weight: 600;
   }
 
   .text-mobile-lg {
-    font-size: 20px;
+    font-size: 20px;           /* 16pt equivalent */
     line-height: 24px;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .text-mobile-base {
-    font-size: 16px;
+    font-size: 16px;           /* 14pt equivalent */
     line-height: 20px;
     font-weight: 400;
   }
 
   .text-mobile-sm {
-    font-size: 14px;
+    font-size: 14px;           /* 12pt equivalent */
     line-height: 18px;
     font-weight: 400;
   }
@@ -149,15 +161,27 @@
   .input-dark {
     @apply bg-card text-card-foreground border-border h-12 px-4 rounded-lg text-base;
     @apply focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent;
+    @apply transition-all duration-200;
   }
 
-  /* Mobile touch targets */
+  /* Touch Target Optimization - 10/10 Standards */
   .touch-target {
     min-height: var(--touch-target);
     min-width: var(--touch-target);
+    @apply flex items-center justify-center;
   }
 
-  /* Safe area handling */
+  .button-touch {
+    height: var(--button-height);
+    @apply px-6;
+  }
+
+  .button-touch-sm {
+    height: var(--button-height-sm);
+    @apply px-4;
+  }
+
+  /* Enhanced Safe Area Handling */
   .safe-top {
     padding-top: max(var(--mobile-padding), var(--safe-area-top));
   }
@@ -174,14 +198,31 @@
     padding-right: max(var(--mobile-padding), var(--safe-area-right));
   }
 
-  /* Scroll snap for carousels */
+  /* Mobile Navigation Enhancement */
+  .px-mobile {
+    padding-left: var(--mobile-padding);
+    padding-right: var(--mobile-padding);
+  }
+
+  .py-mobile {
+    padding-top: var(--mobile-padding);
+    padding-bottom: var(--mobile-padding);
+  }
+
+  /* Scroll Enhancements */
   .scroll-snap-x {
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
   
   .scroll-snap-center {
     scroll-snap-align: center;
+  }
+
+  /* Smooth Transitions */
+  .theme-transition {
+    @apply transition-all duration-300 ease-in-out;
   }
 
   /* Body scroll lock for modals */
@@ -191,14 +232,11 @@
     width: 100%;
     height: 100%;
   }
-}
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
+  /* Card hover effects for mobile */
+  .card-hover {
+    @apply transition-all duration-200 active:scale-95;
   }
 }
+
+/* Enhanced Mobile-First Design System Complete */
