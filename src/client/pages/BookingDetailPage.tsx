@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageThread } from '@/components/communication/MessageThread';
+import MessageThread from '@/components/messaging/MessageThread';
 import { LiveMap } from '@/components/tracking/LiveMap';
 import { EmergencyPanel } from '@/components/emergency/EmergencyPanel';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,7 +87,49 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
 
   useEffect(() => {
     fetchBookingDetails();
-  }, [bookingId]);
+    
+    // Set up real-time subscription for booking updates
+    const channel = supabase
+      .channel(`booking:${bookingId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bookings',
+          filter: `id=eq.${bookingId}`,
+        },
+        (payload) => {
+          console.log('Booking updated:', payload);
+          const updatedBooking = payload.new as any;
+          
+          setBooking(prev => prev ? { ...prev, ...updatedBooking } : null);
+          
+          // Show toast for status changes
+          if (booking && updatedBooking.status !== booking.status) {
+            const statusMessages = {
+              assigned: 'A guard has been assigned to your booking!',
+              in_progress: 'Your security service is now in progress',
+              completed: 'Your security service has been completed',
+              cancelled: 'Your booking has been cancelled',
+            };
+            
+            const message = statusMessages[updatedBooking.status as keyof typeof statusMessages];
+            if (message) {
+              toast({
+                title: 'Booking Update',
+                description: message,
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [bookingId, booking?.status]);
 
   const fetchBookingDetails = async () => {
     try {
@@ -428,12 +470,7 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
           </TabsContent>
 
           <TabsContent value="messages">
-            <MessageThread
-              bookingId={booking.id}
-              onVideoCall={handleVideoCall}
-              onVoiceCall={handleVoiceCall}
-              onEmergencyAlert={handleEmergencyAlert}
-            />
+            <MessageThread bookingId={booking.id} />
           </TabsContent>
 
           <TabsContent value="tracking">

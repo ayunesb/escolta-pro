@@ -17,6 +17,8 @@ import { t, getPreferredLanguage } from '@/lib/i18n';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatMXN } from '@/utils/pricing';
 import { RouteGuard } from '@/components/auth/RouteGuard';
+import NotificationBell from '@/components/notifications/NotificationBell';
+import { useRealtimeBookings } from '@/hooks/use-realtime-bookings';
 
 interface Guard {
   id: string;
@@ -35,6 +37,7 @@ interface HomePageProps {
 
 const HomePage = ({ navigate }: HomePageProps) => {
   const { hasRole } = useAuth();
+  const { activeBookings } = useRealtimeBookings();
   const [guards, setGuards] = useState<Guard[]>([]);
   const [stats, setStats] = useState({
     totalBookings: 0,
@@ -227,7 +230,43 @@ const HomePage = ({ navigate }: HomePageProps) => {
   return (
     <div className="min-h-screen bg-background">
       <PullToRefresh onRefresh={fetchData}>
+        {/* Header with notification bell */}
+        <div className="flex justify-between items-center p-4 border-b border-border safe-top">
+          <div className="flex items-center gap-3">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+          <NotificationBell />
+        </div>
+
         <div className="safe-top px-mobile">
+          {/* Active Bookings Alert */}
+          {activeBookings.length > 0 && (
+            <div className="mb-6">
+              <Card className="border-accent bg-accent/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-accent">
+                        {activeBookings.length} Active Booking{activeBookings.length > 1 ? 's' : ''}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {hasRole('client') ? 'Your bookings are in progress' : 'Jobs requiring attention'}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/bookings')}
+                    >
+                      View All
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Hero Section */}
           <div className="pt-8 pb-6 text-center">
             <h1 data-testid="hero-title" className="text-hero font-hero text-foreground mb-4">
