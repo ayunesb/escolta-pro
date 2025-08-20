@@ -1,4 +1,4 @@
-import { Shield, Calendar, User, Building, Users } from 'lucide-react';
+import { Shield, Calendar, User, Building, Users, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -23,6 +23,12 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
       label: 'Assignments',
       icon: Calendar,
       path: '/assignments'
+    },
+    {
+      id: 'bookings',
+      label: 'Bookings',
+      icon: Briefcase,
+      path: '/bookings'
     }
   ];
 

@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AuthPage from '@/pages/AuthPage';
 import GuardHomePage from './pages/GuardHomePage';
 import AssignmentsPage from './pages/AssignmentsPage';
+import BookingsPage from './pages/BookingsPage';
 import GuardAccountPage from './pages/GuardAccountPage';
 import CompanyPage from './pages/CompanyPage';
 import CompanyPermitsPage from './pages/CompanyPermitsPage';
@@ -61,6 +62,8 @@ const GuardRouter = () => {
       return <GuardHomePage navigate={navigate} />;
     case '/assignments':
       return <AssignmentsPage navigate={navigate} />;
+    case '/bookings':
+      return <BookingsPage navigate={navigate} />;
     case '/account':
       return <GuardAccountPage navigate={navigate} />;
     case '/company':
