@@ -84,4 +84,5 @@ const BottomNav = ({ currentPath, navigate }: BottomNavProps) => {
   );
 };
 
+export { BottomNav };
 export default BottomNav;
