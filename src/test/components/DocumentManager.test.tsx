@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, fireEvent, waitFor, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DocumentManager } from '@/components/documents/DocumentManager'
 import { useAuth } from '@/contexts/AuthContext'
@@ -32,7 +32,11 @@ vi.mock('@/hooks/use-toast', () => ({
 describe('DocumentManager', () => {
   const mockUser = {
     id: 'mock-user-id',
-    email: 'test@example.com'
+    email: 'test@example.com',
+    aud: 'authenticated',
+    app_metadata: {},
+    user_metadata: {},
+    created_at: '2023-01-01T00:00:00Z'
   }
 
   beforeEach(() => {
