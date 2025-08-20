@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Clock, User, Shield, Car } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Shield, Car, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { t, getPreferredLanguage, formatMXN, Lang } from '@/lib/i18n';
+import { toast } from '@/hooks/use-toast';
+import { formatMXN } from '@/utils/pricing';
 import { LanguageToggle } from '@/components/ui/language-toggle';
+import { t, getPreferredLanguage, type Lang } from '@/lib/i18n';
 
 interface QuotePageProps {
   navigate: (path: string) => void;
@@ -18,39 +18,126 @@ interface BookingData {
   startTime: string;
   duration: number;
   protectorId?: string;
-  armedRequired?: boolean;
-  withVehicle?: boolean;
+  armedRequired: boolean;
+  withVehicle: boolean;
   vehicleType?: string;
   armoredLevel?: string;
 }
 
+interface PricingCalculation {
+  subtotal: number;
+  serviceFee: number;
+  total: number;
+  breakdown: {
+    base: number;
+    armed: number;
+    vehicle: number;
+    armored: number;
+  };
+}
+
 const QuotePage = ({ navigate }: QuotePageProps) => {
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
+  const [pricing, setPricing] = useState<PricingCalculation | null>(null);
   const [loading, setLoading] = useState(false);
-  const [lang] = useState<Lang>(getPreferredLanguage());
-  
-  // MXN pricing in centavos (server will use actual DB rates)
-  const hourly_rate_mxn_cents = 80000; // $800 MXN/hr
-  const armed_hourly_surcharge_mxn_cents = 20000; // $200 MXN/hr
-  const vehicle_hourly_rate_mxn_cents = 350000; // $3,500 MXN/hr
-  const armored_hourly_surcharge_mxn_cents = 150000; // $1,500 MXN/hr
+  const [currentLang, setCurrentLang] = useState<Lang>('en');
 
   useEffect(() => {
-    const data = sessionStorage.getItem('bookingData');
-    if (!data) {
+    setCurrentLang(getPreferredLanguage());
+    
+    // Get booking data from sessionStorage
+    const storedData = sessionStorage.getItem('bookingData');
+    if (!storedData) {
       navigate('/book');
       return;
     }
     
-    try {
-      setBookingData(JSON.parse(data));
-    } catch (error) {
-      console.error('Error parsing booking data:', error);
-      navigate('/book');
-    }
+    const data: BookingData = JSON.parse(storedData);
+    setBookingData(data);
+    
+    // Calculate pricing (using MXN rates)
+    calculatePricing(data);
   }, [navigate]);
 
-  if (!bookingData) {
+  const calculatePricing = (data: BookingData) => {
+    // Base rates in centavos (cents)
+    const baseRateCents = 80000; // $800 MXN per hour
+    const armedSurchargeCents = 20000; // $200 MXN per hour
+    const vehicleRateCents = 35000; // $350 MXN per hour  
+    const armoredSurchargeCents = 15000; // $150 MXN per hour
+
+    const hours = data.duration;
+    
+    // Calculate components
+    const baseTotal = baseRateCents * hours;
+    const armedTotal = data.armedRequired ? armedSurchargeCents * hours : 0;
+    const vehicleTotal = data.withVehicle ? vehicleRateCents * hours : 0;
+    const armoredTotal = (data.withVehicle && data.armoredLevel !== 'None') ? armoredSurchargeCents * hours : 0;
+    
+    const subtotal = baseTotal + armedTotal + vehicleTotal + armoredTotal;
+    const serviceFee = Math.round(subtotal * 0.10); // 10% service fee
+    const total = subtotal + serviceFee;
+    
+    setPricing({
+      subtotal,
+      serviceFee,
+      total,
+      breakdown: {
+        base: baseTotal,
+        armed: armedTotal,
+        vehicle: vehicleTotal,
+        armored: armoredTotal
+      }
+    });
+  };
+
+  const handleConfirm = async () => {
+    if (!bookingData || !pricing) return;
+    
+    setLoading(true);
+    
+    try {
+      // Create booking via edge function
+      const { data, error } = await supabase.functions.invoke('bookings', {
+        body: {
+          pickup_address: bookingData.location,
+          start_ts: new Date(`${bookingData.date}T${bookingData.startTime}`).toISOString(),
+          duration_hours: bookingData.duration,
+          armed_required: bookingData.armedRequired,
+          vehicle_required: bookingData.withVehicle,
+          vehicle_type: bookingData.vehicleType,
+          notes: `Armor level: ${bookingData.armoredLevel || 'None'}`,
+          subtotal_mxn_cents: pricing.subtotal,
+          service_fee_mxn_cents: pricing.serviceFee,
+          total_mxn_cents: pricing.total
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Clear booking data and show success
+      sessionStorage.removeItem('bookingData');
+      toast({
+        title: t('request_submitted', currentLang),
+        description: "We'll match you with available protectors shortly."
+      });
+      
+      navigate('/bookings');
+    } catch (error: any) {
+      console.error('Booking creation error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create booking',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!bookingData || !pricing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
@@ -58,208 +145,162 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
     );
   }
 
-  // Calculate pricing based on MXN rates (in centavos)
-  const hours = bookingData.duration;
-  const base = hourly_rate_mxn_cents * hours;
-  const armedFee = bookingData.armedRequired ? armed_hourly_surcharge_mxn_cents * hours : 0;
-  const vehicleBase = bookingData.withVehicle ? vehicle_hourly_rate_mxn_cents * hours : 0;
-  const armoredFee = (bookingData.withVehicle && bookingData.armoredLevel && bookingData.armoredLevel !== 'None') 
-    ? armored_hourly_surcharge_mxn_cents * hours : 0;
-
-  const subtotal = base + armedFee + vehicleBase + armoredFee;
-  const serviceFee = Math.round(subtotal * 0.10);
-  const total = subtotal + serviceFee;
-
-  const handleConfirm = async () => {
-    const isStubMode = new URLSearchParams(window.location.search).get('stub') === '1' || 
-                       import.meta.env.VITE_STUB_API === 'true';
-    
-    setLoading(true);
-    
-    try {
-      if (isStubMode) {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success(t('request_submitted', lang));
-      } else {
-        // Call actual Edge Function with new payload
-        const { error, data: response } = await supabase.functions.invoke('bookings', {
-          body: {
-            location: bookingData.location,
-            start: `${bookingData.date}T${bookingData.startTime}:00`,
-            end: new Date(new Date(`${bookingData.date}T${bookingData.startTime}:00`).getTime() + bookingData.duration * 60 * 60 * 1000).toISOString(),
-            duration_hours: bookingData.duration,
-            protector_id: bookingData.protectorId,
-            vehicle_id: null, // Will be assigned later
-            armed: bookingData.armedRequired || false,
-            with_vehicle: bookingData.withVehicle || false,
-            armored_level: bookingData.armoredLevel || 'None'
-          }
-        });
-
-        if (error) {
-          console.error('Booking submission error:', error);
-          toast.error(error.message || 'Failed to submit request. Please try again.');
-          return;
-        }
-        
-        toast.success(t('request_submitted', lang));
-      }
-      
-      // Clear booking data and navigate to bookings
-      sessionStorage.removeItem('bookingData');
-      navigate('/bookings');
-    } catch (error) {
-      console.error('Error submitting booking:', error);
-      toast.error('Failed to submit request. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const formatDateTime = (date: string, time: string) => {
+    const dateObj = new Date(`${date}T${time}`);
+    return {
+      date: dateObj.toLocaleDateString('es-MX', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      time: dateObj.toLocaleTimeString('es-MX', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    };
   };
+
+  const { date, time } = formatDateTime(bookingData.date, bookingData.startTime);
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="safe-top px-mobile py-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button 
-            onClick={() => navigate('/book')}
-            className="touch-target flex items-center justify-center"
-          >
-            <ArrowLeft className="h-6 w-6 text-foreground" />
-          </button>
-          <h2 className="text-mobile-lg font-semibold text-foreground">
-            {t('instant_quote', lang)}
-          </h2>
-          <LanguageToggle />
-        </div>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-border safe-top">
+        <button
+          onClick={() => navigate('/book')}
+          className="touch-target flex items-center justify-center"
+        >
+          <ArrowLeft className="h-6 w-6 text-foreground" />
+        </button>
+        <h1 className="text-mobile-lg font-semibold">
+          {t('instant_quote', currentLang)}
+        </h1>
+        <LanguageToggle />
+      </div>
 
+      <div className="px-mobile py-6 space-y-6 pb-32">
         {/* Booking Summary */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-mobile-base">{t('booking_summary', lang)}</CardTitle>
+            <CardTitle className="text-mobile-lg">
+              {t('booking_summary', currentLang)}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span className="text-mobile-sm">{bookingData.location}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-mobile-sm">
-                {new Date(bookingData.date).toLocaleDateString()} at {bookingData.startTime}
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-mobile-sm">{bookingData.duration} hours</span>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-3">
+              <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div>
+                <p className="text-mobile-base font-medium">{bookingData.location}</p>
+                <p className="text-mobile-sm text-muted-foreground">Pickup location</p>
+              </div>
             </div>
             
-            {/* Service Options */}
-            <div className="flex flex-wrap gap-2 mt-2">
-              {bookingData.armedRequired && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  {t('armed_surcharge', lang)}
-                </Badge>
-              )}
-              {bookingData.withVehicle && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Car className="h-3 w-3" />
-                  {t(bookingData.vehicleType?.toLowerCase() || 'suv', lang)}
-                  {bookingData.armoredLevel !== 'None' && ` (${t(bookingData.armoredLevel?.toLowerCase()?.replace(/\s+/g, '_') || 'none', lang)})`}
-                </Badge>
-              )}
-              {bookingData.protectorId && (
-                <Badge variant="secondary">
-                  {t('protector_base', lang)}
-                </Badge>
-              )}
+            <div className="flex items-start gap-3">
+              <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div>
+                <p className="text-mobile-base font-medium">{date} at {time}</p>
+                <p className="text-mobile-sm text-muted-foreground">
+                  {bookingData.duration} hour{bookingData.duration > 1 ? 's' : ''} service
+                </p>
+              </div>
             </div>
+
+            {bookingData.armedRequired && (
+              <div className="flex items-center gap-3">
+                <Shield className="h-5 w-5 text-amber-500" />
+                <span className="text-mobile-base text-amber-600 font-medium">Armed protection</span>
+              </div>
+            )}
+
+            {bookingData.withVehicle && (
+              <div className="flex items-start gap-3">
+                <Car className="h-5 w-5 text-blue-500 mt-0.5" />
+                <div>
+                  <p className="text-mobile-base text-blue-600 font-medium">
+                    {bookingData.vehicleType} vehicle
+                  </p>
+                  {bookingData.armoredLevel !== 'None' && (
+                    <p className="text-mobile-sm text-muted-foreground">
+                      Armor: {bookingData.armoredLevel}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Price Breakdown */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-mobile-base">{t('price_breakdown', lang)}</CardTitle>
+            <CardTitle className="text-mobile-lg">
+              {t('price_breakdown', currentLang)}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-mobile-sm text-muted-foreground">
-                {t('protector_base', lang)} ({hours}h × {formatMXN(hourly_rate_mxn_cents)})
-              </span>
-              <span className="text-mobile-sm font-medium">
-                {formatMXN(base)}
-              </span>
+            <div className="flex justify-between items-center">
+              <span className="text-mobile-base">{t('protector_base', currentLang)} × {bookingData.duration}h</span>
+              <span className="font-semibold">{formatMXN(pricing.breakdown.base)}</span>
             </div>
             
-            {bookingData.armedRequired && (
-              <div className="flex justify-between">
-                <span className="text-mobile-sm text-muted-foreground">
-                  {t('armed_surcharge', lang)} ({hours}h × {formatMXN(armed_hourly_surcharge_mxn_cents)})
-                </span>
-                <span className="text-mobile-sm font-medium">
-                  {formatMXN(armedFee)}
-                </span>
+            {pricing.breakdown.armed > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-mobile-base">{t('armed_surcharge', currentLang)} × {bookingData.duration}h</span>
+                <span className="font-semibold">{formatMXN(pricing.breakdown.armed)}</span>
               </div>
             )}
             
-            {bookingData.withVehicle && vehicleBase > 0 && (
-              <div className="flex justify-between">
-                <span className="text-mobile-sm text-muted-foreground">
-                  {t('vehicle_service', lang)} ({hours}h × {formatMXN(vehicle_hourly_rate_mxn_cents)})
-                </span>
-                <span className="text-mobile-sm font-medium">
-                  {formatMXN(vehicleBase)}
-                </span>
+            {pricing.breakdown.vehicle > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-mobile-base">{t('vehicle_service', currentLang)} × {bookingData.duration}h</span>
+                <span className="font-semibold">{formatMXN(pricing.breakdown.vehicle)}</span>
               </div>
             )}
             
-            {bookingData.withVehicle && bookingData.armoredLevel !== 'None' && armoredFee > 0 && (
-              <div className="flex justify-between">
-                <span className="text-mobile-sm text-muted-foreground">
-                  {t('armored_surcharge', lang)} ({hours}h × {formatMXN(armored_hourly_surcharge_mxn_cents)})
-                </span>
-                <span className="text-mobile-sm font-medium">
-                  {formatMXN(armoredFee)}
-                </span>
+            {pricing.breakdown.armored > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-mobile-base">{t('armored_surcharge', currentLang)} × {bookingData.duration}h</span>
+                <span className="font-semibold">{formatMXN(pricing.breakdown.armored)}</span>
               </div>
             )}
             
-            <div className="flex justify-between">
-              <span className="text-mobile-sm text-muted-foreground">
-                {t('service_fee_10', lang)}
-              </span>
-              <span className="text-mobile-sm font-medium">
-                {formatMXN(serviceFee)}
-              </span>
+            <hr className="border-border" />
+            
+            <div className="flex justify-between items-center">
+              <span className="text-mobile-base">{t('subtotal', currentLang)}</span>
+              <span className="font-semibold">{formatMXN(pricing.subtotal)}</span>
             </div>
-            <div className="border-t pt-3">
-              <div className="flex justify-between">
-                <span className="text-mobile-base font-semibold">{t('total', lang)}</span>
-                <span className="text-mobile-base font-semibold text-accent">
-                  {formatMXN(total)}
-                </span>
-              </div>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-mobile-base">{t('service_fee_10', currentLang)}</span>
+              <span className="font-semibold">{formatMXN(pricing.serviceFee)}</span>
+            </div>
+            
+            <hr className="border-border" />
+            
+            <div className="flex justify-between items-center text-mobile-lg">
+              <span className="font-bold">{t('total', currentLang)}</span>
+              <span className="font-bold text-accent">{formatMXN(pricing.total)}</span>
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Terms */}
-        <div className="bg-muted/50 rounded-lg p-4 mb-6">
-          <p className="text-xs text-muted-foreground">
-            By confirming, you agree to our terms of service. Final pricing may vary based on specific requirements and availability.
-          </p>
-        </div>
-
-        {/* Confirm Button */}
-        <Button 
+      {/* Fixed Bottom Button */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 safe-bottom">
+        <Button
           onClick={handleConfirm}
           disabled={loading}
           className="w-full h-button rounded-button bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
         >
-          {loading ? t('loading', lang) : `${t('confirm_request', lang)} - ${formatMXN(total)}`}
+          {loading ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-foreground"></div>
+              Processing...
+            </div>
+          ) : (
+            `${t('confirm_request', currentLang)} • ${formatMXN(pricing.total)}`
+          )}
         </Button>
       </div>
     </div>

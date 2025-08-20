@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { mxn } from '@/utils/money';
 import { MapPin, Clock, Shield, Car, Briefcase, ArrowLeft } from 'lucide-react';
+import PullToRefresh from '@/components/mobile/PullToRefresh';
 
 type Booking = {
   id: string;
@@ -75,7 +76,7 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border safe-top">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -85,11 +86,12 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-semibold">Guard Jobs</h1>
+          <h1 className="text-mobile-lg font-semibold">Guard Jobs</h1>
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
+      <PullToRefresh onRefresh={() => load(tab)} className="h-full">
+        <div className="p-4 space-y-4">
         <div className="flex gap-2">
           <Button 
             variant={tab === 'available' ? 'default' : 'outline'}
@@ -186,7 +188,8 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
             </Card>
           ))}
         </div>
-      </div>
+        </div>
+      </PullToRefresh>
     </div>
   );
 }

@@ -145,8 +145,7 @@ const BookPage = ({ navigate, pid }: BookPageProps) => {
               <SelectValue placeholder="Select duration" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2">2 hours</SelectItem>
-              <SelectItem value="4">4 hours</SelectItem>
+              <SelectItem value="4">4 hours (minimum)</SelectItem>
               <SelectItem value="6">6 hours</SelectItem>
               <SelectItem value="8">8 hours</SelectItem>
               <SelectItem value="12">12 hours</SelectItem>
