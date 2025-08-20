@@ -77,11 +77,19 @@ serve(async (req) => {
       .eq("id", booking_id)
       .eq("status", "matching") // avoid race condition
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("booking_accept: error updating booking", error);
       return new Response(JSON.stringify({ error: error.message }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!data) {
+      console.error("booking_accept: booking no longer available or already assigned");
+      return new Response(JSON.stringify({ error: "Booking no longer available" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
