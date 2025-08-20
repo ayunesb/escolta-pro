@@ -11,6 +11,11 @@ import ProfileEditPage from './pages/ProfileEditPage';
 import { BookingDetailPage } from './pages/BookingDetailPage';
 import BillingPage from './pages/BillingPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import CompanyPage from './pages/CompanyPage';
+import StaffPage from './pages/StaffPage';
+import VehiclesPage from './pages/VehiclesPage';
+import UsersPage from './pages/UsersPage';
+import CompaniesPage from './pages/CompaniesPage';
 
 const ClientRouter = () => {
   console.log('ClientRouter loading...');
@@ -71,6 +76,16 @@ const ClientRouter = () => {
       return <BillingPage navigate={navigate} />;
     case '/analytics':
       return <AnalyticsPage navigate={navigate} />;
+    case '/company':
+      return <CompanyPage navigate={navigate} />;
+    case '/staff':
+      return <StaffPage navigate={navigate} />;
+    case '/vehicles':
+      return <VehiclesPage navigate={navigate} />;
+    case '/users':
+      return <UsersPage navigate={navigate} />;
+    case '/companies':
+      return <CompaniesPage navigate={navigate} />;
     default:
       // Handle dynamic routes
       if (pathSegments[1] === 'booking' && pathSegments[2]) {

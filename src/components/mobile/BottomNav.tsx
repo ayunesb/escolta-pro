@@ -1,4 +1,4 @@
-import { Home, Calendar, FileText, User, Receipt, BarChart3 } from 'lucide-react';
+import { Home, Calendar, FileText, User, Receipt, BarChart3, Building, Users, Car } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHaptics } from '@/hooks/use-haptics';
@@ -12,51 +12,50 @@ const BottomNav = ({ currentPath, navigate }: BottomNavProps) => {
   const { hasRole } = useAuth();
   const haptics = useHaptics();
 
-  // Client navigation tabs (6 tabs)
-  const tabs = [
-    { 
-      id: 'home', 
-      path: '/home', 
-      icon: Home, 
-      label: 'Home',
-      testId: 'nav-home'
-    },
-    { 
-      id: 'book', 
-      path: '/book', 
-      icon: Calendar, 
-      label: 'Book',
-      testId: 'nav-book'
-    },
-    { 
-      id: 'bookings', 
-      path: '/bookings', 
-      icon: FileText, 
-      label: 'Bookings',
-      testId: 'nav-bookings'
-    },
-    { 
-      id: 'billing', 
-      path: '/billing', 
-      icon: Receipt, 
-      label: 'Billing',
-      testId: 'nav-billing'
-    },
-    { 
-      id: 'analytics', 
-      path: '/analytics', 
-      icon: BarChart3, 
-      label: 'Analytics',
-      testId: 'nav-analytics'
-    },
-    { 
-      id: 'account', 
-      path: '/account', 
-      icon: User, 
-      label: 'Account',
-      testId: 'nav-account'
-    },
-  ];
+  // Role-based navigation configuration
+  const getTabsForRole = () => {
+    // Super Admin - sees everything
+    if (hasRole('super_admin')) {
+      return [
+        { id: 'home', path: '/home', icon: Home, label: 'Dashboard', testId: 'nav-home' },
+        { id: 'users', path: '/users', icon: Users, label: 'Users', testId: 'nav-users' },
+        { id: 'companies', path: '/companies', icon: Building, label: 'Companies', testId: 'nav-companies' },
+        { id: 'analytics', path: '/analytics', icon: BarChart3, label: 'Analytics', testId: 'nav-analytics' },
+        { id: 'account', path: '/account', icon: User, label: 'Account', testId: 'nav-account' }
+      ];
+    }
+    
+    // Company Admin - full company management
+    if (hasRole('company_admin')) {
+      return [
+        { id: 'company', path: '/company', icon: Building, label: 'Company', testId: 'nav-company' },
+        { id: 'staff', path: '/staff', icon: Users, label: 'Staff', testId: 'nav-staff' },
+        { id: 'vehicles', path: '/vehicles', icon: Car, label: 'Vehicles', testId: 'nav-vehicles' },
+        { id: 'bookings', path: '/bookings', icon: FileText, label: 'Bookings', testId: 'nav-bookings' },
+        { id: 'analytics', path: '/analytics', icon: BarChart3, label: 'Analytics', testId: 'nav-analytics' },
+        { id: 'account', path: '/account', icon: User, label: 'Account', testId: 'nav-account' }
+      ];
+    }
+    
+    // Freelancer/Guard - limited view with personal stats
+    if (hasRole('freelancer')) {
+      return [
+        { id: 'bookings', path: '/bookings', icon: FileText, label: 'Bookings', testId: 'nav-bookings' },
+        { id: 'analytics', path: '/analytics', icon: BarChart3, label: 'Analytics', testId: 'nav-analytics' },
+        { id: 'account', path: '/account', icon: User, label: 'Account', testId: 'nav-account' }
+      ];
+    }
+    
+    // Client (default) - booking focused
+    return [
+      { id: 'home', path: '/home', icon: Home, label: 'Home', testId: 'nav-home' },
+      { id: 'book', path: '/book', icon: Calendar, label: 'Book', testId: 'nav-book' },
+      { id: 'bookings', path: '/bookings', icon: FileText, label: 'Bookings', testId: 'nav-bookings' },
+      { id: 'account', path: '/account', icon: User, label: 'Account', testId: 'nav-account' }
+    ];
+  };
+
+  const tabs = getTabsForRole();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-bottom z-nav">
