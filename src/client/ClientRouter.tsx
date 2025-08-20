@@ -8,6 +8,7 @@ import BookingsPage from './pages/BookingsPage';
 import AccountPage from './pages/AccountPage';
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
+import { BookingDetailPage } from './pages/BookingDetailPage';
 
 const ClientRouter = () => {
   const { user, loading } = useAuth();
@@ -42,6 +43,9 @@ const ClientRouter = () => {
   // Route parsing
   const [basePath, queryString] = currentPath.split('?');
   const queryParams = new URLSearchParams(queryString || '');
+  
+  // Handle dynamic routes like /booking/:id
+  const pathSegments = basePath.split('/');
 
   switch (basePath) {
     case '/home':
@@ -60,6 +64,12 @@ const ClientRouter = () => {
     case '/profile-edit':
       return <ProfileEditPage navigate={navigate} />;
     default:
+      // Handle dynamic routes
+      if (pathSegments[1] === 'booking' && pathSegments[2]) {
+        const bookingId = pathSegments[2];
+        return <BookingDetailPage navigate={navigate} bookingId={bookingId} />;
+      }
+      
       // Redirect to home for unknown routes
       navigate('/home');
       return <HomePage navigate={navigate} />;

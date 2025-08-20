@@ -44,6 +44,24 @@ interface BookingDetail {
   notes: string | null;
   assigned_user_id: string | null;
   created_at: string;
+  // Additional properties from Supabase bookings table
+  assigned_company_id: string | null;
+  client_id: string;
+  currency: string | null;
+  dest_lat: number | null;
+  dest_lng: number | null;
+  dress_code: string | null;
+  min_hours: number | null;
+  origin_lat: number | null;
+  origin_lng: number | null;
+  protectees: number | null;
+  quote_amount: number | null;
+  service_fee_mxn_cents: number | null;
+  subtotal_mxn_cents: number | null;
+  surge_mult: number | null;
+  tier: string | null;
+  updated_at: string | null;
+  vehicles: number | null;
   assignment?: {
     id: string;
     status: string;
@@ -57,7 +75,7 @@ interface BookingDetail {
         last_name: string | null;
         phone_e164: string | null;
       };
-    };
+    } | null;
   };
 }
 
@@ -73,38 +91,91 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
 
   const fetchBookingDetails = async () => {
     try {
-      const { data, error } = await supabase
+      // First get the booking with assignments
+      const { data: bookingData, error: bookingError } = await supabase
         .from('bookings')
         .select(`
           *,
-          assignment:assignments(
+          assignments(
             id,
             status,
-            guard:guards(
-              id,
-              photo_url,
-              rating,
-              city,
-              user:profiles!user_id(
-                first_name,
-                last_name,
-                phone_e164
-              )
-            )
+            guard_id
           )
         `)
         .eq('id', bookingId)
         .single();
 
-      if (error) throw error;
+      if (bookingError) throw bookingError;
+
+      let bookingWithGuard = bookingData;
+
+      // If there's an assignment, get guard details separately
+      if (bookingData.assignments && bookingData.assignments.length > 0) {
+        const assignment = bookingData.assignments[0];
+        
+        // Get guard details
+        const { data: guardData, error: guardError } = await supabase
+          .from('guards')
+          .select(`
+            id,
+            photo_url,
+            rating,
+            city,
+            user_id
+          `)
+          .eq('id', assignment.guard_id)
+          .single();
+
+        if (!guardError && guardData) {
+          // Get user profile for the guard
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, phone_e164')
+            .eq('id', guardData.user_id)
+            .single();
+
+          // Construct the proper data structure directly
+          bookingWithGuard = {
+            ...bookingData,
+            assignment: {
+              id: assignment.id,
+              status: assignment.status,
+              guard: {
+                id: guardData.id,
+                photo_url: guardData.photo_url,
+                rating: guardData.rating,
+                city: guardData.city,
+                user: profileData || {
+                  first_name: null,
+                  last_name: null,
+                  phone_e164: null
+                }
+              }
+            }
+          } as any;
+          delete bookingWithGuard.assignments;
+        } else {
+          // No guard data, just include assignment without guard
+          bookingWithGuard = {
+            ...bookingData,
+            assignment: {
+              id: assignment.id,
+              status: assignment.status,
+              guard: null
+            }
+          } as any;
+          delete bookingWithGuard.assignments;
+        }
+      } else {
+        // No assignment
+        bookingWithGuard = {
+          ...bookingData,
+          assignment: undefined
+        } as any;
+        delete bookingWithGuard.assignments;
+      }
       
-      // Handle assignment array properly
-      const bookingData = {
-        ...data,
-        assignment: data.assignment && data.assignment.length > 0 ? data.assignment[0] : undefined
-      };
-      
-      setBooking(bookingData);
+      setBooking(bookingWithGuard);
     } catch (error) {
       console.error('Error fetching booking details:', error);
       toast({
@@ -139,7 +210,7 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
   };
 
   const handleVoiceCall = () => {
-    if (booking?.assignment?.guard.user.phone_e164) {
+    if (booking?.assignment?.guard?.user.phone_e164) {
       window.location.href = `tel:${booking.assignment.guard.user.phone_e164}`;
     } else {
       toast({
@@ -164,7 +235,7 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
             <div className="h-32 bg-muted rounded"></div>
           </div>
         </div>
-        <BottomNav />
+        <BottomNav currentPath="/bookings" navigate={navigate} />
       </div>
     );
   }
@@ -185,12 +256,12 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
             </CardContent>
           </Card>
         </div>
-        <BottomNav />
+        <BottomNav currentPath="/bookings" navigate={navigate} />
       </div>
     );
   }
 
-  const guardName = booking.assignment?.guard.user
+  const guardName = booking.assignment?.guard?.user
     ? `${booking.assignment.guard.user.first_name || ''} ${booking.assignment.guard.user.last_name || ''}`.trim()
     : 'Guard';
 
@@ -392,7 +463,7 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
           </TabsContent>
         </Tabs>
       </div>
-      <BottomNav />
+      <BottomNav currentPath="/bookings" navigate={navigate} />
     </div>
   );
 };
