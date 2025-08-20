@@ -1,133 +1,124 @@
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import HapticButton from '@/components/mobile/HapticButton';
-import { MapPin, Star, Shield, Car, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Star, MapPin, Shield, Clock } from 'lucide-react';
+import { mxn } from '@/utils/money';
 
 interface Guard {
   id: string;
-  name: string;
-  photoUrl?: string;
+  photo_url: string | null;
   rating: number;
-  distance: number;
-  skills: string[];
-  armed: boolean;
-  hasVehicle: boolean;
-  hourlyRate: number;
-  availability: 'available' | 'busy' | 'offline';
+  city: string | null;
+  hourly_rate_mxn_cents: number;
+  armed_hourly_surcharge_mxn_cents: number;
+  dress_codes: string[] | null;
+  distance?: number;
+  availability_status?: string;
 }
 
 interface BookingMatchCardProps {
   guard: Guard;
-  matchScore: number;
-  onAssign: (guardId: string) => void;
-  isAssigning?: boolean;
+  isArmed: boolean;
+  hours: number;
+  onSelect: (guardId: string) => void;
+  isSelected: boolean;
 }
 
 export const BookingMatchCard = ({ 
   guard, 
-  matchScore, 
-  onAssign, 
-  isAssigning = false 
+  isArmed, 
+  hours, 
+  onSelect, 
+  isSelected 
 }: BookingMatchCardProps) => {
-  const getAvailabilityColor = (status: string) => {
-    switch (status) {
-      case 'available': return 'bg-success text-success-foreground';
-      case 'busy': return 'bg-warning text-warning-foreground';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const getMatchScoreColor = (score: number) => {
-    if (score >= 90) return 'text-success';
-    if (score >= 70) return 'text-warning';
-    return 'text-muted-foreground';
-  };
+  const baseRate = guard.hourly_rate_mxn_cents;
+  const armedSurcharge = isArmed ? guard.armed_hourly_surcharge_mxn_cents : 0;
+  const totalHourlyRate = baseRate + armedSurcharge;
+  const totalCost = totalHourlyRate * hours;
 
   return (
-    <Card className="transition-all hover:shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                {guard.photoUrl ? (
-                  <img 
-                    src={guard.photoUrl} 
-                    alt={guard.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Shield className="w-6 h-6 text-muted-foreground" />
+    <Card className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+      isSelected ? 'ring-2 ring-primary shadow-lg' : ''
+    }`} onClick={() => onSelect(guard.id)}>
+      <CardContent className="p-4">
+        <div className="flex items-start space-x-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={guard.photo_url || ''} alt="Guard" />
+            <AvatarFallback className="bg-primary/10">
+              <Shield className="h-6 w-6 text-primary" />
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-medium">{guard.rating.toFixed(1)}</span>
+                </div>
+                {guard.availability_status === 'available' && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Available Now
+                  </Badge>
                 )}
               </div>
-              <Badge 
-                className={cn(
-                  "absolute -bottom-1 -right-1 px-1.5 py-0.5 text-xs",
-                  getAvailabilityColor(guard.availability)
+              <div className="text-right">
+                <div className="text-lg font-bold text-primary">
+                  {mxn(totalHourlyRate)}
+                  <span className="text-sm text-muted-foreground">/hr</span>
+                </div>
+                {isArmed && (
+                  <div className="text-xs text-muted-foreground">
+                    +{mxn(guard.armed_hourly_surcharge_mxn_cents)} armed
+                  </div>
                 )}
-              >
-                {guard.availability}
-              </Badge>
+              </div>
             </div>
             
-            <div>
-              <h3 className="font-semibold">{guard.name}</h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Star className="w-4 h-4 fill-warning text-warning" />
-                <span>{guard.rating.toFixed(1)}</span>
-                <MapPin className="w-4 h-4 ml-1" />
-                <span>{guard.distance.toFixed(1)}km</span>
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
+              {guard.city && (
+                <div className="flex items-center space-x-1">
+                  <MapPin className="h-4 w-4" />
+                  <span>{guard.city}</span>
+                </div>
+              )}
+              {guard.distance && (
+                <div className="flex items-center space-x-1">
+                  <span>{guard.distance.toFixed(1)} km away</span>
+                </div>
+              )}
+            </div>
+            
+            {guard.dress_codes && guard.dress_codes.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {guard.dress_codes.slice(0, 3).map((code, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {code}
+                  </Badge>
+                ))}
+                {guard.dress_codes.length > 3 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{guard.dress_codes.length - 3} more
+                  </Badge>
+                )}
               </div>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <div className={cn("text-2xl font-bold", getMatchScoreColor(matchScore))}>
-              {matchScore}%
-            </div>
-            <div className="text-xs text-muted-foreground">match</div>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        <div className="space-y-3">
-          {/* Skills & Capabilities */}
-          <div className="flex flex-wrap gap-1">
-            {guard.skills.slice(0, 3).map((skill) => (
-              <Badge key={skill} variant="secondary" className="text-xs">
-                {skill}
-              </Badge>
-            ))}
-            {guard.armed && (
-              <Badge variant="default" className="text-xs">
-                <Shield className="w-3 h-3 mr-1" />
-                Armed
-              </Badge>
             )}
-            {guard.hasVehicle && (
-              <Badge variant="outline" className="text-xs">
-                <Car className="w-3 h-3 mr-1" />
-                Vehicle
-              </Badge>
-            )}
-          </div>
-
-          {/* Rate & Actions */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-sm">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="font-medium">${guard.hourlyRate}/hr</span>
+            
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Total for {hours}h: </span>
+                <span className="font-semibold text-primary">{mxn(totalCost)}</span>
+              </div>
+              <Button 
+                size="sm" 
+                variant={isSelected ? "default" : "outline"}
+                className="ml-2"
+              >
+                {isSelected ? 'Selected' : 'Select'}
+              </Button>
             </div>
-
-            <HapticButton
-              onClick={() => onAssign(guard.id)}
-              disabled={isAssigning || guard.availability !== 'available'}
-              className="h-9 px-4"
-            >
-              {isAssigning ? 'Assigning...' : 'Assign'}
-            </HapticButton>
           </div>
         </div>
       </CardContent>
