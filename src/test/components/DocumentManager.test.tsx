@@ -1,4 +1,6 @@
-import { render, fireEvent, waitFor, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/dom'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DocumentManager } from '@/components/documents/DocumentManager'
 import { useAuth } from '@/contexts/AuthContext'
@@ -73,12 +75,13 @@ describe('DocumentManager', () => {
   })
 
   it('handles file selection', async () => {
+    const user = userEvent.setup()
     render(<DocumentManager />)
     
     const fileInput = screen.getByLabelText('Select File')
     const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
     
-    fireEvent.change(fileInput, { target: { files: [file] } })
+    await user.upload(fileInput, file)
     
     await waitFor(() => {
       expect(screen.getByText('test.pdf')).toBeInTheDocument()
@@ -86,12 +89,13 @@ describe('DocumentManager', () => {
   })
 
   it('shows upload button when file is selected', async () => {
+    const user = userEvent.setup()
     render(<DocumentManager />)
     
     const fileInput = screen.getByLabelText('Select File')
     const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
     
-    fireEvent.change(fileInput, { target: { files: [file] } })
+    await user.upload(fileInput, file)
     
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Upload' })).toBeInTheDocument()
@@ -99,12 +103,13 @@ describe('DocumentManager', () => {
   })
 
   it('validates file size', async () => {
+    const user = userEvent.setup()
     render(<DocumentManager maxSizeBytes={1024} />)
     
     const fileInput = screen.getByLabelText('Select File')
     const largeFile = new File(['x'.repeat(2048)], 'large.pdf', { type: 'application/pdf' })
     
-    fireEvent.change(fileInput, { target: { files: [largeFile] } })
+    await user.upload(fileInput, largeFile)
     
     // Should not show the file since it's too large
     await waitFor(() => {
@@ -112,11 +117,12 @@ describe('DocumentManager', () => {
     })
   })
 
-  it('changes document type', () => {
+  it('changes document type', async () => {
+    const user = userEvent.setup()
     render(<DocumentManager />)
     
     const select = screen.getByLabelText('Document Type')
-    fireEvent.change(select, { target: { value: 'license' } })
+    await user.selectOptions(select, 'license')
     
     expect(select).toHaveValue('license')
   })
