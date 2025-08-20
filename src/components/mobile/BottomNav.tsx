@@ -25,22 +25,24 @@ const BottomNav = ({ currentPath, navigate }: BottomNavProps) => {
       ];
     }
     
-    // Company Admin - full company management
+    // Company Admin - full company management + billing for payouts
     if (hasRole('company_admin')) {
       return [
         { id: 'company', path: '/company', icon: Building, label: 'Company', testId: 'nav-company' },
         { id: 'staff', path: '/staff', icon: Users, label: 'Staff', testId: 'nav-staff' },
         { id: 'vehicles', path: '/vehicles', icon: Car, label: 'Vehicles', testId: 'nav-vehicles' },
         { id: 'bookings', path: '/bookings', icon: FileText, label: 'Bookings', testId: 'nav-bookings' },
+        { id: 'billing', path: '/billing', icon: Receipt, label: 'Billing', testId: 'nav-billing' },
         { id: 'analytics', path: '/analytics', icon: BarChart3, label: 'Analytics', testId: 'nav-analytics' },
         { id: 'account', path: '/account', icon: User, label: 'Account', testId: 'nav-account' }
       ];
     }
     
-    // Freelancer/Guard - limited view with personal stats
+    // Freelancer/Guard - accept bookings + billing for payouts + personal stats
     if (hasRole('freelancer')) {
       return [
         { id: 'bookings', path: '/bookings', icon: FileText, label: 'Bookings', testId: 'nav-bookings' },
+        { id: 'billing', path: '/billing', icon: Receipt, label: 'Billing', testId: 'nav-billing' },
         { id: 'analytics', path: '/analytics', icon: BarChart3, label: 'Analytics', testId: 'nav-analytics' },
         { id: 'account', path: '/account', icon: User, label: 'Account', testId: 'nav-account' }
       ];
