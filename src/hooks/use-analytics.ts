@@ -119,7 +119,7 @@ export const useBookingAnalytics = (dateRange: { start: Date; end: Date }) => {
         .in('booking_id', bookings?.map(b => b.id) || []);
 
       // Fetch guard profiles separately to avoid type issues
-      const guardIds = [...new Set(assignments?.map(a => a.guards?.id).filter(Boolean))] || [];
+      const guardIds = [...new Set(assignments?.map(a => a.guards?.id).filter(Boolean))];
       const { data: guardProfiles } = await supabase
         .from('guards')
         .select(`
