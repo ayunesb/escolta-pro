@@ -25,7 +25,7 @@ serve(async (req) => {
       ? createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
       : null;
 
-    const { name, email, id_doc_url, proof_of_residence_url } = await req.json();
+    const { first_name, last_name, email, phone, id_doc_url, proof_of_residence_url } = await req.json();
 
     // Get authenticated user
     const {
@@ -41,13 +41,15 @@ serve(async (req) => {
       });
     }
 
-    const [first_name, ...rest] = (name || "").trim().split(" ");
-    const last_name = rest.join(" ").trim() || null;
-
     // Update profile (RLS: user can update own profile)
     const { error: upErr } = await supabase
       .from("profiles")
-      .update({ email: email || null, first_name: first_name || null, last_name })
+      .update({ 
+        email: email || null, 
+        first_name: first_name || null, 
+        last_name: last_name || null,
+        phone_e164: phone || null
+      })
       .eq("id", user.id);
 
     if (upErr) {
