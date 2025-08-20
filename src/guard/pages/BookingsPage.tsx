@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { mxn } from '@/utils/money';
 import { MapPin, Clock, Shield, Car, Briefcase, ArrowLeft } from 'lucide-react';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
+import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 
 type Booking = {
   id: string;
@@ -190,6 +191,9 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
         </div>
         </div>
       </PullToRefresh>
+      
+      {/* Add GuardBottomNav for proper role-based navigation */}
+      <GuardBottomNav currentPath="/bookings" navigate={navigate} />
     </div>
   );
 }

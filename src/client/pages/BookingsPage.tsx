@@ -1,196 +1,239 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+import { formatMXN } from '@/utils/pricing';
+import { MapPin, Clock, Shield, Car, RefreshCw, Eye } from 'lucide-react';
 import BottomNav from '@/components/mobile/BottomNav';
-
-interface Booking {
-  id: string;
-  pickup_address?: string;
-  start_ts?: string;
-  end_ts?: string;
-  status: string;
-  protectors: number;
-  quote_amount?: number;
-  currency?: string;
-  created_at: string;
-}
+import PullToRefresh from '@/components/mobile/PullToRefresh';
+import { t, getPreferredLanguage, type Lang } from '@/lib/i18n';
 
 interface BookingsPageProps {
   navigate: (path: string) => void;
 }
 
+interface Booking {
+  id: string;
+  pickup_address: string;
+  start_ts: string;
+  end_ts: string;
+  armed_required: boolean;
+  vehicle_required: boolean;
+  vehicle_type?: string;
+  total_mxn_cents: number;
+  status: string;
+  notes?: string;
+  created_at: string;
+}
+
 const BookingsPage = ({ navigate }: BookingsPageProps) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const [currentLang] = useState<Lang>(getPreferredLanguage());
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      if (!user) return;
+  const loadBookings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      try {
-        const { data, error } = await supabase
-          .from('bookings')
-          .select('*')
-          .eq('client_id', user.id)
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching bookings:', error);
-        } else {
-          setBookings(data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching bookings:', error);
-      } finally {
-        setLoading(false);
+      if (error) {
+        throw error;
       }
-    };
-
-    fetchBookings();
-  }, [user]);
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-        return 'bg-success text-white';
-      case 'pending':
-      case 'matching':
-        return 'bg-warning text-black';
-      case 'cancelled':
-        return 'bg-destructive text-white';
-      case 'completed':
-        return 'bg-muted text-muted-foreground';
-      default:
-        return 'bg-secondary text-secondary-foreground';
+      
+      setBookings(data || []);
+    } catch (error: any) {
+      console.error('Error loading bookings:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load bookings',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Date TBD';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'matching':
+        return 'bg-blue-500/10 text-blue-600 border-blue-200';
+      case 'assigned':
+        return 'bg-green-500/10 text-green-600 border-green-200';
+      case 'enroute':
+        return 'bg-orange-500/10 text-orange-600 border-orange-200';
+      case 'onsite':
+        return 'bg-purple-500/10 text-purple-600 border-purple-200';
+      case 'in_progress':
+        return 'bg-accent/10 text-accent border-accent/20';
+      case 'completed':
+        return 'bg-emerald-500/10 text-emerald-600 border-emerald-200';
+      case 'canceled':
+      case 'failed':
+        return 'bg-red-500/10 text-red-600 border-red-200';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
   };
 
-  const formatTime = (dateString?: string) => {
-    if (!dateString) return 'Time TBD';
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+  const getStatusText = (status: string) => {
+    return t(status, currentLang);
   };
 
-  const getDuration = (start?: string, end?: string) => {
-    if (!start || !end) return 'Duration TBD';
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const hours = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60));
-    return `${hours}h`;
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background">
       <div className="safe-top px-mobile py-4">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-mobile-xl font-semibold text-foreground">
-            My Bookings
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-mobile-xl font-bold text-foreground">
+            {t('bookings', currentLang)}
           </h1>
-          <p className="text-mobile-sm text-muted-foreground">
-            Track your security escort requests
-          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={loadBookings}
+            className="p-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
 
-        {/* Bookings List */}
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
-            ))}
-          </div>
-        ) : bookings.length === 0 ? (
-          <div className="text-center py-12">
-            <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-mobile-base font-medium text-foreground mb-2">
-              No bookings yet
-            </h3>
-            <p className="text-mobile-sm text-muted-foreground mb-6">
-              Book your first security escort to get started
-            </p>
-            <button
-              onClick={() => navigate('/book')}
-              className="text-accent hover:underline font-medium"
-            >
-              Book a Protector
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {bookings.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-mobile-base">
-                      Booking #{booking.id.slice(-8)}
-                    </CardTitle>
-                    <Badge 
-                      className={getStatusColor(booking.status)}
-                      variant="secondary"
-                    >
-                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {booking.pickup_address && (
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-mobile-sm text-foreground">
-                        {booking.pickup_address}
-                      </span>
+        <PullToRefresh onRefresh={loadBookings} className="min-h-96">
+          {bookings.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Eye className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-mobile-lg font-medium mb-2">
+                  {t('no_bookings', currentLang)}
+                </h3>
+                <p className="text-mobile-sm text-muted-foreground text-center mb-4">
+                  {t('book_first_service', currentLang)}
+                </p>
+                <Button 
+                  onClick={() => navigate('/book')}
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                >
+                  {t('book_protector', currentLang)}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4 pb-20">
+              {bookings.map((booking) => (
+                <Card key={booking.id} className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-mobile-sm font-medium line-clamp-1">
+                            {booking.pickup_address}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-mobile-sm text-muted-foreground">
+                            {new Date(booking.start_ts).toLocaleDateString('es-MX', {
+                              weekday: 'short',
+                              month: 'short', 
+                              day: 'numeric'
+                            })} at {new Date(booking.start_ts).toLocaleTimeString('es-MX', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge className={getStatusColor(booking.status)}>
+                          {getStatusText(booking.status)}
+                        </Badge>
+                        <span className="text-mobile-sm font-semibold text-accent">
+                          {formatMXN(booking.total_mxn_cents)}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-mobile-sm text-foreground">
-                      {formatDate(booking.start_ts)} at {formatTime(booking.start_ts)}
-                      {booking.end_ts && ` • ${getDuration(booking.start_ts, booking.end_ts)}`}
-                    </span>
-                  </div>
+                  </CardHeader>
 
-                  <div className="flex items-center gap-3">
-                    <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-mobile-sm text-foreground">
-                      {booking.protectors} protector{booking.protectors > 1 ? 's' : ''}
-                    </span>
-                  </div>
-
-                  {booking.quote_amount && (
-                    <div className="flex justify-between items-center pt-2 border-t">
-                      <span className="text-mobile-sm text-muted-foreground">
-                        Total
-                      </span>
-                      <span className="text-mobile-sm font-semibold text-accent">
-                        ${booking.currency || 'MXN'} {booking.quote_amount.toLocaleString()}
-                      </span>
+                  <CardContent className="pt-0">
+                    {/* Service Details */}
+                    <div className="flex gap-4 text-mobile-sm">
+                      {booking.armed_required && (
+                        <div className="flex items-center gap-1">
+                          <Shield className="h-4 w-4 text-amber-500" />
+                          <span className="text-amber-600 font-medium">Armed</span>
+                        </div>
+                      )}
+                      {booking.vehicle_required && (
+                        <div className="flex items-center gap-1">
+                          <Car className="h-4 w-4 text-blue-500" />
+                          <span className="text-blue-600 font-medium">
+                            {booking.vehicle_type || 'Vehicle'}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+
+                    {/* Duration */}
+                    <div className="mt-3 text-mobile-sm text-muted-foreground">
+                      Duration: {Math.round((new Date(booking.end_ts).getTime() - new Date(booking.start_ts).getTime()) / (1000 * 60 * 60))} hours
+                    </div>
+
+                    {/* Notes */}
+                    {booking.notes && (
+                      <div className="mt-2 text-mobile-sm text-muted-foreground">
+                        <span className="font-medium">Notes:</span> {booking.notes}
+                      </div>
+                    )}
+
+                    {/* Action buttons based on status */}
+                    {booking.status === 'matching' && (
+                      <div className="mt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          disabled
+                        >
+                          {t('finding_guards', currentLang)}
+                        </Button>
+                      </div>
+                    )}
+
+                    {['assigned', 'enroute', 'onsite', 'in_progress'].includes(booking.status) && (
+                      <div className="mt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => navigate(`/booking/${booking.id}`)}
+                        >
+                          {t('track_service', currentLang)}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </PullToRefresh>
       </div>
 
-      {/* Bottom Navigation */}
       <BottomNav currentPath="/bookings" navigate={navigate} />
     </div>
   );
