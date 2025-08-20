@@ -14,6 +14,8 @@ import CompanyStaffNewPage from './pages/CompanyStaffNewPage';
 import CompanyStaffDetailPage from './pages/CompanyStaffDetailPage';
 import VehicleFormPage from './pages/VehicleFormPage';
 import FreelancerApplyPage from './pages/FreelancerApplyPage';
+import SecurityDashboardPage from './pages/SecurityDashboardPage';
+import AuditTrailPage from './pages/AuditTrailPage';
 
 const GuardRouter = () => {
   const { user, loading, hasRole } = useAuth();
@@ -81,6 +83,10 @@ const GuardRouter = () => {
       return <VehicleFormPage navigate={navigate} />;
     case '/apply':
       return <FreelancerApplyPage navigate={navigate} />;
+    case '/security':
+      return <SecurityDashboardPage navigate={navigate} />;
+    case '/audit-trail':
+      return <AuditTrailPage navigate={navigate} />;
     default:
       if (basePath.startsWith('/assignment/')) {
         const assignmentId = pathParts[2];

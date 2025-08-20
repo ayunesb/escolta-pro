@@ -130,11 +130,11 @@ const GuardHomePage = ({ navigate }: GuardHomePageProps) => {
             <Card className="cursor-pointer hover:bg-accent/5 transition-colors">
               <CardContent 
                 className="p-4 text-center"
-                onClick={() => navigate('/company')}
+                onClick={() => navigate('/security')}
               >
                 <Shield className="h-8 w-8 text-accent mx-auto mb-2" />
                 <h3 className="text-mobile-sm font-medium text-foreground">
-                  Company
+                  Security
                 </h3>
               </CardContent>
             </Card>
