@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Star, MapPin, Shield, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,6 +8,9 @@ import BottomNav from '@/components/mobile/BottomNav';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import HapticButton from '@/components/mobile/HapticButton';
 import SwipeGestures from '@/components/mobile/SwipeGestures';
+import { LazyImage } from '@/components/performance/LazyImage';
+import { OptimizedSkeleton } from '@/components/performance/OptimizedSkeleton';
+import { useImagePreloader, useDebounce } from '@/hooks/use-performance';
 
 interface Guard {
   id: string;
@@ -27,6 +30,14 @@ interface HomePageProps {
 const HomePage = ({ navigate }: HomePageProps) => {
   const [guards, setGuards] = useState<Guard[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Preload guard images for better performance
+  const guardImageUrls = useMemo(() => 
+    guards.filter(guard => guard.photo_url).map(guard => guard.photo_url!),
+    [guards]
+  );
+  
+  const { isLoaded: isImageLoaded } = useImagePreloader(guardImageUrls);
 
   const fetchGuards = async () => {
     try {
@@ -146,11 +157,7 @@ const HomePage = ({ navigate }: HomePageProps) => {
               Featured Protectors
             </h2>
             {loading ? (
-              <div className="grid grid-cols-2 gap-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
-                ))}
-              </div>
+              <OptimizedSkeleton type="guard-card" count={4} className="grid grid-cols-2 gap-4" />
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {guards.map((guard) => (
@@ -160,12 +167,16 @@ const HomePage = ({ navigate }: HomePageProps) => {
                     onClick={() => navigate(`/profile?id=${guard.id}`)}
                   >
                     <CardContent className="p-3 text-center">
-                      <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-3 flex items-center justify-center">
+                      <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-3 flex items-center justify-center overflow-hidden">
                         {guard.photo_url ? (
-                          <img 
-                            src={guard.photo_url} 
-                            alt="Guard" 
+                          <LazyImage
+                            src={guard.photo_url}
+                            alt="Guard profile"
                             className="w-full h-full rounded-full object-cover"
+                            priority={false}
+                            fallback={
+                              <Shield className="h-8 w-8 text-muted-foreground" />
+                            }
                           />
                         ) : (
                           <Shield className="h-8 w-8 text-muted-foreground" />

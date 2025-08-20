@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Shield, Calendar, MapPin, User, Settings, Plus } from 'lucide-react';
+import { Shield, Calendar, MapPin, User, Settings, Plus, Bell } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import GuardBottomNav from '@/components/mobile/GuardBottomNav';
+import { useRealTimeAssignments, useRealTimeNotifications } from '@/hooks/use-real-time';
+import HapticButton from '@/components/mobile/HapticButton';
 
 interface Assignment {
   id: string;
@@ -28,43 +30,17 @@ interface GuardHomePageProps {
 
 const GuardHomePage = ({ navigate }: GuardHomePageProps) => {
   const { user, hasRole } = useAuth();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Use real-time assignments hook
+  const { assignments, loading } = useRealTimeAssignments();
+  
+  // Use real-time notifications
+  const { notifications, requestNotificationPermission } = useRealTimeNotifications();
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('assignments')
-          .select(`
-            *,
-            bookings (
-              pickup_address,
-              start_ts,
-              end_ts,
-              client_id
-            )
-          `)
-          .eq('guard_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-        
-        if (error) {
-          console.error('Error fetching assignments:', error);
-        } else {
-          setAssignments(data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching assignments:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAssignments();
-  }, [user]);
+    // Request notification permission on mount
+    requestNotificationPermission();
+  }, [requestNotificationPermission]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -94,12 +70,32 @@ const GuardHomePage = ({ navigate }: GuardHomePageProps) => {
               {user?.email}
             </p>
           </div>
-          <button
-            onClick={() => navigate('/account')}
-            className="w-10 h-10 bg-muted rounded-full flex items-center justify-center"
-          >
-            <Settings className="h-5 w-5 text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-3">
+            <HapticButton
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/account')}
+              hapticPattern="light"
+              className="w-10 h-10 bg-muted rounded-full flex items-center justify-center p-0"
+            >
+              <Settings className="h-5 w-5 text-muted-foreground" />
+            </HapticButton>
+            
+            {notifications.length > 0 && (
+              <HapticButton
+                variant="ghost"
+                size="sm"
+                onClick={() => {/* Show notifications */}}
+                hapticPattern="light"
+                className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center p-0 relative"
+              >
+                <Bell className="h-5 w-5 text-accent" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              </HapticButton>
+            )}
+          </div>
         </div>
 
         {/* Quick Actions */}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,8 @@ import BottomNav from '@/components/mobile/BottomNav';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import HapticButton from '@/components/mobile/HapticButton';
 import { t, getPreferredLanguage, type Lang } from '@/lib/i18n';
+import { useRealTimeBookings, useRealTimeNotifications } from '@/hooks/use-real-time';
+import { VirtualList } from '@/components/performance/VirtualList';
 
 interface BookingsPageProps {
   navigate: (path: string) => void;
@@ -30,37 +32,22 @@ interface Booking {
 }
 
 const BookingsPage = ({ navigate }: BookingsPageProps) => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentLang] = useState<Lang>(getPreferredLanguage());
-
-  const loadBookings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      setBookings(data || []);
-    } catch (error: any) {
-      console.error('Error loading bookings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load bookings',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  // Use real-time bookings hook
+  const { bookings, loading, refetch } = useRealTimeBookings();
+  
+  // Use real-time notifications
+  const { 
+    notifications, 
+    requestNotificationPermission,
+    clearNotifications 
+  } = useRealTimeNotifications();
 
   useEffect(() => {
-    loadBookings();
-  }, []);
+    // Request notification permission on mount
+    requestNotificationPermission();
+  }, [requestNotificationPermission]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -106,7 +93,7 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
           <HapticButton
             variant="ghost"
             size="sm"
-            onClick={loadBookings}
+            onClick={refetch}
             hapticPattern="light"
             className="p-2"
           >
@@ -114,7 +101,7 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
           </HapticButton>
         </div>
 
-        <PullToRefresh onRefresh={loadBookings} className="min-h-96">
+        <PullToRefresh onRefresh={refetch} className="min-h-96">
           {bookings.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
