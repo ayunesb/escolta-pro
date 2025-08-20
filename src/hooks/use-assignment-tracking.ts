@@ -113,42 +113,39 @@ export const useAssignmentTracking = (assignmentId?: string) => {
   const updateStatus = async (status: Assignment['status']) => {
     if (!assignmentId) return;
 
-    const updates: any = { status };
-    const timestamp = new Date().toISOString();
+    try {
+      // Use the edge function for status updates to ensure proper business logic
+      const { data, error } = await supabase.functions.invoke('assignment_update', {
+        body: {
+          assignmentId,
+          status,
+          location: location ? { lat: location.lat, lng: location.lng } : undefined
+        }
+      });
 
-    switch (status) {
-      case 'accepted':
-        updates.check_in_ts = timestamp;
-        break;
-      case 'in_progress':
-        updates.in_progress_ts = timestamp;
-        break;
-      case 'on_site':
-        updates.on_site_ts = timestamp;
-        break;
-      case 'completed':
-        updates.check_out_ts = timestamp;
-        break;
-    }
+      if (error) {
+        console.error('Edge function error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update assignment status",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    const { error } = await supabase
-      .from('assignments')
-      .update(updates)
-      .eq('id', assignmentId);
+      toast({
+        title: "Status Updated",
+        description: data.message || `Assignment status updated to ${status}`,
+      });
 
-    if (error) {
+    } catch (error) {
+      console.error('Update error:', error);
       toast({
         title: "Error",
         description: "Failed to update assignment status",
         variant: "destructive"
       });
-      return;
     }
-
-    toast({
-      title: "Status Updated",
-      description: `Assignment status updated to ${status}`,
-    });
   };
 
   const startLocationTracking = () => {

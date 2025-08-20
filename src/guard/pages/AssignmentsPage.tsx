@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Clock, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealTimeAssignments } from '@/hooks/use-real-time';
+import HapticButton from '@/components/mobile/HapticButton';
 
 interface Assignment {
   id: string;
@@ -28,56 +29,29 @@ interface AssignmentsPageProps {
 
 const AssignmentsPage = ({ navigate }: AssignmentsPageProps) => {
   const { user } = useAuth();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAssignments = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('assignments')
-          .select(`
-            *,
-            bookings (
-              pickup_address,
-              start_ts,
-              end_ts,
-              client_id
-            )
-          `)
-          .eq('guard_id', user.id)
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching assignments:', error);
-        } else {
-          setAssignments(data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching assignments:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAssignments();
-  }, [user]);
+  
+  // Use real-time assignments hook instead of local state
+  const { assignments, loading } = useRealTimeAssignments();
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'offered':
-        return 'bg-warning text-black';
+        return 'bg-warning text-warning-foreground';
       case 'accepted':
-        return 'bg-success text-white';
+        return 'bg-success text-success-foreground';
       case 'in_progress':
-        return 'bg-accent text-white';
+        return 'bg-accent text-accent-foreground';
+      case 'on_site':
+        return 'bg-info text-info-foreground';
       case 'completed':
         return 'bg-muted text-muted-foreground';
       default:
         return 'bg-secondary text-secondary-foreground';
     }
+  };
+
+  const handleAssignmentClick = (assignmentId: string) => {
+    navigate(`/assignment/${assignmentId}`);
   };
 
   return (
@@ -117,15 +91,22 @@ const AssignmentsPage = ({ navigate }: AssignmentsPageProps) => {
         ) : (
           <div className="space-y-4">
             {assignments.map((assignment) => (
-              <Card key={assignment.id}>
+              <Card 
+                key={assignment.id} 
+                className="cursor-pointer hover:bg-accent/5 transition-colors"
+                onClick={() => handleAssignmentClick(assignment.id)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-mobile-base">
                       Assignment #{assignment.id.slice(-8)}
                     </CardTitle>
-                    <Badge className={getStatusColor(assignment.status)}>
-                      {assignment.status.replace('_', ' ').toUpperCase()}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(assignment.status)}>
+                        {assignment.status.replace('_', ' ').toUpperCase()}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -164,35 +145,14 @@ const AssignmentsPage = ({ navigate }: AssignmentsPageProps) => {
                     </div>
                   )}
 
-                  {/* Status-specific actions */}
-                  {assignment.status === 'offered' && (
+                  {/* Quick Status Indicator */}
+                  {(assignment.status === 'offered' || assignment.status === 'accepted') && (
                     <div className="pt-3 border-t">
-                      <div className="flex gap-3">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1"
-                        >
-                          Decline
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1 bg-accent hover:bg-accent/90"
-                        >
-                          Accept
-                        </Button>
+                      <div className="text-center">
+                        <span className="text-mobile-sm text-muted-foreground">
+                          {assignment.status === 'offered' ? 'Tap to respond' : 'Tap to manage'}
+                        </span>
                       </div>
-                    </div>
-                  )}
-
-                  {assignment.status === 'accepted' && (
-                    <div className="pt-3 border-t">
-                      <Button 
-                        size="sm" 
-                        className="w-full bg-accent hover:bg-accent/90"
-                      >
-                        Start Assignment
-                      </Button>
                     </div>
                   )}
                 </CardContent>

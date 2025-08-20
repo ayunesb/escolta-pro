@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AuthPage from '@/pages/AuthPage';
 import GuardHomePage from './pages/GuardHomePage';
 import AssignmentsPage from './pages/AssignmentsPage';
+import AssignmentDetailPage from './pages/AssignmentDetailPage';
 import BookingsPage from './pages/BookingsPage';
 import GuardAccountPage from './pages/GuardAccountPage';
 import CompanyPage from './pages/CompanyPage';
@@ -52,14 +53,16 @@ const GuardRouter = () => {
   const requiresCompanyAdmin = ['/company', '/company-permits', '/company-vehicles', '/company-vehicles-new', '/company-staff', '/company-staff-new'].includes(basePath) || basePath.startsWith('/company-staff/') || basePath.startsWith('/company-vehicles/');
   
   if (requiresCompanyAdmin && !hasRole('company_admin')) {
-    navigate('/bookings');
-    return <BookingsPage navigate={navigate} />;
+    navigate('/home');
+    return <GuardHomePage navigate={navigate} />;
   }
 
   switch (basePath) {
     case '/home':
     case '/':
-      return <BookingsPage navigate={navigate} />;
+      return <GuardHomePage navigate={navigate} />;
+    case '/assignments':
+      return <AssignmentsPage navigate={navigate} />;
     case '/bookings':
       return <BookingsPage navigate={navigate} />;
     case '/account':
@@ -79,6 +82,10 @@ const GuardRouter = () => {
     case '/apply':
       return <FreelancerApplyPage navigate={navigate} />;
     default:
+      if (basePath.startsWith('/assignment/')) {
+        const assignmentId = pathParts[2];
+        return <AssignmentDetailPage navigate={navigate} assignmentId={assignmentId} />;
+      }
       if (basePath.startsWith('/company-staff/')) {
         const staffId = pathParts[2];
         return <CompanyStaffDetailPage navigate={navigate} staffId={staffId} />;
@@ -87,9 +94,9 @@ const GuardRouter = () => {
         const vehicleId = pathParts[2];
         return <VehicleFormPage navigate={navigate} vehicleId={vehicleId} />;
       }
-      // Redirect to bookings for unknown routes
-      navigate('/bookings');
-      return <BookingsPage navigate={navigate} />;
+      // Redirect to home for unknown routes
+      navigate('/home');
+      return <GuardHomePage navigate={navigate} />;
   }
 };
 

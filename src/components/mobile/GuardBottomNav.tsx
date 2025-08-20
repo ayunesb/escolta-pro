@@ -1,6 +1,8 @@
-import { Calendar, FileText, User, Building, Car, Users } from 'lucide-react';
+import { Calendar, FileText, User, Building, Car, Users, Home, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealTimeAssignments } from '@/hooks/use-real-time';
+import { Badge } from '@/components/ui/badge';
 
 interface GuardBottomNavProps {
   currentPath: string;
@@ -9,9 +11,30 @@ interface GuardBottomNavProps {
 
 const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
   const { hasRole } = useAuth();
+  const { assignments } = useRealTimeAssignments();
+  
+  // Count pending assignments
+  const pendingAssignments = assignments.filter(
+    assignment => assignment.status === 'offered' || assignment.status === 'accepted'
+  ).length;
 
-  // Base tabs for all guards (freelancer gets only these 2)
+  // Base tabs for all guards
   const baseTabs = [
+    {
+      id: 'home',
+      path: '/home',
+      icon: Home,
+      label: 'Home',
+      testId: 'nav-home'
+    },
+    {
+      id: 'assignments',
+      path: '/assignments',
+      icon: Clock,
+      label: 'Assignments',
+      testId: 'nav-assignments',
+      badge: pendingAssignments > 0 ? pendingAssignments : undefined
+    },
     {
       id: 'bookings',
       path: '/bookings',
@@ -28,7 +51,7 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
     }
   ];
 
-  // Additional tabs for company admins
+  // Additional tabs for company admins  
   const companyTabs = [
     {
       id: 'company',
@@ -36,27 +59,13 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
       icon: Building,
       label: 'Company',
       testId: 'nav-company'
-    },
-    {
-      id: 'vehicles',
-      path: '/vehicles',
-      icon: Car,
-      label: 'Vehicles',
-      testId: 'nav-vehicles'
-    },
-    {
-      id: 'staff',
-      path: '/staff',
-      icon: Users,
-      label: 'Staff',
-      testId: 'nav-staff'
     }
   ];
 
   // Determine which tabs to show based on role
   const tabs = hasRole('company_admin') 
-    ? [baseTabs[0], ...companyTabs, baseTabs[1]] // Bookings, Company, Vehicles, Staff, Account
-    : baseTabs; // Just Bookings, Account for freelancers
+    ? [baseTabs[0], baseTabs[1], baseTabs[2], ...companyTabs, baseTabs[3]] // Home, Assignments, Bookings, Company, Account
+    : baseTabs.filter(tab => tab.id !== 'bookings'); // Home, Assignments, Account for freelancers
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-bottom z-nav">
@@ -70,13 +79,23 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
               data-testid={tab.testId}
               onClick={() => navigate(tab.path)}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center touch-target px-1 py-3 transition-colors min-h-[56px]",
+                "flex-1 flex flex-col items-center justify-center touch-target px-1 py-3 transition-colors min-h-[56px] relative",
                 isActive 
                   ? "text-accent bg-accent/5" 
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <tab.icon className={cn("h-5 w-5 mb-1", isActive && "text-accent")} />
+              <div className="relative">
+                <tab.icon className={cn("h-5 w-5 mb-1", isActive && "text-accent")} />
+                {(tab as any).badge && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-4 min-w-[16px] text-xs px-1 py-0 flex items-center justify-center"
+                  >
+                    {(tab as any).badge > 9 ? '9+' : (tab as any).badge}
+                  </Badge>
+                )}
+              </div>
               <span className="text-xs font-medium leading-none">
                 {tab.label}
               </span>
