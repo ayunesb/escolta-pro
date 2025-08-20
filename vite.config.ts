@@ -8,8 +8,10 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       input: {
+        main: path.resolve(__dirname, 'index.html'),
         client: path.resolve(__dirname, 'client.html'),
         guard: path.resolve(__dirname, 'guard.html'),
+        admin: path.resolve(__dirname, 'admin.html'),
       }
     }
   },

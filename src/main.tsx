@@ -6,6 +6,8 @@ import { QueryContextProvider } from './contexts/QueryContext'
 import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+console.log('🚀 Main app initializing...');
+
 // Production performance monitoring
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   // Disable console logs in production

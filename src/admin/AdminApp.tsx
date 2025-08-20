@@ -8,20 +8,24 @@ import AdminRouter from "./AdminRouter";
 
 const queryClient = new QueryClient();
 
-const AdminApp = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="blindado-admin-theme">
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AdminRouter />
-          {/* Overlays portal container */}
-          <div id="overlays" />
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const AdminApp = () => {
+  console.log('✅ Admin App component rendered');
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="dark" storageKey="blindado-admin-theme">
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AdminRouter />
+            {/* Overlays portal container */}
+            <div id="overlays" />
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default AdminApp;

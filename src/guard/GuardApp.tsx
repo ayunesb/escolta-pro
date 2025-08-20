@@ -8,20 +8,24 @@ import GuardRouter from "./GuardRouter";
 
 const queryClient = new QueryClient();
 
-const GuardApp = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="blindado-guard-theme">
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <GuardRouter />
-          {/* Overlays portal container */}
-          <div id="overlays" />
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const GuardApp = () => {
+  console.log('✅ Guard App component rendered');
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="dark" storageKey="blindado-guard-theme">
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <GuardRouter />
+            {/* Overlays portal container */}
+            <div id="overlays" />
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default GuardApp;

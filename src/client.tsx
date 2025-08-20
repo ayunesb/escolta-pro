@@ -6,6 +6,8 @@ import { QueryContextProvider } from './contexts/QueryContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css'
 
+console.log('🚀 Client app initializing...');
+
 // Production performance monitoring
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   // Disable console logs in production
