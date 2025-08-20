@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.delete_payment_method]
 verify_jwt = true
+
+[functions.generate_report]
+verify_jwt = true
