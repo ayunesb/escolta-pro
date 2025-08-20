@@ -9,7 +9,7 @@ import BottomNav from '@/components/mobile/BottomNav';
 interface Guard {
   id: string;
   photo_url?: string;
-  skills: any;
+  skills?: any;
   rating: number;
   city?: string;
   hourly_rate_mxn_cents?: number;
@@ -29,15 +29,12 @@ const HomePage = ({ navigate }: HomePageProps) => {
     const fetchGuards = async () => {
       try {
         const { data, error } = await supabase
-          .from('guards')
-          .select('id, photo_url, skills, rating, city, hourly_rate_mxn_cents, armed_hourly_surcharge_mxn_cents, company_id')
-          .eq('active', true)
-          .limit(6);
+          .rpc('get_public_guards');
         
         if (error) {
           console.error('Error fetching guards:', error);
         } else {
-          setGuards(data || []);
+          setGuards(((data || []) as unknown as Guard[]));
         }
       } catch (error) {
         console.error('Error fetching guards:', error);

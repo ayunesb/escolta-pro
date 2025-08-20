@@ -11,8 +11,8 @@ interface Guard {
   city: string;
   hourly_rate_mxn_cents: number;
   armed_hourly_surcharge_mxn_cents: number;
-  company_id: string | null;
-  skills: any;
+  company_id?: string | null;
+  skills?: any;
 }
 
 const Index = () => {
@@ -23,12 +23,8 @@ const Index = () => {
     const fetchGuards = async () => {
       try {
         const { data } = await supabase
-          .from('guards')
-          .select('id, photo_url, rating, city, hourly_rate_mxn_cents, armed_hourly_surcharge_mxn_cents, company_id, skills')
-          .eq('active', true)
-          .limit(6);
-        
-        if (data) setGuards(data);
+          .rpc('get_public_guards');
+        if (data) setGuards(((data || []) as unknown as Guard[]).slice(0, 6));
       } catch (error) {
         console.error('Error fetching guards:', error);
       } finally {

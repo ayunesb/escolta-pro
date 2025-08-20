@@ -898,6 +898,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_guard_by_id: {
+        Args: { _id: string }
+        Returns: {
+          armed_hourly_surcharge_mxn_cents: number
+          city: string
+          dress_codes: string[]
+          hourly_rate_mxn_cents: number
+          id: string
+          photo_url: string
+          rating: number
+        }[]
+      }
+      get_public_guards: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          armed_hourly_surcharge_mxn_cents: number
+          city: string
+          dress_codes: string[]
+          hourly_rate_mxn_cents: number
+          id: string
+          photo_url: string
+          rating: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -39,16 +39,18 @@ const ProfilePage = ({ navigate, id }: ProfilePageProps) => {
     const fetchGuard = async () => {
       try {
         const { data, error } = await supabase
-          .from('guards')
-          .select('*, companies(name)')
-          .eq('id', id)
-          .single();
+          .rpc('get_public_guard_by_id', { _id: id });
         
         if (error) {
           console.error('Error fetching guard:', error);
           navigate('/home');
         } else {
-          setGuard(data);
+          const rows = (data as any[]) || [];
+          if (rows.length === 0) {
+            navigate('/home');
+          } else {
+            setGuard(rows[0] as any);
+          }
         }
       } catch (error) {
         console.error('Error fetching guard:', error);
