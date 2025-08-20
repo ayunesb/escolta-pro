@@ -13,8 +13,10 @@ import BillingPage from './pages/BillingPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 
 const ClientRouter = () => {
+  console.log('ClientRouter loading...');
   const { user, loading } = useAuth();
   const [currentPath, setCurrentPath] = useState(window.location.hash.slice(1) || '/home');
+  console.log('Current path:', currentPath, 'User:', user?.id, 'Loading:', loading);
 
   useEffect(() => {
     const handleHashChange = () => {
