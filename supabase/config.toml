@@ -17,3 +17,12 @@ verify_jwt = true
 
 [functions.generate_report]
 verify_jwt = true
+
+[functions.validate_quote]
+verify_jwt = true
+
+[functions.performance_monitor]
+verify_jwt = true
+
+[functions.real_time_sync]
+verify_jwt = true

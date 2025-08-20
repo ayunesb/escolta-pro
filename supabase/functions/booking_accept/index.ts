@@ -87,29 +87,92 @@ serve(async (req) => {
       });
     }
 
-    // Attempt atomic update
-    const { data: updateResult, error: updateError } = await supabase
-      .from("bookings")
-      .update({ status: "assigned", assigned_user_id: user.id })
-      .eq("id", booking_id)
-      .eq("status", "matching") // only update if still matching
-      .select()
-      .maybeSingle();
+    // Attempt atomic update with retry logic for better reliability
+    let updateResult = null;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    if (updateError) {
-      console.error("booking_accept: database error during update", updateError);
-      return new Response(JSON.stringify({ error: "Database error occurred" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    while (!updateResult && attempts < maxAttempts) {
+      attempts++;
+      console.log(`booking_accept: attempt ${attempts} to assign booking ${booking_id}`);
+
+      const { data, error: updateError } = await supabase
+        .from("bookings")
+        .update({ 
+          status: "assigned", 
+          assigned_user_id: user.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", booking_id)
+        .eq("status", "matching") // only update if still matching
+        .select()
+        .maybeSingle();
+
+      if (updateError) {
+        console.error(`booking_accept: database error on attempt ${attempts}`, updateError);
+        if (attempts === maxAttempts) {
+          return new Response(JSON.stringify({ error: "Database error occurred" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Wait before retry with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 100));
+        continue;
+      }
+
+      if (data) {
+        updateResult = data;
+        break;
+      }
+
+      // If no data returned, booking might have been taken by another guard
+      console.log(`booking_accept: no data returned on attempt ${attempts}, checking current status`);
+      
+      // Check current booking status
+      const { data: currentBooking } = await supabase
+        .from("bookings")
+        .select("status, assigned_user_id")
+        .eq("id", booking_id)
+        .single();
+
+      if (currentBooking?.status === "assigned" && currentBooking.assigned_user_id === user.id) {
+        // We actually got it, return success
+        updateResult = currentBooking;
+        break;
+      }
+
+      if (currentBooking?.status !== "matching") {
+        // Booking is no longer available
+        break;
+      }
+
+      // Try again if still matching
+      if (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 100));
+      }
     }
 
     if (!updateResult) {
-      console.error("booking_accept: booking no longer in matching status or race condition occurred");
+      console.error("booking_accept: booking no longer available after all attempts");
       return new Response(JSON.stringify({ error: "Booking no longer available" }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Create assignment record for tracking
+    const { error: assignmentError } = await supabase
+      .from("assignments")
+      .insert({
+        booking_id: booking_id,
+        guard_id: user.id,
+        status: "offered"
+      });
+
+    if (assignmentError) {
+      console.error("booking_accept: failed to create assignment record", assignmentError);
+      // This is not critical, so we don't fail the entire operation
     }
 
     console.log("booking_accept: successfully assigned booking", booking_id, "to user", user.id);

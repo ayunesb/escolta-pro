@@ -33,29 +33,62 @@ serve(async (req) => {
         
         console.log(`Payment succeeded: ${paymentIntent.id}`);
 
-        // Update payment record
-        const { error: updateError } = await supabaseClient
-          .from('payments')
-          .update({
-            status: 'succeeded',
-            amount_captured: paymentIntent.amount,
-            charge_id: paymentIntent.latest_charge as string,
-          })
-          .eq('preauth_id', paymentIntent.id);
+        // Update payment record with retry logic
+        let paymentUpdated = false;
+        let attempts = 0;
+        const maxAttempts = 3;
 
-        if (updateError) {
-          console.error('Failed to update payment:', updateError);
+        while (!paymentUpdated && attempts < maxAttempts) {
+          attempts++;
+          const { error: updateError } = await supabaseClient
+            .from('payments')
+            .update({
+              status: 'succeeded',
+              amount_captured: paymentIntent.amount,
+              charge_id: paymentIntent.latest_charge as string,
+            })
+            .eq('preauth_id', paymentIntent.id);
+
+          if (!updateError) {
+            paymentUpdated = true;
+            console.log(`Payment updated successfully on attempt ${attempts}`);
+          } else {
+            console.error(`Failed to update payment (attempt ${attempts}):`, updateError);
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 100));
+            }
+          }
         }
 
         // Update booking status to confirmed
-        if (paymentIntent.metadata.booking_id) {
-          const { error: bookingError } = await supabaseClient
-            .from('bookings')
-            .update({ status: 'confirmed' })
-            .eq('id', paymentIntent.metadata.booking_id);
+        if (paymentIntent.metadata.booking_id && paymentUpdated) {
+          let bookingUpdated = false;
+          attempts = 0;
 
-          if (bookingError) {
-            console.error('Failed to update booking:', bookingError);
+          while (!bookingUpdated && attempts < maxAttempts) {
+            attempts++;
+            const { error: bookingError } = await supabaseClient
+              .from('bookings')
+              .update({ 
+                status: 'confirmed',
+                total_mxn_cents: paymentIntent.amount 
+              })
+              .eq('id', paymentIntent.metadata.booking_id);
+
+            if (!bookingError) {
+              bookingUpdated = true;
+              console.log(`Booking updated successfully on attempt ${attempts}`);
+            } else {
+              console.error(`Failed to update booking (attempt ${attempts}):`, bookingError);
+              if (attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 100));
+              }
+            }
+          }
+
+          if (!bookingUpdated) {
+            console.error('CRITICAL: Payment succeeded but failed to update booking status');
+            // This should trigger an alert in production
           }
         }
 

@@ -35,22 +35,51 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { booking_id, amount } = await req.json();
+    const { booking_id, amount, quote_validation } = await req.json();
 
     if (!booking_id || !amount || amount <= 0) {
       throw new Error('Invalid booking_id or amount');
     }
 
-    // Verify booking ownership
+    // Verify booking ownership and get booking details
     const { data: booking, error: bookingError } = await supabaseClient
       .from('bookings')
-      .select('*')
+      .select('*, total_mxn_cents')
       .eq('id', booking_id)
       .eq('client_id', user.id)
       .single();
 
     if (bookingError || !booking) {
       throw new Error('Booking not found or access denied');
+    }
+
+    // Validate booking is in correct state for payment
+    if (!['draft', 'quoted', 'assigned'].includes(booking.status)) {
+      throw new Error(`Cannot create payment for booking in status: ${booking.status}`);
+    }
+
+    // Server-side amount validation - ensure amount matches booking total
+    if (booking.total_mxn_cents && Math.abs(booking.total_mxn_cents - amount) > 1) {
+      console.error('Payment amount mismatch', {
+        booking_total: booking.total_mxn_cents,
+        requested_amount: amount,
+        booking_id
+      });
+      throw new Error('Payment amount does not match booking total');
+    }
+
+    // Verify quote if provided
+    if (quote_validation) {
+      const { data: storedQuote } = await supabaseClient
+        .from('quotes')
+        .select('payload')
+        .eq('booking_id', booking_id)
+        .single();
+
+      if (storedQuote?.payload?.quote?.total && 
+          Math.abs(storedQuote.payload.quote.total - amount) > 1) {
+        throw new Error('Payment amount does not match validated quote');
+      }
     }
 
     // Initialize Stripe
@@ -74,19 +103,41 @@ serve(async (req) => {
       description: `Payment for security booking - ${booking.pickup_address || 'Booking'}`,
     });
 
-    // Record payment in database
-    const { error: paymentError } = await supabaseClient
-      .from('payments')
-      .insert({
-        booking_id: booking_id,
-        amount_preauth: amount,
-        provider: 'stripe',
-        status: 'pending',
-        preauth_id: paymentIntent.id,
-      });
+    // Record payment in database with retry logic
+    let paymentRecorded = false;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    if (paymentError) {
-      console.error('Failed to record payment:', paymentError);
+    while (!paymentRecorded && attempts < maxAttempts) {
+      attempts++;
+      const { error: paymentError } = await supabaseClient
+        .from('payments')
+        .insert({
+          booking_id: booking_id,
+          amount_preauth: amount,
+          provider: 'stripe',
+          status: 'pending',
+          preauth_id: paymentIntent.id,
+        });
+
+      if (!paymentError) {
+        paymentRecorded = true;
+        console.log(`Payment recorded successfully on attempt ${attempts}`);
+      } else {
+        console.error(`Failed to record payment (attempt ${attempts}):`, paymentError);
+        if (attempts === maxAttempts) {
+          // Cancel the payment intent if we can't record it
+          try {
+            await stripe.paymentIntents.cancel(paymentIntent.id);
+            console.log('Payment intent canceled due to database error');
+          } catch (cancelError) {
+            console.error('Failed to cancel payment intent:', cancelError);
+          }
+          throw new Error('Failed to record payment in database');
+        }
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 100));
+      }
     }
 
     console.log(`Payment intent created: ${paymentIntent.id}`);
