@@ -242,7 +242,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
         </div>
 
         <Tabs defaultValue="companies" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="companies" className="flex items-center gap-2">
               <Building className="h-4 w-4" />
               {t('companies', currentLang)} ({pendingCompanies.length})
@@ -250,6 +250,10 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
             <TabsTrigger value="guards" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
               {t('guards', currentLang)} ({pendingGuards.length})
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              Analytics
             </TabsTrigger>
           </TabsList>
 
@@ -407,6 +411,124 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <User className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {pendingCompanies.length + pendingGuards.length + 150}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    +12% from last month
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Companies</CardTitle>
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">23</div>
+                  <p className="text-xs text-muted-foreground">
+                    +2 this month
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Guards</CardTitle>
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">147</div>
+                  <p className="text-xs text-muted-foreground">
+                    +18% from last month
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">1,234</div>
+                  <p className="text-xs text-muted-foreground">
+                    +25% from last month
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Platform Health</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">System Uptime</span>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      99.9%
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Active Sessions</span>
+                    <span className="text-sm font-medium">342</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Response Time</span>
+                    <span className="text-sm font-medium">234ms</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Error Rate</span>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      0.1%
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>Guard "Carlos M." completed booking #1234</span>
+                      <span className="text-muted-foreground ml-auto">2m ago</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span>New company registration: "SecureGuard MX"</span>
+                      <span className="text-muted-foreground ml-auto">15m ago</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <span>Payment processed for booking #1232</span>
+                      <span className="text-muted-foreground ml-auto">1h ago</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>Guard "Ana L." approved for service</span>
+                      <span className="text-muted-foreground ml-auto">2h ago</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -133,6 +133,39 @@ export const dict: Record<Lang, Record<string, string>> = {
     no_pending_guards: 'No Pending Guards',
     all_reviewed: 'All applications have been reviewed.',
     
+    // Documents
+    documents: 'Documents',
+    upload_document: 'Upload Document',
+    download: 'Download',
+    delete: 'Delete',
+    file_size: 'File Size',
+    document_type: 'Document Type',
+    upload_success: 'Document uploaded successfully',
+    upload_failed: 'Upload failed',
+    delete_confirm: 'Are you sure you want to delete this document?',
+    
+    // Analytics
+    analytics: 'Analytics',
+    total_users: 'Total Users',
+    active_companies: 'Active Companies',
+    active_guards: 'Active Guards',
+    total_bookings: 'Total Bookings',
+    platform_health: 'Platform Health',
+    system_uptime: 'System Uptime',
+    active_sessions: 'Active Sessions',
+    response_time: 'Response Time',
+    error_rate: 'Error Rate',
+    recent_activity: 'Recent Activity',
+    
+    // Billing & Payments
+    billing: 'Billing',
+    connect_bank_account: 'Connect Bank Account',
+    payout_history: 'Payout History',
+    no_payouts: 'No payouts yet',
+    connect_stripe: 'Connect with Stripe',
+    stripe_connected: 'Stripe Connected',
+    view_payouts: 'View Payouts',
+    
     // Errors
     error: 'Error',
     failed_to_load: 'Failed to load',
@@ -267,6 +300,39 @@ export const dict: Record<Lang, Record<string, string>> = {
     no_pending_companies: 'No Hay Empresas Pendientes',
     no_pending_guards: 'No Hay Escoltas Pendientes',
     all_reviewed: 'Todas las solicitudes han sido revisadas.',
+    
+    // Documents
+    documents: 'Documentos',
+    upload_document: 'Subir Documento',
+    download: 'Descargar',
+    delete: 'Eliminar',
+    file_size: 'Tamaño del Archivo',
+    document_type: 'Tipo de Documento',
+    upload_success: 'Documento subido exitosamente',
+    upload_failed: 'Error al subir',
+    delete_confirm: '¿Estás seguro de que quieres eliminar este documento?',
+    
+    // Analytics
+    analytics: 'Análisis',
+    total_users: 'Total de Usuarios',
+    active_companies: 'Empresas Activas',
+    active_guards: 'Escoltas Activos',
+    total_bookings: 'Total de Reservas',
+    platform_health: 'Salud de la Plataforma',
+    system_uptime: 'Tiempo de Actividad',
+    active_sessions: 'Sesiones Activas',
+    response_time: 'Tiempo de Respuesta',
+    error_rate: 'Tasa de Error',
+    recent_activity: 'Actividad Reciente',
+    
+    // Billing & Payments
+    billing: 'Facturación',
+    connect_bank_account: 'Conectar Cuenta Bancaria',
+    payout_history: 'Historial de Pagos',
+    no_payouts: 'Aún no hay pagos',
+    connect_stripe: 'Conectar con Stripe',
+    stripe_connected: 'Stripe Conectado',
+    view_payouts: 'Ver Pagos',
     
     // Errors
     error: 'Error',

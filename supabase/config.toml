@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.payouts_list]
 verify_jwt = true
+
+[functions.document_signed_url]
+verify_jwt = true

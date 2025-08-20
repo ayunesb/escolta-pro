@@ -911,6 +911,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_document_signed_url: {
+        Args: { document_path: string; expires_in?: unknown }
+        Returns: string
+      }
       get_public_guard_by_id: {
         Args: { _id: string }
         Returns: {
