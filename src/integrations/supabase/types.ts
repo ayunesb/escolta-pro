@@ -133,6 +133,8 @@ export type Database = {
       bookings: {
         Row: {
           armed_required: boolean | null
+          assigned_company_id: string | null
+          assigned_user_id: string | null
           city: string | null
           client_id: string
           created_at: string | null
@@ -164,6 +166,8 @@ export type Database = {
         }
         Insert: {
           armed_required?: boolean | null
+          assigned_company_id?: string | null
+          assigned_user_id?: string | null
           city?: string | null
           client_id: string
           created_at?: string | null
@@ -195,6 +199,8 @@ export type Database = {
         }
         Update: {
           armed_required?: boolean | null
+          assigned_company_id?: string | null
+          assigned_user_id?: string | null
           city?: string | null
           client_id?: string
           created_at?: string | null
@@ -225,6 +231,13 @@ export type Database = {
           vehicles?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_assigned_company_id_fkey"
+            columns: ["assigned_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_client_id_fkey"
             columns: ["client_id"]

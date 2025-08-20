@@ -1,259 +1,215 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, Calendar, Clock, Users, Shield } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
+import { mxn } from '@/utils/money';
+import { MapPin, Clock, Shield, Car, Briefcase, ArrowLeft } from 'lucide-react';
 
-interface Booking {
+type Booking = {
   id: string;
-  pickup_address?: string;
-  start_ts?: string;
-  end_ts?: string;
-  protectors: number;
-  protectees: number;
+  pickup_address: string;
+  start_ts: string;
+  end_ts: string;
   armed_required: boolean;
   vehicle_required: boolean;
-  vehicle_type?: string;
-  tier: string;
+  total_mxn_cents?: number;
   status: string;
-  city?: string;
-  dress_code?: string;
-  notes?: string;
-}
+  tier?: string;
+};
 
 interface BookingsPageProps {
   navigate: (path: string) => void;
 }
 
-const BookingsPage = ({ navigate }: BookingsPageProps) => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function BookingsPage({ navigate }: BookingsPageProps) {
+  const [tab, setTab] = useState<'available'|'mine'>('available');
+  const [items, setItems] = useState<Booking[]>([]);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    const fetchAvailableBookings = async () => {
-      if (!user) return;
-      
-      try {
-        // Get bookings that are in 'matching' status and don't have assignments yet
-        const { data, error } = await supabase
-          .from('bookings')
-          .select('*')
-          .eq('status', 'matching')
-          .not('id', 'in', 
-            `(SELECT booking_id FROM assignments WHERE guard_id = '${user.id}')`
-          )
-          .order('start_ts', { ascending: true });
-        
-        if (error) {
-          console.error('Error fetching available bookings:', error);
-        } else {
-          setBookings(data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching available bookings:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAvailableBookings();
-  }, [user]);
-
-  const handleApplyForJob = async (bookingId: string) => {
-    if (!user) return;
-
+  async function load(scope:'available'|'mine') {
+    setBusy(true);
     try {
-      const { error } = await supabase
-        .from('assignments')
-        .insert({
-          booking_id: bookingId,
-          guard_id: user.id,
-          status: 'offered'
-        });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to apply for this job. Please try again.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Application Sent",
-          description: "Your application has been submitted successfully.",
-        });
-        // Remove the booking from the list or refresh
-        setBookings(prev => prev.filter(b => b.id !== bookingId));
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast({ title: 'Error', description: 'Not authenticated' });
+        return;
       }
-    } catch (error) {
-      console.error('Error applying for job:', error);
-      toast({
-        title: "Error",
-        description: "Failed to apply for this job. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
 
-  const getStatusColor = (tier: string) => {
-    switch (tier.toLowerCase()) {
-      case 'premium':
-        return 'bg-accent text-white';
-      case 'standard':
-        return 'bg-success text-white';
-      case 'direct':
-        return 'bg-secondary text-secondary-foreground';
-      default:
-        return 'bg-muted text-muted-foreground';
+      const url = `https://isnezquuwepqcjkaupjh.supabase.co/functions/v1/bookings_guard_list?scope=${scope}`;
+      const res = await fetch(url, { 
+        headers: { 
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        } 
+      });
+      
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      
+      const json = await res.json();
+      setItems(Array.isArray(json) ? json : []);
+    } catch (e: any) {
+      console.error('Load error:', e);
+      toast({ title: 'Error', description: e.message || 'Failed to load' });
+    } finally { 
+      setBusy(false); 
     }
-  };
+  }
+
+  useEffect(() => { 
+    load(tab); 
+  }, [tab]);
+
+  async function accept(booking_id: string) {
+    setBusy(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast({ title: 'Error', description: 'Not authenticated' });
+        return;
+      }
+
+      const url = `https://isnezquuwepqcjkaupjh.supabase.co/functions/v1/booking_accept`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ booking_id })
+      });
+      
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      
+      toast({ title: 'Assigned', description: 'You accepted this job.' });
+      await load('mine'); 
+      setTab('mine');
+    } catch (e: any) {
+      console.error('Accept error:', e);
+      toast({ title: 'Cannot accept', description: e.message || 'Try again' });
+    } finally { 
+      setBusy(false); 
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="safe-top px-mobile py-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button 
-            onClick={() => navigate('/home')}
-            className="touch-target flex items-center justify-center"
+      <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/account')}
+            className="p-2"
           >
-            <ArrowLeft className="h-6 w-6 text-foreground" />
-          </button>
-          <h2 className="text-mobile-lg font-semibold text-foreground">
-            Available Jobs
-          </h2>
-          <div className="w-6" />
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-xl font-semibold">Guard Jobs</h1>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-4">
+        <div className="flex gap-2">
+          <Button 
+            variant={tab === 'available' ? 'default' : 'outline'}
+            onClick={() => setTab('available')}
+            className="flex-1"
+          >
+            Available
+          </Button>
+          <Button 
+            variant={tab === 'mine' ? 'default' : 'outline'}
+            onClick={() => setTab('mine')}
+            className="flex-1"
+          >
+            My Jobs
+          </Button>
         </div>
 
-        {/* Bookings List */}
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-40 bg-muted animate-pulse rounded-lg" />
-            ))}
+        {busy && (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
           </div>
-        ) : bookings.length === 0 ? (
+        )}
+
+        {!busy && items.length === 0 && (
           <div className="text-center py-12">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-mobile-base font-medium text-foreground mb-2">
-              No available jobs
+            <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">
+              {tab === 'available' ? 'No Available Jobs' : 'No Assigned Jobs'}
             </h3>
-            <p className="text-mobile-sm text-muted-foreground">
-              New job opportunities will appear here when available
+            <p className="text-muted-foreground">
+              {tab === 'available' ? 'Check back later for new opportunities' : 'Accept jobs from the Available tab'}
             </p>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {bookings.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-mobile-base">
-                      Job #{booking.id.slice(-8)}
-                    </CardTitle>
-                    <Badge className={getStatusColor(booking.tier)}>
-                      {booking.tier.toUpperCase()}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {booking.pickup_address && (
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-mobile-sm text-foreground">
-                        {booking.pickup_address}
-                      </span>
+        )}
+
+        <div className="space-y-3">
+          {items.map(b => (
+            <Card key={b.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">{b.pickup_address}</span>
                     </div>
-                  )}
-                  
-                  {booking.start_ts && (
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-mobile-sm text-foreground">
-                        {new Date(booking.start_ts).toLocaleDateString()} at{' '}
-                        {new Date(booking.start_ts).toLocaleTimeString('en-US', {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(b.start_ts).toLocaleDateString()} at{' '}
+                        {new Date(b.start_ts).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
                         })}
                       </span>
                     </div>
-                  )}
-
-                  {booking.start_ts && booking.end_ts && (
-                    <div className="flex items-center gap-3">
-                      <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-mobile-sm text-foreground">
-                        Duration: {Math.round(
-                          (new Date(booking.end_ts).getTime() - 
-                           new Date(booking.start_ts).getTime()) / (1000 * 60 * 60)
-                        )}h
-                      </span>
+                  </div>
+                  <div className="text-right">
+                    {typeof b.total_mxn_cents === 'number' && (
+                      <div className="text-lg font-semibold text-primary">
+                        {mxn(b.total_mxn_cents)}
+                      </div>
+                    )}
+                    <div className="text-xs text-muted-foreground capitalize">
+                      {b.status}
                     </div>
-                  )}
+                  </div>
+                </div>
 
-                  <div className="flex items-center gap-3">
-                    <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-mobile-sm text-foreground">
-                      {booking.protectors} guard{booking.protectors > 1 ? 's' : ''} • {booking.protectees} client{booking.protectees > 1 ? 's' : ''}
+                <div className="flex gap-4 mb-4 text-sm">
+                  <div className="flex items-center gap-1">
+                    <Shield className={`h-4 w-4 ${b.armed_required ? 'text-amber-500' : 'text-muted-foreground'}`} />
+                    <span className={b.armed_required ? 'text-amber-600 font-medium' : 'text-muted-foreground'}>
+                      {b.armed_required ? 'Armed' : 'Unarmed'}
                     </span>
                   </div>
-
-                  {booking.armed_required && (
-                    <div className="flex items-center gap-3">
-                      <Shield className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-mobile-sm text-foreground">
-                        Armed protection required
-                      </span>
-                    </div>
-                  )}
-
-                  {booking.vehicle_required && booking.vehicle_type && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-mobile-sm text-foreground">
-                        🚗 Vehicle: {booking.vehicle_type}
-                      </span>
-                    </div>
-                  )}
-
-                  {booking.dress_code && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-mobile-sm text-foreground">
-                        👔 Dress code: {booking.dress_code}
-                      </span>
-                    </div>
-                  )}
-
-                  {booking.notes && (
-                    <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-mobile-sm text-foreground">
-                        <strong>Notes:</strong> {booking.notes}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="pt-3 border-t">
-                    <Button 
-                      onClick={() => handleApplyForJob(booking.id)}
-                      size="sm" 
-                      className="w-full bg-accent hover:bg-accent/90"
-                    >
-                      Apply for This Job
-                    </Button>
+                  <div className="flex items-center gap-1">
+                    <Car className={`h-4 w-4 ${b.vehicle_required ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                    <span className={b.vehicle_required ? 'text-blue-600 font-medium' : 'text-muted-foreground'}>
+                      {b.vehicle_required ? 'Vehicle' : 'No vehicle'}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                </div>
+
+                {tab === 'available' && (
+                  <Button 
+                    onClick={() => accept(b.id)}
+                    className="w-full"
+                    disabled={busy}
+                  >
+                    Accept Job
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
-};
-
-export default BookingsPage;
+}

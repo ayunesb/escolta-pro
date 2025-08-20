@@ -95,7 +95,7 @@ serve(async (req) => {
       start_ts: start ? new Date(start).toISOString() : null,
       end_ts: end ? new Date(end).toISOString() : null,
       pickup_address: location || null,
-      status: "draft",
+      status: "matching", // client confirmed; ready to match
       notes: null,
       armed_required: armed || false,
       vehicle_required: with_vehicle || false,
@@ -104,6 +104,8 @@ serve(async (req) => {
       subtotal_mxn_cents,
       service_fee_mxn_cents,
       total_mxn_cents,
+      assigned_user_id: null,
+      assigned_company_id: null,
     };
 
     console.log("bookings: inserting payload", payload);
