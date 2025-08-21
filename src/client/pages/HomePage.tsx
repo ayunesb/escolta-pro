@@ -280,7 +280,7 @@ const HomePage = ({ navigate }: HomePageProps) => {
               onClick={homeContent.ctaAction}
               size="lg"
               hapticPattern="medium"
-              className="w-full max-w-xs"
+              className="w-full max-w-xs text-white"
             >
               {homeContent.ctaText}
             </HapticButton>
