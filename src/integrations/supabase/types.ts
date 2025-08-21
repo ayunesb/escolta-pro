@@ -405,7 +405,7 @@ export type Database = {
           home_lng?: number | null
           hourly_rate?: number | null
           hourly_rate_mxn_cents?: number | null
-          id: string
+          id?: string
           org_id?: string | null
           photo_url?: string | null
           rating?: number | null
@@ -851,6 +851,36 @@ export type Database = {
           role?: string
           stripe_account_id?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      push_tokens: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          platform: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

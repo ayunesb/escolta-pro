@@ -1,0 +1,191 @@
+name: Mobile App Deployment
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate version
+        id: version
+        run: |
+          VERSION="1.0.${{ github.run_number }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Generated version: $VERSION"
+
+  build-web:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ needs.setup.outputs.version }}
+
+      - name: Upload web build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: dist/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run linting
+        run: npm run lint || true
+
+  ios-build:
+    runs-on: macos-latest
+    needs: [setup, build-web]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: dist/
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Capacitor CLI
+        run: npm install -g @capacitor/cli
+
+      - name: Update version in iOS
+        run: |
+          npx cap sync ios
+          # Update version in iOS project files
+          sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = ${{ needs.setup.outputs.version }};/" ios/App/App.xcodeproj/project.pbxproj
+          sed -i '' "s/CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = ${{ github.run_number }};/" ios/App/App.xcodeproj/project.pbxproj
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.0'
+
+      - name: Build iOS app
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+                     -scheme App \
+                     -destination 'generic/platform=iOS' \
+                     -archivePath App.xcarchive \
+                     archive \
+                     CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: ios/App/App.xcarchive
+
+  android-build:
+    runs-on: ubuntu-latest
+    needs: [setup, build-web]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: dist/
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Capacitor CLI
+        run: npm install -g @capacitor/cli
+
+      - name: Update version in Android
+        run: |
+          npx cap sync android
+          # Update version in Android build files
+          sed -i "s/versionName .*/versionName \"${{ needs.setup.outputs.version }}\"/" android/app/build.gradle
+          sed -i "s/versionCode .*/versionCode ${{ github.run_number }}/" android/app/build.gradle
+
+      - name: Build Android APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: android/app/build/outputs/apk/debug/
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [setup, ios-build, android-build]
+    if: always() && github.ref == 'refs/heads/main'
+    steps:
+      - name: Deployment notification
+        run: |
+          echo "🚀 Mobile app build completed!"
+          echo "Version: ${{ needs.setup.outputs.version }}"
+          echo "iOS Build: ${{ needs.ios-build.result }}"
+          echo "Android Build: ${{ needs.android-build.result }}"
+          echo ""
+          echo "Next steps:"
+          echo "1. Download artifacts from GitHub Actions"
+          echo "2. Test on physical devices"
+          echo "3. Upload to TestFlight (iOS) and Play Console (Android)"
+          echo "4. Submit for review when ready"

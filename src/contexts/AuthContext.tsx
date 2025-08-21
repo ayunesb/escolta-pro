@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 type UserRole = 'client' | 'freelancer' | 'company_admin' | 'super_admin';
 
+export type { UserRole };
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
