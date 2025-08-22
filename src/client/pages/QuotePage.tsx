@@ -122,11 +122,11 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
         throw new Error('No payment URL received');
       }
       
-    } catch (error: any) {
+  } catch (error: unknown) {
       console.error('Booking payment error:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create booking payment',
+  description: error instanceof Error ? error.message : 'Failed to create booking payment',
         variant: 'destructive'
       });
     } finally {

@@ -46,4 +46,4 @@ global.IntersectionObserver = class IntersectionObserver {
   takeRecords() {
     return []
   }
-} as any
+} as unknown as IntersectionObserver

@@ -48,7 +48,7 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
 
   useEffect(() => {
     loadProfile();
-  }, [user]);
+  }, [user, loadProfile]);
 
   const loadProfile = async () => {
     if (!user) return;
@@ -82,7 +82,7 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
           setGuardProfile(guardData);
         }
       }
-    } catch (error: any) {
+  } catch (error: unknown) {
       console.error('Error loading profile:', error);
       toast({
         title: 'Error',
@@ -98,7 +98,7 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
     try {
       await signOut();
       navigate('/');
-    } catch (error: any) {
+  } catch (error: unknown) {
       console.error('Sign out error:', error);
       toast({
         title: 'Error',

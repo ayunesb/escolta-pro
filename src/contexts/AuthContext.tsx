@@ -10,6 +10,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRoles: UserRole[];
+  activeRole: UserRole | null;
+  setRole: (role: UserRole) => void;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, firstName?: string, lastName?: string, role?: UserRole) => Promise<{ error: any }>;
@@ -32,6 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
+    const [activeRole, setActiveRole] = useState<UserRole | null>(null);
 
   const fetchUserRoles = async (userId: string) => {
     try {
@@ -64,10 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTimeout(async () => {
             const roles = await fetchUserRoles(session.user.id);
             setUserRoles(roles);
+              setActiveRole(roles[0] ?? null);
             setLoading(false);
           }, 0);
         } else {
           setUserRoles([]);
+      setActiveRole(null);
           setLoading(false);
         }
       }
@@ -82,10 +87,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setTimeout(async () => {
           const roles = await fetchUserRoles(session.user.id);
           setUserRoles(roles);
+            setActiveRole(roles[0] ?? null);
           setLoading(false);
         }, 0);
       } else {
+          setActiveRole(null);
         setLoading(false);
+    const setRole = (role: UserRole) => {
+      if (userRoles.includes(role)) {
+        setActiveRole(role);
+      }
+    };
       }
     });
 
@@ -126,10 +138,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return userRoles.includes(role);
   };
 
+  const setRole = (role: UserRole) => {
+    if (userRoles.includes(role)) {
+      setActiveRole(role);
+    }
+  };
+
   const value = {
     user,
     session,
     userRoles,
+    activeRole,
+    setRole: setRole,
     loading,
     signIn,
     signUp,

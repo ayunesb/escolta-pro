@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import SuperAdminPage from '@/guard/pages/SuperAdminPage';
+import SystemSettingsPage from '@/guard/pages/SystemSettingsPage';
 import AuthPage from '@/pages/AuthPage';
 
 const AdminRouter = () => {
@@ -51,6 +52,9 @@ const AdminRouter = () => {
   // Route to appropriate page
   switch (currentPath) {
     case '/dashboard':
+      return <SuperAdminPage navigate={navigate} />;
+    case '/settings':
+      return <SystemSettingsPage navigate={navigate} />;
     default:
       return <SuperAdminPage navigate={navigate} />;
   }
