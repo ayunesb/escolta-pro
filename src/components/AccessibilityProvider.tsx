@@ -207,6 +207,15 @@ export const AccessibilityProvider = ({ children }: AccessibilityProviderProps) 
 export const useAccessibility = () => {
   const context = useContext(AccessibilityContext);
   if (context === undefined) {
+    if (typeof window !== 'undefined') {
+      // Log the React tree and call stack for debugging
+      console.error('useAccessibility context missing! Call stack:', new Error().stack);
+      // Optionally, log the nearest parent nodes
+      const root = document.getElementById('root');
+      if (root) {
+        console.error('Root innerHTML:', root.innerHTML.slice(0, 1000));
+      }
+    }
     throw new Error('useAccessibility must be used within an AccessibilityProvider');
   }
   return context;
