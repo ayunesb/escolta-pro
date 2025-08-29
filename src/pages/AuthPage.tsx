@@ -15,12 +15,11 @@ const AuthPage = () => {
   const [lastName, setLastName] = useState('');
   const [userType, setUserType] = useState<'client' | 'freelancer' | 'company_admin'>('client');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { user, signIn, signUp } = useAuth();
 
-  // Redirect authenticated users to appropriate app
   useEffect(() => {
     if (user) {
-      // Redirect based on current URL or default to client
       if (window.location.pathname.includes('admin')) {
         window.location.href = '/admin.html';
       } else if (window.location.pathname.includes('guard')) {
@@ -34,119 +33,93 @@ const AuthPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    setErrorMsg(null);
     try {
-      const { error } = isSignUp 
-        ? await signUp(email, password, firstName, lastName, userType)
-        : await signIn(email, password);
-
-      if (error) {
-        toast.error(error.message);
-      } else if (isSignUp) {
-        toast.success('Check your email to confirm your account');
+      if (isSignUp) {
+        const result = await signUp(email, password, firstName, lastName, userType);
+        if (result.error) {
+          setErrorMsg(result.error.message || 'Authentication failed.');
+          toast.error(result.error.message || 'Authentication failed.');
+        } else {
+          toast.success('Account created! Check your email.');
+        }
       } else {
-        toast.success('Welcome back!');
+        const result = await signIn(email, password);
+        if (result.error) {
+          setErrorMsg(result.error.message || 'Authentication failed.');
+          toast.error(result.error.message || 'Authentication failed.');
+        } else {
+          toast.success('Login successful!');
+        }
       }
-    } catch (error) {
-      toast.error('An unexpected error occurred');
+    } catch (error: any) {
+      setErrorMsg(error.message || 'Unexpected error.');
+      toast.error(error.message || 'Unexpected error.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-hero">Blindado</CardTitle>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Card className="w-full max-w-md mx-auto shadow-lg">
+        <CardHeader>
+          <CardTitle>{isSignUp ? 'Create Account' : 'Sign In'}</CardTitle>
           <CardDescription>
-            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            {isSignUp ? 'Sign up to get started.' : 'Sign in to your account.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {errorMsg && (
+            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-center">
+              {errorMsg}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="input-dark"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="input-dark"
-                      required
-                    />
-                  </div>
+              <div className="flex gap-2">
+                <div className="w-1/2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} required />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="userType">I want to</Label>
-                  <Select value={userType} onValueChange={(value: 'client' | 'freelancer' | 'company_admin') => setUserType(value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select account type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="client">Hire security services</SelectItem>
-                      <SelectItem value="freelancer">Work as a freelancer guard</SelectItem>
-                      <SelectItem value="company_admin">Manage a security company</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="w-1/2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} required />
                 </div>
-              </>
+              </div>
             )}
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-dark"
-                required
-              />
+              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-dark"
-                required
-              />
+              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full h-button rounded-button"
-              disabled={loading}
-            >
-              {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            {isSignUp && (
+              <div>
+                <Label htmlFor="userType">Account Type</Label>
+                <Select value={userType} onValueChange={v => setUserType(v as any)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">Client</SelectItem>
+                    <SelectItem value="freelancer">Freelancer</SelectItem>
+                    <SelectItem value="company_admin">Company Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In'}
             </Button>
+            <div className="text-center mt-2">
+              <Button type="button" variant="link" onClick={() => setIsSignUp(!isSignUp)}>
+                {isSignUp ? 'Already have an account? Sign In' : 'No account? Create one'}
+              </Button>
+            </div>
           </form>
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-accent hover:underline"
-            >
-              {isSignUp 
-                ? 'Already have an account? Sign in' 
-                : "Don't have an account? Sign up"}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>
