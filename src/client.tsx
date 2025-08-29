@@ -73,12 +73,10 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
-    <AccessibilityProvider>
-      <QueryContextProvider>
-        <ThemeProvider defaultTheme="dark" storageKey="blindado-client-theme">
-          <ClientApp />
-        </ThemeProvider>
-      </QueryContextProvider>
-    </AccessibilityProvider>  
+    <QueryContextProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="blindado-client-theme">
+        <ClientApp />
+      </ThemeProvider>
+    </QueryContextProvider>
   </ErrorBoundary>
 );

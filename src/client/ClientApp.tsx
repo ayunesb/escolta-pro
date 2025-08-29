@@ -6,20 +6,21 @@ import { NativeWrapper } from "@/components/mobile/NativeWrapper";
 import ClientRouter from "./ClientRouter";
 
 const ClientApp = () => {
-  console.log('✅ Client App component rendered');
   
   return (
-    <NativeWrapper>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <ClientRouter />
-          {/* Overlays portal container */}
-          <div id="overlays" />
-        </TooltipProvider>
-      </AuthProvider>
-    </NativeWrapper>
+    <AccessibilityProvider>
+      <NativeWrapper>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <ClientRouter />
+            {/* Overlays portal container */}
+            <div id="overlays" />
+          </TooltipProvider>
+        </AuthProvider>
+      </NativeWrapper>
+    </AccessibilityProvider>
   );
 };
 
