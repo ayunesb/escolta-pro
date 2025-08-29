@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
 interface BottomSheetProps {
@@ -11,8 +10,8 @@ interface BottomSheetProps {
 
 const BottomSheet = ({ isOpen, onClose, children, className }: BottomSheetProps) => {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const overlaysElement = document.getElementById('overlays');
-  const shouldUseInline = !overlaysElement || import.meta.env.VITE_INLINE_OVERLAYS === 'true';
+  // Always render overlays inline within the React tree for context safety
+  const shouldUseInline = true;
 
   useEffect(() => {
     if (isOpen) {
@@ -84,12 +83,8 @@ const BottomSheet = ({ isOpen, onClose, children, className }: BottomSheetProps)
     </div>
   );
 
-  // Use portal if overlays element exists, otherwise render inline
-  if (shouldUseInline) {
-    return sheetContent;
-  }
-
-  return createPortal(sheetContent, overlaysElement);
+  // Always render overlays inline to ensure context is available
+  return sheetContent;
 };
 
 export default BottomSheet;
