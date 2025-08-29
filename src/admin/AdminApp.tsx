@@ -1,3 +1,4 @@
+import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,21 +11,22 @@ const queryClient = new QueryClient();
 
 const AdminApp = () => {
   console.log('✅ Admin App component rendered');
-  
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="blindado-admin-theme">
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AdminRouter />
-            {/* Overlays portal container */}
-            <div id="overlays" />
-          </TooltipProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <AccessibilityProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="dark" storageKey="blindado-admin-theme">
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <AdminRouter />
+              {/* Overlays portal container */}
+              <div id="overlays" />
+            </TooltipProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </AccessibilityProvider>
   );
 };
 
