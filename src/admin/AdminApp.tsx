@@ -10,7 +10,7 @@ import AdminRouter from "./AdminRouter";
 const queryClient = new QueryClient();
 
 const AdminApp = () => {
-  console.log('✅ Admin App component rendered');
+  console.warn('✅ Admin App component rendered');
   return (
     <AccessibilityProvider>
       <QueryClientProvider client={queryClient}>

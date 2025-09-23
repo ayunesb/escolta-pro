@@ -7,7 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import './index.css'
 
-console.log('🚀 Client app initializing...');
+console.warn('🚀 Client app initializing...');
 
 // Production performance monitoring
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {

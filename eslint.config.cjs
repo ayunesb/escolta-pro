@@ -20,7 +20,8 @@ module.exports = [
       react: { version: 'detect' },
     },
     rules: {
-  'no-console': 'off',
+      // Warn on console usage except for console.warn and console.error which are allowed
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       '@typescript-eslint/no-unused-vars': 'off',
     },
   },

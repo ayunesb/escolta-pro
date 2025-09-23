@@ -5,7 +5,7 @@ import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import './index.css';
 
-console.log('🚀 Admin app initializing...');
+console.warn('🚀 Admin app initializing...');
 
 // Production performance monitoring
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {

@@ -56,7 +56,7 @@ export const useMobileNative = () => {
         }
 
         PushNotifications.addListener('registration', (token) => {
-          console.log('Push registration success, token: ' + token.value);
+          console.warn('Push registration success, token: ' + token.value);
           setPushToken(token.value);
         });
 
@@ -65,11 +65,11 @@ export const useMobileNative = () => {
         });
 
         PushNotifications.addListener('pushNotificationReceived', (notification) => {
-          console.log('Push notification received: ', notification);
+          console.warn('Push notification received: ', notification);
         });
 
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-          console.log('Push notification action performed', notification.actionId, notification.inputValue);
+          console.warn('Push notification action performed', notification.actionId, notification.inputValue);
         });
 
       } catch (error) {

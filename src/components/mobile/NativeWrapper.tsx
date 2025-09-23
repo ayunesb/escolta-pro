@@ -28,7 +28,7 @@ export const NativeWrapper = ({ children }: NativeWrapperProps) => {
         if (error) {
           console.error('Failed to register push token:', error);
         } else {
-          console.log('Push token registered successfully');
+          console.warn('Push token registered successfully');
         }
       } catch (error) {
         console.error('Push token registration error:', error);

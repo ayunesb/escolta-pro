@@ -12,10 +12,10 @@ interface AnalyticsPageProps {
 }
 
 export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ navigate }) => {
-  console.log('AnalyticsPage rendering...');
+  console.warn('AnalyticsPage rendering...');
   const { hasRole } = useAuth();
   const userType = hasRole('company_admin') ? 'company' : 'client';
-  console.log('User type determined:', userType);
+  console.warn('User type determined:', userType);
 
   return (
     <div className="min-h-screen bg-background">

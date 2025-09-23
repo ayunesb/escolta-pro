@@ -30,7 +30,7 @@ export const useSystemMetrics = () => {
     metadata?: Record<string, any>
   ) => {
     try {
-      console.log('Tracking metric:', { type, value, metadata });
+      console.warn('Tracking metric:', { type, value, metadata });
     } catch (error) {
       console.error('Error tracking metric:', error);
     }
@@ -41,7 +41,7 @@ export const useSystemMetrics = () => {
     properties?: Record<string, any>
   ) => {
     try {
-      console.log('Tracking event:', { event, properties });
+      console.warn('Tracking event:', { event, properties });
       
       if (event === 'booking_completed') {
         setMetrics(prev => ({
