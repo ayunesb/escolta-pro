@@ -1,17 +1,12 @@
 const js = require("@eslint/js");
 module.exports = {
-  root: true,
   ignorePatterns: ["dist"],
   env: {
     browser: true,
     es2020: true,
     node: true,
   },
-  extends: [
-    js.configs.recommended, 
-    "plugin:@typescript-eslint/recommended",
-    "plugin:react/recommended",
-  ],
+  // intentionally avoid `extends` to be compatible with flat-config detection
   plugins: ["@typescript-eslint", "react-hooks", "react-refresh"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
