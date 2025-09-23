@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useChat } from '../../hooks/use-chat';
 import Composer from './Composer';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 type Props = {
   bookingId: string;
@@ -8,6 +11,24 @@ type Props = {
 
 export default function Thread({ bookingId }: Props) {
   const { messages, send } = useChat(bookingId);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editedBody, setEditedBody] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    supabase.auth.getUser().then((res) => {
+      if (!mounted) return;
+      setCurrentUserId(res.data.user?.id ?? null);
+    });
+    return () => { mounted = false };
+  }, []);
+
+  // helper to update message
+  async function updateMessage(id: string) {
+    const { error } = await supabase.from('messages').update({ body: editedBody }).eq('id', id);
+    if (!error) setEditingId(null);
+  }
 
   return (
     <div className="flex flex-col h-full border rounded">
@@ -15,8 +36,36 @@ export default function Thread({ bookingId }: Props) {
         {messages.map((m) => (
           <div key={m.id} className="p-2 bg-gray-100 rounded">
             <div className="text-sm text-gray-600">{m.sender_id ?? 'anónimo'}</div>
-            <div className="mt-1">{m.body}</div>
+            {editingId === m.id ? (
+              <div>
+                <textarea
+                  className="w-full p-2 border rounded"
+                  value={editedBody}
+                  onChange={(e) => setEditedBody(e.target.value)}
+                />
+                <div className="flex space-x-2 mt-2">
+                  <button className="btn btn-sm" onClick={() => updateMessage(m.id)}>Save</button>
+                  <button className="btn btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-1">{m.body}</div>
+            )}
             <div className="text-xs text-gray-400 mt-1">{new Date(m.created_at).toLocaleString()}</div>
+            {/* show Edit if this message is by current user (simple check) */}
+            {m.sender_id === currentUserId && (
+              <div className="mt-1">
+                <button
+                  className="text-xs text-blue-600"
+                  onClick={() => {
+                    setEditingId(m.id);
+                    setEditedBody(m.body);
+                  }}
+                >
+                  Edit
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
