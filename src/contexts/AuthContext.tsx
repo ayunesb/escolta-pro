@@ -82,22 +82,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         setTimeout(async () => {
           const roles = await fetchUserRoles(session.user.id);
           setUserRoles(roles);
-            setActiveRole(roles[0] ?? null);
+          setActiveRole(roles[0] ?? null);
           setLoading(false);
         }, 0);
       } else {
-          setActiveRole(null);
+        setUserRoles([]);
+        setActiveRole(null);
         setLoading(false);
-    const setRole = (role: UserRole) => {
-      if (userRoles.includes(role)) {
-        setActiveRole(role);
-      }
-    };
       }
     });
 

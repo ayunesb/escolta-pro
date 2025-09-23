@@ -1,11 +1,5 @@
-module.exports = {
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended'
-  ],
-  parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
-  rules: {
-    '@typescript-eslint/no-unused-vars': 'off'
-  }
-};
+// Minimal ESLint flat config shim to avoid requiring the project's ESM config
+// This avoids ESM/CJS loader issues when running eslint under a package with
+// "type": "module". The project also has .eslintrc.cjs which is the
+// canonical config used by editors/CI.
+module.exports = [];

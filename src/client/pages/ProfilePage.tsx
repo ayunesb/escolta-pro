@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Shield, Star, MapPin, CheckCircle } from 'lucide-react';
@@ -20,6 +21,21 @@ interface Guard {
   status?: string;
   company_id?: string;
 }
+interface Guard {
+  id: string;
+  photo_url?: string | null;
+  skills?: Record<string, boolean> | null;
+  rating: number;
+  city?: string | null;
+  hourly_rate_mxn_cents?: number | null;
+  armed_hourly_surcharge_mxn_cents?: number | null;
+  vehicle_hourly_rate_mxn_cents?: number | null;
+  armored_hourly_surcharge_mxn_cents?: number | null;
+  dress_codes?: string[] | null;
+  status?: string | null;
+  company_id?: string | null;
+}
+}
 
 interface ProfilePageProps {
   navigate: (path: string) => void;
@@ -29,6 +45,7 @@ interface ProfilePageProps {
 const ProfilePage = ({ navigate, id }: ProfilePageProps) => {
   const [guard, setGuard] = useState<Guard | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!id) {
@@ -42,18 +59,18 @@ const ProfilePage = ({ navigate, id }: ProfilePageProps) => {
           .rpc('get_public_guard_by_id', { _id: id });
         
         if (error) {
-          console.error('Error fetching guard:', error);
+        toast.error('Error fetching guard');
           navigate('/home');
         } else {
-          const rows = (data as any[]) || [];
+        const rows = (data as unknown[] | null) || [];
           if (rows.length === 0) {
             navigate('/home');
           } else {
-            setGuard(rows[0] as any);
+          setGuard(rows[0] as Guard);
           }
         }
       } catch (error) {
-        console.error('Error fetching guard:', error);
+        toast.error('Error fetching guard');
         navigate('/home');
       } finally {
         setLoading(false);

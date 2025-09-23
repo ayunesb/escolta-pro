@@ -99,11 +99,10 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
           table: 'bookings',
           filter: `id=eq.${bookingId}`,
         },
-        (payload) => {
-          console.log('Booking updated:', payload);
-          const updatedBooking = payload.new as any;
-          
-          setBooking(prev => prev ? { ...prev, ...updatedBooking } : null);
+        (payload: any) => {
+          const updatedBooking = payload.new as Partial<BookingDetail> | undefined;
+
+          setBooking(prev => prev ? { ...prev, ...(updatedBooking || {}) } : null);
           
           // Show toast for status changes
           if (booking && updatedBooking.status !== booking.status) {
@@ -114,7 +113,7 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
               cancelled: 'Your booking has been cancelled',
             };
             
-            const message = statusMessages[updatedBooking.status as keyof typeof statusMessages];
+            const message = statusMessages[String(updatedBooking?.status) as keyof typeof statusMessages];
             if (message) {
               toast({
                 title: 'Booking Update',
@@ -149,7 +148,7 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
 
       if (bookingError) throw bookingError;
 
-      let bookingWithGuard = bookingData;
+  let bookingWithGuard: BookingDetail | null = bookingData as BookingDetail | null;
 
       // If there's an assignment, get guard details separately
       if (bookingData.assignments && bookingData.assignments.length > 0) {
@@ -168,7 +167,7 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
           .eq('id', assignment.guard_id)
           .single();
 
-        if (!guardError && guardData) {
+          if (!guardError && guardData) {
           // Get user profile for the guard
           const { data: profileData } = await supabase
             .from('profiles')
@@ -177,8 +176,12 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
             .single();
 
           // Construct the proper data structure directly
+          // Build booking object without the original `assignments` array
+          // Copy bookingData excluding `assignments`
+          const bookingRest = JSON.parse(JSON.stringify(bookingData));
+          delete bookingRest.assignments;
           bookingWithGuard = {
-            ...bookingData,
+            ...bookingRest,
             assignment: {
               id: assignment.id,
               status: assignment.status,
@@ -194,32 +197,36 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
                 }
               }
             }
-          } as any;
-          delete bookingWithGuard.assignments;
-        } else {
+          } as BookingDetail;
+          } else {
           // No guard data, just include assignment without guard
-          bookingWithGuard = {
-            ...bookingData,
-            assignment: {
-              id: assignment.id,
-              status: assignment.status,
-              guard: null
-            }
-          } as any;
-          delete bookingWithGuard.assignments;
+            const bookingRest = JSON.parse(JSON.stringify(bookingData));
+            delete bookingRest.assignments;
+            bookingWithGuard = {
+              ...bookingRest,
+              assignment: {
+                id: assignment.id,
+                status: assignment.status,
+                guard: null
+              }
+            } as BookingDetail;
         }
       } else {
         // No assignment
+        const bookingRest = JSON.parse(JSON.stringify(bookingData));
+        delete bookingRest.assignments;
         bookingWithGuard = {
-          ...bookingData,
+          ...bookingRest,
           assignment: undefined
-        } as any;
-        delete bookingWithGuard.assignments;
+        } as BookingDetail;
       }
-      
       setBooking(bookingWithGuard);
     } catch (error) {
-      console.error('Error fetching booking details:', error);
+      toast({
+        title: 'Error fetching booking details',
+        description: String(error),
+        variant: 'destructive'
+      });
       toast({
         title: "Error",
         description: "Failed to load booking details",
@@ -261,10 +268,6 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
         variant: "destructive",
       });
     }
-  };
-
-  const handleEmergencyAlert = () => {
-    setActiveTab('emergency');
   };
 
   if (loading) {
@@ -469,9 +472,6 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
             )}
           </TabsContent>
 
-          <TabsContent value="messages">
-            <MessageThread bookingId={booking.id} />
-          </TabsContent>
 
           <TabsContent value="tracking">
             {booking.assignment?.id ? (

@@ -16,6 +16,9 @@ export type ChartConfig = {
   )
 }
 
+// Lightweight payload datum type used by tooltip/legend helpers
+export type ChartDatum = { value?: number; name?: string; dataKey?: string; payload?: Record<string, any> } | Record<string, any>;
+
 type ChartContextProps = {
   config: ChartConfig
 }
@@ -104,17 +107,17 @@ const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     active?: boolean
-    payload?: Array<any>
-    label?: any
-    hideLabel?: boolean
-    hideIndicator?: boolean
-    indicator?: "line" | "dot" | "dashed"
-    nameKey?: string
-    labelKey?: string
-    labelFormatter?: (label: any, payload: Array<any>) => React.ReactNode
-    formatter?: (value: any, name: any, item: any, index: number, payload: any) => React.ReactNode
-    labelClassName?: string
-    color?: string
+  payload?: Array<ChartDatum>
+  label?: string | number | null
+  hideLabel?: boolean
+  hideIndicator?: boolean
+  indicator?: "line" | "dot" | "dashed"
+  nameKey?: string
+  labelKey?: string
+  labelFormatter?: (label: string | number | null, payload: Array<ChartDatum>) => React.ReactNode
+  formatter?: (value: number | string, name: string | undefined, item: ChartDatum, index: number, payload: any) => React.ReactNode
+  labelClassName?: string
+  color?: string
   }
 >(
   (
@@ -145,15 +148,18 @@ const ChartTooltipContent = React.forwardRef<
       const [item] = payload
       const key = `${labelKey || item.dataKey || item.name || "value"}`
       const itemConfig = getPayloadConfigFromPayload(config, item, key)
-      const value =
+      const rawValue =
         !labelKey && typeof label === "string"
           ? config[label as keyof typeof config]?.label || label
           : itemConfig?.label
+      const value: string | number | null =
+        rawValue === undefined || rawValue === null ? null : String(rawValue)
 
       if (labelFormatter) {
+        const rendered = labelFormatter(value, payload)
         return (
           <div className={cn("font-medium", labelClassName)}>
-            {labelFormatter(value, payload)}
+            {rendered as React.ReactNode}
           </div>
         )
       }
@@ -192,7 +198,8 @@ const ChartTooltipContent = React.forwardRef<
           {payload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
-            const indicatorColor = color || item.payload.fill || item.color
+            const indicatorColor =
+              color || (item && typeof item === 'object' && 'payload' in item && item.payload?.fill) || (item as any).color
 
             return (
               <div

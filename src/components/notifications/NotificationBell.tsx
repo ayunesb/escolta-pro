@@ -8,11 +8,21 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
 import { formatDistanceToNow } from 'date-fns';
 
+type Notification = {
+  id: string;
+  title: string;
+  message?: string;
+  read?: boolean;
+  created_at: string;
+  action_url?: string | null;
+  type?: string | null;
+}
+
 const NotificationBell = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useRealtimeNotifications();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = async (notification: Notification) => {
     if (!notification.read) {
       await markAsRead(notification.id);
     }
@@ -79,7 +89,7 @@ const NotificationBell = () => {
                 </CardContent>
               </Card>
             ) : (
-              notifications.map((notification) => (
+              notifications.map((notification: Notification) => (
                 <Card
                   key={notification.id}
                   className={`cursor-pointer transition-colors hover:bg-muted/50 ${
