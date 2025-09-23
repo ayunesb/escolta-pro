@@ -46,10 +46,6 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
   const [loading, setLoading] = useState(true);
   const [currentLang] = useState<Lang>(getPreferredLanguage());
 
-  useEffect(() => {
-    loadProfile();
-  }, [user, loadProfile]);
-
   const loadProfile = async () => {
     if (!user) return;
 
@@ -93,6 +89,10 @@ const AccountPage = ({ navigate }: AccountPageProps) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {

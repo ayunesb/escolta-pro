@@ -8,10 +8,12 @@ import { fileURLToPath } from "node:url";
 export default defineConfig(async ({ mode }) => {
   const dirname = path.dirname(fileURLToPath(import.meta.url));
   const plugins = [react()];
+  
   if (mode === 'development') {
     const { componentTagger } = await import('lovable-tagger');
-    plugins.push(componentTagger());
+    plugins.push(componentTagger() as any);
   }
+  
   return {
     build: {
       rollupOptions: {

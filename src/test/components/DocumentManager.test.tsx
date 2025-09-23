@@ -47,6 +47,8 @@ describe('DocumentManager', () => {
       hasRole: vi.fn().mockReturnValue(false),
       session: null,
       userRoles: [],
+      activeRole: null,
+      setRole: vi.fn(),
       loading: false,
       signIn: vi.fn(),
       signUp: vi.fn(),

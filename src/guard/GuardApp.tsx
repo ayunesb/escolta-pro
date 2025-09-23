@@ -8,27 +8,23 @@ import GuardRouter from "./GuardRouter";
 
 const queryClient = new QueryClient();
 
-import { AccessibilityProvider } from '@/components/AccessibilityProvider';
-
 const GuardApp = () => {
   // ...existing code...
   
   return (
-    <AccessibilityProvider>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="dark" storageKey="blindado-guard-theme">
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <GuardRouter />
-              {/* Overlays portal container */}
-              <div id="overlays" />
-            </TooltipProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </AccessibilityProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="dark" storageKey="blindado-guard-theme">
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <GuardRouter />
+            {/* Overlays portal container */}
+            <div id="overlays" />
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 };
 

@@ -28,7 +28,7 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+const IntersectionObserverMock = class IntersectionObserver {
   root = null
   rootMargin = ''
   thresholds = []
@@ -46,4 +46,7 @@ global.IntersectionObserver = class IntersectionObserver {
   takeRecords() {
     return []
   }
-} as unknown as IntersectionObserver
+} as any;
+
+IntersectionObserverMock.prototype = IntersectionObserver.prototype;
+global.IntersectionObserver = IntersectionObserverMock;
