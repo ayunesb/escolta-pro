@@ -7,14 +7,18 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import './index.css'
 
-console.warn('🚀 Client app initializing...');
+if (import.meta.env.DEV) console.warn('🚀 Client app initializing...');
 
 // Production performance monitoring
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   // Disable console logs in production
+  // eslint-disable-next-line no-console
   const originalLog = console.log;
+   
   const originalWarn = console.warn;
+  // eslint-disable-next-line no-console
   console.log = () => {};
+   
   console.warn = () => {};
   
   // Global error handler

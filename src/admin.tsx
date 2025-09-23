@@ -5,12 +5,14 @@ import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import './index.css';
 
-console.warn('🚀 Admin app initializing...');
+if (import.meta.env.DEV) console.warn('🚀 Admin app initializing...');
 
 // Production performance monitoring
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   // Disable console logs in production
+  // eslint-disable-next-line no-console
   console.log = () => {};
+   
   console.warn = () => {};
   
   // Global error handler
