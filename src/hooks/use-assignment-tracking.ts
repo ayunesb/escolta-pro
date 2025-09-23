@@ -31,29 +31,29 @@ export const useAssignmentTracking = (assignmentId?: string) => {
         schema: 'public',
         table: 'assignments',
         filter: `id=eq.${assignmentId}`
-      }, (payload) => {
-        const newData = payload.new as any;
+      }, (payload: any) => {
+        const newData = payload.new as Record<string, unknown> | undefined;
         const gpsTrail: Array<{ lat: number; lng: number; timestamp: string }> = 
-          Array.isArray(newData.gps_trail) ? 
-            newData.gps_trail
+          Array.isArray(newData?.gps_trail) ? 
+            (newData!.gps_trail as unknown[])
               .filter((item): item is { lat: number; lng: number; timestamp: string } => 
                 item !== null && 
                 typeof item === 'object' && 
-                'lat' in item && 'lng' in item &&
-                typeof (item as any).lat === 'number' && 
-                typeof (item as any).lng === 'number' &&
-                typeof (item as any).timestamp === 'string'
+                'lat' in (item as any) && 'lng' in (item as any) &&
+                typeof ((item as any).lat) === 'number' && 
+                typeof ((item as any).lng) === 'number' &&
+                typeof ((item as any).timestamp) === 'string'
               ) : [];
 
         setAssignment({
-          id: newData.id,
-          bookingId: newData.booking_id,
-          guardId: newData.guard_id,
-          status: newData.status as Assignment['status'],
-          checkInTs: newData.check_in_ts,
-          checkOutTs: newData.check_out_ts,
-          onSiteTs: newData.on_site_ts,
-          inProgressTs: newData.in_progress_ts,
+          id: String((newData && (newData as any).id) ?? ''),
+          bookingId: String((newData && (newData as any).booking_id) ?? ''),
+          guardId: String((newData && (newData as any).guard_id) ?? ''),
+          status: String((newData && (newData as any).status) ?? 'offered') as Assignment['status'],
+          checkInTs: (newData && (newData as any).check_in_ts) ?? undefined,
+          checkOutTs: (newData && (newData as any).check_out_ts) ?? undefined,
+          onSiteTs: (newData && (newData as any).on_site_ts) ?? undefined,
+          inProgressTs: (newData && (newData as any).in_progress_ts) ?? undefined,
           gpsTrail
         });
       })
@@ -87,14 +87,14 @@ export const useAssignmentTracking = (assignmentId?: string) => {
 
     const gpsTrail: Array<{ lat: number; lng: number; timestamp: string }> = 
       Array.isArray(data.gps_trail) ? 
-        data.gps_trail
+        (data.gps_trail as unknown[])
           .filter((item): item is { lat: number; lng: number; timestamp: string } => 
             item !== null && 
             typeof item === 'object' && 
-            'lat' in item && 'lng' in item &&
-            typeof (item as any).lat === 'number' && 
-            typeof (item as any).lng === 'number' &&
-            typeof (item as any).timestamp === 'string'
+            'lat' in (item as any) && 'lng' in (item as any) &&
+            typeof ((item as any).lat) === 'number' && 
+            typeof ((item as any).lng) === 'number' &&
+            typeof ((item as any).timestamp) === 'string'
           ) : [];
 
     setAssignment({

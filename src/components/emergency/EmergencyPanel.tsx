@@ -116,11 +116,12 @@ export const EmergencyPanel = ({ bookingId, assignmentId }: EmergencyPanelProps)
 
           if (uploadError) throw uploadError;
 
-          const { data: { publicUrl } } = supabase.storage
-            .from('incidents')
-            .getPublicUrl(filePath);
-
-          mediaUrls.push(publicUrl);
+          // Use signed URL for private access
+          const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke('document_signed_url', {
+            body: { document_path: filePath, expires_in: 300 }
+          });
+          if (signedUrlError || !signedUrlData?.signed_url) throw signedUrlError || new Error('Failed to generate signed URL');
+          mediaUrls.push(signedUrlData.signed_url);
         }
       }
 

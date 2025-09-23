@@ -4,6 +4,7 @@ import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { QueryContextProvider } from './contexts/QueryContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 import './index.css'
 
 console.log('🚀 Client app initializing...');
@@ -73,10 +74,14 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
-    <QueryContextProvider>
-      <ThemeProvider defaultTheme="dark" storageKey="blindado-client-theme">
-        <ClientApp />
-      </ThemeProvider>
-    </QueryContextProvider>
+    <AccessibilityProvider>
+      <QueryContextProvider>
+        <AuthProvider>
+          <ThemeProvider defaultTheme="dark" storageKey="blindado-client-theme">
+            <ClientApp />
+          </ThemeProvider>
+        </AuthProvider>
+      </QueryContextProvider>
+    </AccessibilityProvider>
   </ErrorBoundary>
 );

@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react'
 import { screen, waitFor } from '@testing-library/dom'
+import { act } from 'react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DocumentManager } from '@/components/documents/DocumentManager'
@@ -54,35 +55,49 @@ describe('DocumentManager', () => {
     })
   })
 
-  it('renders upload section', () => {
-    render(<DocumentManager />)
-    
+  it('renders upload section', async () => {
+    await act(async () => {
+      render(<DocumentManager />)
+      // allow any pending promises in effects to resolve
+      await Promise.resolve()
+    })
+
     expect(screen.getByText('Upload Document')).toBeInTheDocument()
     expect(screen.getByLabelText('Select File')).toBeInTheDocument()
     expect(screen.getByLabelText('Document Type')).toBeInTheDocument()
   })
 
-  it('renders documents list section', () => {
-    render(<DocumentManager />)
-    
+  it('renders documents list section', async () => {
+    await act(async () => {
+      render(<DocumentManager />)
+      await Promise.resolve()
+    })
+
     expect(screen.getByText(/Documents \(0\)/)).toBeInTheDocument()
   })
 
-  it('shows file validation message', () => {
-    render(<DocumentManager />)
-    
+  it('shows file validation message', async () => {
+    await act(async () => {
+      render(<DocumentManager />)
+      await Promise.resolve()
+    })
+
     expect(screen.getByText('Max size: 10.0MB')).toBeInTheDocument()
   })
 
   it('handles file selection', async () => {
     const user = userEvent.setup()
-    render(<DocumentManager />)
-    
+    await act(async () => {
+      render(<DocumentManager />)
+    })
+
     const fileInput = screen.getByLabelText('Select File')
     const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
-    
-    await user.upload(fileInput, file)
-    
+
+    await act(async () => {
+      await user.upload(fileInput, file)
+    })
+
     await waitFor(() => {
       expect(screen.getByText('test.pdf')).toBeInTheDocument()
     })
@@ -90,13 +105,17 @@ describe('DocumentManager', () => {
 
   it('shows upload button when file is selected', async () => {
     const user = userEvent.setup()
-    render(<DocumentManager />)
-    
+    await act(async () => {
+      render(<DocumentManager />)
+    })
+
     const fileInput = screen.getByLabelText('Select File')
     const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
-    
-    await user.upload(fileInput, file)
-    
+
+    await act(async () => {
+      await user.upload(fileInput, file)
+    })
+
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Upload' })).toBeInTheDocument()
     })
@@ -104,13 +123,17 @@ describe('DocumentManager', () => {
 
   it('validates file size', async () => {
     const user = userEvent.setup()
-    render(<DocumentManager maxSizeBytes={1024} />)
-    
+    await act(async () => {
+      render(<DocumentManager maxSizeBytes={1024} />)
+    })
+
     const fileInput = screen.getByLabelText('Select File')
     const largeFile = new File(['x'.repeat(2048)], 'large.pdf', { type: 'application/pdf' })
-    
-    await user.upload(fileInput, largeFile)
-    
+
+    await act(async () => {
+      await user.upload(fileInput, largeFile)
+    })
+
     // Should not show the file since it's too large
     await waitFor(() => {
       expect(screen.queryByText('large.pdf')).not.toBeInTheDocument()
@@ -119,11 +142,15 @@ describe('DocumentManager', () => {
 
   it('changes document type', async () => {
     const user = userEvent.setup()
-    render(<DocumentManager />)
-    
+    await act(async () => {
+      render(<DocumentManager />)
+    })
+
     const select = screen.getByLabelText('Document Type')
-    await user.selectOptions(select, 'license')
-    
+    await act(async () => {
+      await user.selectOptions(select, 'license')
+    })
+
     expect(select).toHaveValue('license')
   })
 })

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import MessageThread from '@/components/messaging/MessageThread';
+import { MessagesTab } from '@/components/messaging/MessagesTab';
 import { LiveMap } from '@/components/tracking/LiveMap';
 import { EmergencyPanel } from '@/components/emergency/EmergencyPanel';
 import { supabase } from '@/integrations/supabase/client';
@@ -497,6 +497,10 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
               bookingId={booking.id}
               assignmentId={booking.assignment?.id}
             />
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <MessagesTab bookingId={bookingId} />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 
-export function useOptimisticUpdate<T>(
+export function useOptimisticUpdate<T extends { id: string }>(
   initialData: T[],
   updateFn: (id: string, updates: Partial<T>) => Promise<void>,
   onError?: (error: any) => void
@@ -17,8 +17,8 @@ export function useOptimisticUpdate<T>(
     const previousData = [...data];
     setData(prev => 
       prev.map(item => 
-        (item as any).id === id 
-          ? { ...item, ...optimisticData || updates }
+        item.id === id
+          ? ({ ...item, ...(optimisticData || updates) } as T)
           : item
       )
     );
@@ -30,8 +30,8 @@ export function useOptimisticUpdate<T>(
       // If successful, apply the real updates
       setData(prev => 
         prev.map(item => 
-          (item as any).id === id 
-            ? { ...item, ...updates }
+          item.id === id
+            ? ({ ...item, ...updates } as T)
             : item
         )
       );
@@ -58,7 +58,7 @@ export function useOptimisticUpdate<T>(
   };
 }
 
-export function useOptimisticAdd<T>(
+export function useOptimisticAdd<T extends { id: string }>(
   initialData: T[],
   addFn: (item: Partial<T>) => Promise<T>,
   onError?: (error: any) => void
@@ -74,11 +74,11 @@ export function useOptimisticAdd<T>(
     
     // Generate temporary ID for optimistic item
     const tempId = `temp_${Date.now()}`;
-    const optimisticData = optimisticItem || { 
+    const optimisticData = optimisticItem || ( { 
       ...item, 
       id: tempId,
       created_at: new Date().toISOString()
-    } as T;
+    } as unknown as T );
 
     // Add optimistic item immediately
     setData(prev => [optimisticData, ...prev]);
@@ -90,13 +90,13 @@ export function useOptimisticAdd<T>(
       // Replace optimistic item with real item
       setData(prev => 
         prev.map(existingItem => 
-          (existingItem as any).id === tempId ? newItem : existingItem
+          existingItem.id === tempId ? newItem : existingItem
         )
       );
     } catch (error) {
       // Remove optimistic item on error
       setData(prev => 
-        prev.filter(existingItem => (existingItem as any).id !== tempId)
+        prev.filter(existingItem => existingItem.id !== tempId)
       );
       
       if (onError) {

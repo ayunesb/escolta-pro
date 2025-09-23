@@ -1,0 +1,6 @@
+{
+  "NSLocationWhenInUseUsageDescription": "We use your location to match you with nearby jobs and provide real-time protection.",
+  "NSUserTrackingUsageDescription": "We use tracking to improve app security and user experience.",
+  "NSCameraUsageDescription": "We use your camera for KYC and document uploads.",
+  "NSPhotoLibraryUsageDescription": "We use your photo library for profile and document uploads."
+}

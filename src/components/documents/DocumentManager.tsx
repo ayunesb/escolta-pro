@@ -233,7 +233,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       if (data?.signed_url) {
         window.open(data.signed_url, '_blank');
       } else {
-        throw new Error('Failed to generate download link');
+        throw new Error('Failed to generate signed download link');
       }
     } catch (error) {
       console.error('Error downloading document:', error);

@@ -1,0 +1,23 @@
+{
+  "dataCollected": [
+    "Location",
+    "Device Token",
+    "Profile Info",
+    "Payment Info"
+  ],
+  "dataShared": [
+    "None"
+  ],
+  "purpose": [
+    "App functionality",
+    "Security",
+    "Payments"
+  ],
+  "permissions": [
+    "ACCESS_FINE_LOCATION",
+    "POST_NOTIFICATIONS",
+    "INTERNET"
+  ]
+}
+  ]
+}
