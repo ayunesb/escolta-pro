@@ -60,9 +60,12 @@ const HomePage = ({ navigate }: HomePageProps) => {
     try {
       if (hasRole('client')) {
         // Clients see available guards
-        const { data, error } = await supabase.rpc('get_public_guards');
+        const { data: guards, error } = await supabase
+          .from('guards')
+          .select('id, photo_url, skills, rating, city, hourly_rate_mxn_cents, armed_hourly_surcharge_mxn_cents, active')
+          .eq('active', true);
         if (error) throw error;
-        setGuards((data || []) as unknown as Guard[]);
+        setGuards(guards || []);
       } else if (hasRole('freelancer')) {
         // Guards see recent job opportunities
         const [bookingsRes] = await Promise.all([

@@ -32,11 +32,12 @@ const BookingSuccessPage = ({ navigate, bookingId }: BookingSuccessPageProps) =>
         if (error) throw error;
         setBooking(data);
 
-        // Update booking status to 'matching' now that payment is confirmed
+        // Atomic update: only set status to 'matching' if current status is 'pending'
         await supabase
           .from('bookings')
           .update({ status: 'matching' })
-          .eq('id', bookingId);
+          .eq('id', bookingId)
+          .eq('status', 'pending');
 
       } catch (error) {
         console.error('Error fetching booking:', error);

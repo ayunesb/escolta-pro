@@ -70,9 +70,10 @@ const FileUpload = ({
       if (uploadError) throw uploadError;
 
       // Get signed URL for private buckets
-      const { data: signedUrlData, error: urlError } = await supabase.storage
-        .from(bucketName)
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
+        // Use edge function for signed URL
+        const { data: signedUrlData, error: urlError } = await supabase.functions.invoke('document_signed_url', {
+          body: { document_path: filePath, expires_in: 300 }
+        });
 
       if (urlError) throw urlError;
 

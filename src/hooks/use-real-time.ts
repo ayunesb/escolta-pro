@@ -2,9 +2,16 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+type Booking = {
+  id: string;
+  client_id: string;
+  created_at: string;
+  [key: string]: unknown;
+}
+
 export function useRealTimeBookings() {
   const { user } = useAuth();
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,18 +44,20 @@ export function useRealTimeBookings() {
           table: 'bookings',
           filter: `client_id=eq.${user.id}`
         },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setBookings(prev => [payload.new as any, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
+        (payload: any) => {
+          const newRecord = payload.new as Booking | undefined;
+          const oldRecord = payload.old as Booking | undefined;
+          if (payload.eventType === 'INSERT' && newRecord) {
+            setBookings(prev => [newRecord, ...prev]);
+          } else if (payload.eventType === 'UPDATE' && newRecord) {
             setBookings(prev => 
               prev.map(booking => 
-                booking.id === payload.new.id ? payload.new as any : booking
+                booking.id === newRecord.id ? newRecord : booking
               )
             );
-          } else if (payload.eventType === 'DELETE') {
+          } else if (payload.eventType === 'DELETE' && oldRecord) {
             setBookings(prev => 
-              prev.filter(booking => booking.id !== payload.old.id)
+              prev.filter(booking => booking.id !== oldRecord.id)
             );
           }
         }
@@ -80,7 +89,8 @@ export function useRealTimeBookings() {
 
 export function useRealTimeAssignments() {
   const { user } = useAuth();
-  const [assignments, setAssignments] = useState<any[]>([]);
+  type Assignment = { id: string } & Record<string, unknown>
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -121,18 +131,20 @@ export function useRealTimeAssignments() {
           table: 'assignments',
           filter: `guard_id=eq.${user.id}`
         },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setAssignments(prev => [payload.new as any, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
+        (payload: any) => {
+          const newRecord = payload.new as Assignment | undefined;
+          const oldRecord = payload.old as Assignment | undefined;
+          if (payload.eventType === 'INSERT' && newRecord) {
+            setAssignments(prev => [newRecord, ...prev]);
+          } else if (payload.eventType === 'UPDATE' && newRecord) {
             setAssignments(prev => 
               prev.map(assignment => 
-                assignment.id === payload.new.id ? payload.new as any : assignment
+                assignment.id === newRecord.id ? newRecord : assignment
               )
             );
-          } else if (payload.eventType === 'DELETE') {
+          } else if (payload.eventType === 'DELETE' && oldRecord) {
             setAssignments(prev => 
-              prev.filter(assignment => assignment.id !== payload.old.id)
+              prev.filter(assignment => assignment.id !== oldRecord.id)
             );
           }
         }

@@ -6,6 +6,7 @@ import AssignmentsPage from './pages/AssignmentsPage';
 import AssignmentDetailPage from './pages/AssignmentDetailPage';
 import BookingsPage from './pages/BookingsPage';
 import GuardAccountPage from './pages/GuardAccountPage';
+import ProfileEditPage from './pages/ProfileEditPage';
 import CompanyPage from './pages/CompanyPage';
 import CompanyPermitsPage from './pages/CompanyPermitsPage';
 import CompanyVehiclesPage from './pages/CompanyVehiclesPage';
@@ -68,7 +69,7 @@ const GuardRouter = () => {
     case '/bookings':
       return <BookingsPage navigate={navigate} />;
     case '/account':
-      return <GuardAccountPage navigate={navigate} />;
+      return <ProfileEditPage />;
     case '/company':
       return <CompanyPage navigate={navigate} />;
     case '/company-permits':
