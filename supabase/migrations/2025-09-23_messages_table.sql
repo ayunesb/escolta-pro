@@ -17,7 +17,7 @@ returns boolean language sql stable as $$
     where b.id = bid and (
       b.client_id = auth.uid()
       or b.assigned_user_id = auth.uid()
-      or b.company_id = public.my_company_id()
+  or b.assigned_company_id = public.my_company_id()
     )
   );
 $$;
