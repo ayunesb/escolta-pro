@@ -13,7 +13,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  console.log('✅ Main App component rendered');
+  console.warn('✅ Main App component rendered');
   
   return (
     <QueryClientProvider client={queryClient}>

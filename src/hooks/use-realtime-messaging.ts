@@ -65,7 +65,7 @@ export const useRealtimeMessaging = (bookingId: string) => {
           filter: `booking_id=eq.${bookingId}`,
         },
         async (payload) => {
-          console.log('New message received:', payload);
+          console.warn('New message received:', payload);
           const newMessage = payload.new as Message;
           
           // Fetch sender profile for the new message

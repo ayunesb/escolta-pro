@@ -86,7 +86,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userType
 
   const exportData = async () => {
     // Placeholder for export functionality
-    console.log('Exporting analytics data...');
+    console.warn('Exporting analytics data...');
   };
 
   const renderClientAnalytics = () => (

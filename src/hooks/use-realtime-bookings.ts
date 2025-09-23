@@ -89,7 +89,7 @@ export const useRealtimeBookings = () => {
           ...(filter && { filter }),
         },
         (payload) => {
-          console.log('Booking updated:', payload);
+          console.warn('Booking updated:', payload);
           const updatedBooking = payload.new as Booking;
           
           setBookings(prev => 
@@ -139,7 +139,7 @@ export const useRealtimeBookings = () => {
           filter: 'status=eq.matching',
         },
         (payload) => {
-          console.log('New booking opportunity:', payload);
+          console.warn('New booking opportunity:', payload);
           const newBooking = payload.new as Booking;
           
           setBookings(prev => [newBooking, ...prev]);

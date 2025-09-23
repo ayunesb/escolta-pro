@@ -56,7 +56,7 @@ export const useRealtimeNotifications = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('New notification received:', payload);
+          console.warn('New notification received:', payload);
           const newNotification = payload.new as Notification;
           
           setNotifications(prev => [newNotification, ...prev]);
@@ -87,7 +87,7 @@ export const useRealtimeNotifications = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('Notification updated:', payload);
+          console.warn('Notification updated:', payload);
           const updatedNotification = payload.new as Notification;
           
           setNotifications(prev => 
