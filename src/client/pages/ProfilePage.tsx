@@ -8,33 +8,18 @@ import { supabase } from '@/integrations/supabase/client';
 import BottomNav from '@/components/mobile/BottomNav';
 
 interface Guard {
-  id: string;
-  photo_url?: string;
-  skills: any;
-  rating: number;
-  city?: string;
-  hourly_rate_mxn_cents?: number;
-  armed_hourly_surcharge_mxn_cents?: number;
-  vehicle_hourly_rate_mxn_cents?: number;
-  armored_hourly_surcharge_mxn_cents?: number;
-  dress_codes?: string[];
-  status?: string;
-  company_id?: string;
-}
-interface Guard {
-  id: string;
-  photo_url?: string | null;
-  skills?: Record<string, boolean> | null;
-  rating: number;
-  city?: string | null;
-  hourly_rate_mxn_cents?: number | null;
-  armed_hourly_surcharge_mxn_cents?: number | null;
-  vehicle_hourly_rate_mxn_cents?: number | null;
-  armored_hourly_surcharge_mxn_cents?: number | null;
-  dress_codes?: string[] | null;
-  status?: string | null;
-  company_id?: string | null;
-}
+  id: string
+  photo_url?: string | null
+  skills?: Record<string, boolean> | null
+  rating: number
+  city?: string | null
+  hourly_rate_mxn_cents?: number | null
+  armed_hourly_surcharge_mxn_cents?: number | null
+  vehicle_hourly_rate_mxn_cents?: number | null
+  armored_hourly_surcharge_mxn_cents?: number | null
+  dress_codes?: string[] | null
+  status?: string | null
+  company_id?: string | null
 }
 
 interface ProfilePageProps {
