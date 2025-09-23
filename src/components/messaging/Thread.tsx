@@ -10,7 +10,7 @@ type Props = {
 };
 
 export default function Thread({ bookingId }: Props) {
-  const { messages, send } = useChat(bookingId);
+  const { messages, send, updateMessage } = useChat(bookingId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedBody, setEditedBody] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -24,10 +24,15 @@ export default function Thread({ bookingId }: Props) {
     return () => { mounted = false };
   }, []);
 
-  // helper to update message
-  async function updateMessage(id: string) {
-    const { error } = await supabase.from('messages').update({ body: editedBody }).eq('id', id);
-    if (!error) setEditingId(null);
+  // helper to update message (optimistic handled by hook)
+  async function onSave(id: string) {
+    try {
+      await updateMessage(id, editedBody);
+    } catch (e) {
+      console.error('update failed', e);
+    } finally {
+      setEditingId(null);
+    }
   }
 
   return (
@@ -44,7 +49,7 @@ export default function Thread({ bookingId }: Props) {
                   onChange={(e) => setEditedBody(e.target.value)}
                 />
                 <div className="flex space-x-2 mt-2">
-                  <button className="btn btn-sm" onClick={() => updateMessage(m.id)}>Save</button>
+                  <button className="btn btn-sm" onClick={() => onSave(m.id)}>Save</button>
                   <button className="btn btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
                 </div>
               </div>
@@ -53,7 +58,7 @@ export default function Thread({ bookingId }: Props) {
             )}
             <div className="text-xs text-gray-400 mt-1">{new Date(m.created_at).toLocaleString()}</div>
             {/* show Edit if this message is by current user (simple check) */}
-            {m.sender_id === currentUserId && (
+            {m.sender_id === currentUserId && messages.length && messages[messages.length - 1].id === m.id && (
               <div className="mt-1">
                 <button
                   className="text-xs text-blue-600"

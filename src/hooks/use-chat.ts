@@ -47,9 +47,30 @@ export function useChat(bookingId: string) {
     if (!bookingId || !body) return null;
     const user = await supabase.auth.getUser();
     const sender_id = user.data?.user?.id ?? null;
-    const res = await supabase.from('messages').insert({ booking_id: bookingId, sender_id, body }).select().single();
-    return (res.data as Message) ?? null;
+    const res = await sendMessage(supabase, bookingId, body);
+    if (res) setMessages((prev) => [...prev, res]);
+    return res;
   };
 
-  return { messages, send };
+  const updateMessage = async (id: string, newBody: string) => {
+    // optimistic update
+    const prev = messages;
+    setMessages((m) => m.map((it) => (it.id === id ? { ...it, body: newBody } : it)));
+    const { error } = await supabase.from('messages').update({ body: newBody }).eq('id', id);
+    if (error) {
+      // revert
+      setMessages(prev);
+      throw error;
+    }
+    return true;
+  };
+
+  return { messages, send, updateMessage };
+}
+
+export async function sendMessage(client: any, bookingId: string, body: string) {
+  const user = await client.auth.getUser();
+  const sender_id = user.data?.user?.id ?? null;
+  const res = await client.from('messages').insert({ booking_id: bookingId, sender_id, body }).select().single();
+  return res.data as Message | null;
 }
