@@ -2,17 +2,19 @@ import { useState, useEffect } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { Loader2, Receipt, CreditCard, DollarSign, Download, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 
+import { PaymentMethodsManager } from './PaymentMethodsManager';
+
 import { supabase } from '@/integrations/supabase/client';
 import { stripePromise } from '@/lib/stripe';
 import { getErrorMessage } from '@/types/stripe';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentMethodsManager } from './PaymentMethodsManager';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+// ...existing code...
 
 interface PaymentRecord {
   id: string;

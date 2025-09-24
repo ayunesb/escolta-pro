@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { Plus, CreditCard, Trash2, Loader2 } from 'lucide-react';
 
+import { PaymentMethodForm } from './PaymentMethodForm';
+
 import { supabase } from '@/integrations/supabase/client';
 import { stripePromise } from '@/lib/stripe';
 import { getErrorMessage } from '@/types/stripe';
@@ -12,7 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { PaymentMethodForm } from './PaymentMethodForm';
 
 interface PaymentMethod {
   id: string;
@@ -27,11 +28,11 @@ interface PaymentMethod {
 }
 
 interface PaymentMethodsManagerProps {
-  customerId?: string;
+  _customerId?: string;
 }
 
 export const PaymentMethodsManager: React.FC<PaymentMethodsManagerProps> = ({
-  customerId,
+  _customerId,
 }) => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
