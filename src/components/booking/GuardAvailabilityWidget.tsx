@@ -148,9 +148,8 @@ const GuardAvailabilityWidget = ({
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
                     {guard.photo_url ? (
-                      // eslint-disable-next-line jsx-a11y/img-redundant-alt
                       // using an img tag inside Avatar to avoid AvatarImage import
-                      <img src={guard.photo_url} alt="guard" className="w-full h-full object-cover rounded" />
+                      <img src={guard.photo_url} alt="Guard profile photo" className="w-full h-full object-cover rounded" />
                     ) : (
                       <AvatarFallback>
                         <Shield className="h-6 w-6" />
