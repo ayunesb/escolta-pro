@@ -12,16 +12,16 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-  "lint": "pnpm exec eslint -c .eslintrc.cjs --no-ignore $(git ls-files 'src/**/*.{ts,tsx,js,jsx}') --max-warnings=0",
+    "lint": "pnpm exec eslint -c .eslintrc.cjs --no-ignore $(git ls-files 'src/**/*.{ts,tsx,js,jsx}') --max-warnings=0",
+    "lint:runner": "node ./scripts/lint-runner.cjs --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
-  "smoke": "node ./scripts/smoke-runner.js",
+    "smoke": "node ./scripts/smoke-runner.js",
     "sync": "npm run build && npx cap sync",
     "ios": "npm run build && npx cap run ios",
-  "android": "npm run build && npx cap run android",
-  "lint:runner": "node ./scripts/lint-runner.js --max-warnings=0"
+    "android": "npm run build && npx cap run android"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
