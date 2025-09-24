@@ -2,8 +2,12 @@
   "name": "vite_react_shadcn_ts",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@8.8.0",
+  "packageManager": "pnpm@10.3.0",
   "version": "0.0.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
