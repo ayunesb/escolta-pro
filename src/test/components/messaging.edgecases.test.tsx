@@ -3,9 +3,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { mockUseChatThread, mockSendChatMessage, mockGetOrCreateBookingThread, ChatMessage } from '@/test/utils/mocks'
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {}
-}))
+// Use renderWithProviders to supply a mock supabase client when tests need it
+import { renderWithProviders, createMockSupabase } from '@/test/test-utils'
 
 // Base mock for useChatThread; tests will override with helpers
 vi.mock('@/hooks/useChatThread', () => ({
@@ -31,7 +30,7 @@ describe('MessagesTab edge cases', () => {
     ]
     mockUseChatThread(messages)
 
-    render(<MessagesTab bookingId="b1" />)
+  renderWithProviders(<MessagesTab bookingId="b1" />, { client: createMockSupabase() })
 
     await screen.findByText('Hi')
     const img = await screen.findByAltText('media')
@@ -45,10 +44,10 @@ describe('MessagesTab edge cases', () => {
     ]
     mockUseChatThread(messages)
 
-    render(<MessagesTab bookingId="b2" />)
+    renderWithProviders(<MessagesTab bookingId="b2" />, { client: createMockSupabase() })
 
-    await screen.findByText('System notice')
-    expect(screen.getByText('System')).toBeInTheDocument()
+  await screen.findByText('System notice')
+  expect(await screen.findByText('System')).toBeInTheDocument()
   })
 
   it('handles send error gracefully', async () => {
@@ -59,15 +58,15 @@ describe('MessagesTab edge cases', () => {
   const messages: ChatMessage[] = [ { id: 'm1', type: 'text', body: 'Hello', created_at: new Date().toISOString() } ]
   mockUseChatThread(messages)
 
-  const { getByPlaceholderText, getByText } = render(<MessagesTab bookingId="b3" />)
+  const { getByPlaceholderText } = renderWithProviders(<MessagesTab bookingId="b3" />, { client: createMockSupabase() })
 
-    await screen.findByText('Hello')
+  await screen.findByText('Hello')
 
-    const input = getByPlaceholderText('Type a message...') as HTMLInputElement
-    await userEvent.type(input, 'Fail message')
-    await userEvent.click(getByText('Send'))
+  const input = getByPlaceholderText('Type a message...') as HTMLInputElement
+  await userEvent.type(input, 'Fail message')
+  await userEvent.click(await screen.findByText('Send'))
 
-    // After failed send, input should still contain the message
-    expect(input).toHaveValue('Fail message')
+  // After failed send, input should still contain the message
+  expect(input).toHaveValue('Fail message')
   })
 })

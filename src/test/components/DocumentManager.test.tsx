@@ -5,27 +5,14 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DocumentManager } from '@/components/documents/DocumentManager'
 import { useAuth } from '@/contexts/AuthContext'
+import { renderWithProviders, createMockSupabase } from '@/test/test-utils'
 
 // Mock the auth context
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn()
 }))
 
-// Mock Supabase
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    storage: {
-      from: () => ({
-        list: vi.fn().mockResolvedValue({ data: [], error: null }),
-        upload: vi.fn().mockResolvedValue({ data: { path: 'test.pdf' }, error: null }),
-        remove: vi.fn().mockResolvedValue({ error: null }),
-      })
-    },
-    functions: {
-      invoke: vi.fn().mockResolvedValue({ data: { signed_url: 'https://example.com/signed' } })
-    }
-  }
-}))
+// We'll inject a mock supabase client using renderWithProviders when needed
 
 // Mock toast
 vi.mock('@/hooks/use-toast', () => ({
@@ -59,7 +46,17 @@ describe('DocumentManager', () => {
 
   it('renders upload section', async () => {
     await act(async () => {
-      render(<DocumentManager />)
+      const client = createMockSupabase()
+      // customize storage/functions implementations used by DocumentManager
+      client.storage = {
+        from: () => ({
+          list: vi.fn().mockResolvedValue({ data: [], error: null }),
+          upload: vi.fn().mockResolvedValue({ data: { path: 'test.pdf' }, error: null }),
+          remove: vi.fn().mockResolvedValue({ error: null }),
+        })
+      }
+      client.functions = { invoke: vi.fn().mockResolvedValue({ data: { signed_url: 'https://example.com/signed' } }) }
+      renderWithProviders(<DocumentManager />, { client })
       // allow any pending promises in effects to resolve
       await Promise.resolve()
     })
@@ -71,7 +68,9 @@ describe('DocumentManager', () => {
 
   it('renders documents list section', async () => {
     await act(async () => {
-      render(<DocumentManager />)
+      const client = createMockSupabase()
+      client.storage = { from: () => ({ list: vi.fn().mockResolvedValue({ data: [], error: null }) }) }
+      renderWithProviders(<DocumentManager />, { client })
       await Promise.resolve()
     })
 
@@ -80,7 +79,9 @@ describe('DocumentManager', () => {
 
   it('shows file validation message', async () => {
     await act(async () => {
-      render(<DocumentManager />)
+      const client = createMockSupabase()
+      client.storage = { from: () => ({ list: vi.fn().mockResolvedValue({ data: [], error: null }) }) }
+      renderWithProviders(<DocumentManager />, { client })
       await Promise.resolve()
     })
 
@@ -90,7 +91,9 @@ describe('DocumentManager', () => {
   it('handles file selection', async () => {
     const user = userEvent.setup()
     await act(async () => {
-      render(<DocumentManager />)
+      const client = createMockSupabase()
+      client.storage = { from: () => ({ list: vi.fn().mockResolvedValue({ data: [], error: null }) }) }
+      renderWithProviders(<DocumentManager />, { client })
     })
 
     const fileInput = screen.getByLabelText('Select File')
@@ -108,7 +111,9 @@ describe('DocumentManager', () => {
   it('shows upload button when file is selected', async () => {
     const user = userEvent.setup()
     await act(async () => {
-      render(<DocumentManager />)
+      const client = createMockSupabase()
+      client.storage = { from: () => ({ list: vi.fn().mockResolvedValue({ data: [], error: null }) }) }
+      renderWithProviders(<DocumentManager />, { client })
     })
 
     const fileInput = screen.getByLabelText('Select File')
@@ -126,7 +131,9 @@ describe('DocumentManager', () => {
   it('validates file size', async () => {
     const user = userEvent.setup()
     await act(async () => {
-      render(<DocumentManager maxSizeBytes={1024} />)
+      const client = createMockSupabase()
+      client.storage = { from: () => ({ list: vi.fn().mockResolvedValue({ data: [], error: null }) }) }
+      renderWithProviders(<DocumentManager maxSizeBytes={1024} />, { client })
     })
 
     const fileInput = screen.getByLabelText('Select File')
@@ -145,7 +152,9 @@ describe('DocumentManager', () => {
   it('changes document type', async () => {
     const user = userEvent.setup()
     await act(async () => {
-      render(<DocumentManager />)
+      const client = createMockSupabase()
+      client.storage = { from: () => ({ list: vi.fn().mockResolvedValue({ data: [], error: null }) }) }
+      renderWithProviders(<DocumentManager />, { client })
     })
 
     const select = screen.getByLabelText('Document Type')

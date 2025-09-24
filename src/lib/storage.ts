@@ -5,7 +5,7 @@ const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
 
 // When running tests locally without env vars, avoid calling createClient('', '') which errors.
 // Export a small mock supabase with the methods our hooks/components use.
-const createMockSupabase = () => {
+export const createMockSupabase = () => {
   const mock = {
     auth: {
       getUser: async () => ({ data: { user: null } }),
@@ -29,17 +29,11 @@ const createMockSupabase = () => {
         order(..._args: any[]) { return chain; },
         limit(..._args: any[]) { return chain; },
         // support .single() used after .select()/insert
-        single() { return Promise.resolve({ data: defaultMessages[0], error: null }); },
-        // support promise-style .then() after ordering/selecting
+        async single() { return { data: defaultMessages[0], error: null }; },
+        // support promise-style .then() after ordering/selecting - always async
         then(fn: any) {
           const data = table === 'messages' ? defaultMessages : [];
-          try {
-            // call synchronously so tests that don't await still see the update
-            fn({ data });
-            return Promise.resolve({ data });
-          } catch (e) {
-            return Promise.reject(e);
-          }
+          return Promise.resolve({ data }).then(fn);
         },
       };
       return chain;

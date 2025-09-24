@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useChat } from '../../hooks/use-chat';
 import Composer from './Composer';
-import { supabase } from '../../lib/storage';
+import { useSupabase } from '../../contexts/SupabaseContext';
 
 type Props = {
   bookingId: string;
@@ -13,6 +13,8 @@ export default function Thread({ bookingId }: Props) {
   const [editedBody, setEditedBody] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  const supabase = useSupabase();
+
   React.useEffect(() => {
     let mounted = true;
     supabase.auth.getUser().then((res) => {
@@ -20,7 +22,7 @@ export default function Thread({ bookingId }: Props) {
       setCurrentUserId(res.data.user?.id ?? null);
     });
     return () => { mounted = false };
-  }, []);
+  }, [supabase]);
 
   // helper to update message (optimistic handled by hook)
   async function onSave(id: string) {

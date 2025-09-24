@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { renderWithProviders, createMockSupabase } from '@/test/test-utils'
 import { mockUseChatThread, mockGetOrCreateBookingThread, ChatMessage } from '@/test/utils/mocks'
 import { MessagesTab } from '@/components/messaging/MessagesTab'
 
@@ -11,7 +12,7 @@ describe('MessagesTab realtime', () => {
     const initial: ChatMessage[] = [ { id: 'm1', type: 'text', body: 'Initial', created_at: new Date().toISOString() } ]
     const spy = mockUseChatThread(initial)
 
-    render(<MessagesTab bookingId="b-rt" />)
+  renderWithProviders(<MessagesTab bookingId="b-rt" />, { client: createMockSupabase() })
 
     await screen.findByText('Initial')
 
@@ -20,9 +21,9 @@ describe('MessagesTab realtime', () => {
     spy.mockImplementation(() => ({ messages: updated }))
 
     // Re-render to pick up new hook behavior (in real app the channel would update state)
-    render(<MessagesTab bookingId="b-rt" />)
+  renderWithProviders(<MessagesTab bookingId="b-rt" />, { client: createMockSupabase() })
 
-    await screen.findByText('Realtime')
-    expect(screen.getByText('Realtime')).toBeInTheDocument()
+  await screen.findByText('Realtime')
+  expect(await screen.findByText('Realtime')).toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { supabase } from '../lib/storage';
+import { useSupabase } from '../contexts/SupabaseContext';
 
 type Message = {
   id: string;
@@ -12,13 +12,14 @@ type Message = {
 export function useChat(bookingId: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const subRef = useRef<any>(null);
+  const supabase = useSupabase();
 
   useEffect(() => {
     if (!bookingId) return;
 
     let mounted = true;
 
-    supabase
+  supabase
       .from('messages')
       .select('*')
       .eq('booking_id', bookingId)
