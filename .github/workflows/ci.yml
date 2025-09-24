@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
   push:
     branches: [ main ]
 
@@ -33,14 +34,14 @@ jobs:
         run: |
           pnpm run typecheck
           pnpm run lint
-          pnpm test --silent
+          pnpm test -- --coverage
         shell: bash
         env:
           CI: true
 
-      - name: Upload test results
+      - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: vitest-results
-          path: ./coverage || ./
+          name: vitest-coverage
+          path: ./coverage
