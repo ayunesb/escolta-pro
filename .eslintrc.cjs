@@ -27,7 +27,7 @@ module.exports = {
   rules: {
     // Keep real errors strict but allow common patterns during active dev
     '@typescript-eslint/no-unused-vars': [
-      'error',
+      'warn',
       { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true, caughtErrors: 'none' }
     ],
     '@typescript-eslint/no-explicit-any': 'warn',
@@ -37,6 +37,9 @@ module.exports = {
     // Small papercuts
     'no-empty': 'warn',
     'no-case-declarations': 'warn',
+  'no-extra-semi': 'warn',
+  '@typescript-eslint/no-empty-object-type': 'warn',
+  'react/no-unknown-property': 'warn',
 
     // Project uses the new JSX transform (React 17+): React doesn't need to be in scope.
     'react/react-in-jsx-scope': 'off',

@@ -33,7 +33,7 @@ jobs:
       - name: Run checks (typecheck, lint, test)
         run: |
           pnpm run typecheck
-          pnpm run lint
+          pnpm run lint:ci
           pnpm test -- --coverage
         shell: bash
         env:

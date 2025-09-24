@@ -25,7 +25,8 @@ function runEslint(files, args) {
 
   // Prefer pnpm exec if available to ensure workspace bin resolution
   const runner = 'pnpm';
-  const runnerArgs = ['exec', 'eslint'].concat(args).concat(files);
+  // Force legacy config file to avoid ESLint flat-config auto-detection
+  const runnerArgs = ['exec', 'eslint', '--config', '.eslintrc.cjs'].concat(args).concat(files);
 
   const res = spawnSync(runner, runnerArgs, { stdio: 'inherit' });
   if (res.error) throw res.error;

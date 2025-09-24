@@ -6,17 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Upload, 
-  File, 
-  Download, 
-  Trash2, 
-  Eye, 
-  Calendar,
-  User,
-  Building,
-  AlertCircle
-} from 'lucide-react';
+import { Upload, File, Download, Trash2, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from '@/hooks/use-toast';
@@ -48,7 +38,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   allowedTypes = ['image/*', 'application/pdf', '.doc,.docx'],
   maxSizeBytes = 10 * 1024 * 1024 // 10MB default
 }) => {
-  const { user, hasRole } = useAuth();
+  const { user } = useAuth();
   const client = useSupabase();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,15 +215,15 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
 
   const downloadDocument = async (document: Document) => {
     try {
-  const { data } = await client.functions.invoke('document_signed_url', {
+      const { data: signedUrlData } = await client.functions.invoke('document_signed_url', {
         body: { 
           document_path: document.name,
           expires_in: 300 // 5 minutes
         }
       });
 
-      if (data?.signed_url) {
-        window.open(data.signed_url, '_blank');
+      if (signedUrlData?.signed_url) {
+        window.open(signedUrlData.signed_url, '_blank');
       } else {
         throw new Error('Failed to generate signed download link');
       }

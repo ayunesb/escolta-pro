@@ -1,4 +1,5 @@
-import { Calendar, FileText, User, Building, Car, Users, Home, Clock } from 'lucide-react';
+import { Calendar, User, Building, Home, Clock } from 'lucide-react';
+import type { ComponentType } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealTimeAssignments } from '@/hooks/use-real-time';
@@ -8,6 +9,15 @@ interface GuardBottomNavProps {
   currentPath: string;
   navigate: (path: string) => void;
 }
+
+type Tab = {
+  id: string;
+  path: string;
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  testId: string;
+  badge?: number;
+};
 
 const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
   const { hasRole } = useAuth();
@@ -19,7 +29,7 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
   ).length;
 
   // Base tabs for all guards
-  const baseTabs = [
+  const baseTabs: Tab[] = [
     {
       id: 'home',
       path: '/home',
@@ -52,7 +62,7 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
   ];
 
   // Additional tabs for company admins  
-  const companyTabs = [
+  const companyTabs: Tab[] = [
     {
       id: 'company',
       path: '/company',
@@ -72,7 +82,8 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
       <div className="flex max-w-mobile mx-auto">
         {tabs.map((tab) => {
           const isActive = currentPath === tab.path || currentPath.startsWith(tab.path + '/');
-          
+          const badge = tab.badge;
+
           return (
             <button
               key={tab.id}
@@ -87,12 +98,12 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
             >
               <div className="relative">
                 <tab.icon className={cn("h-5 w-5 mb-1", isActive && "text-accent")} />
-                {(tab as any).badge && (
+                {badge != null && badge > 0 && (
                   <Badge 
                     variant="destructive" 
                     className="absolute -top-2 -right-2 h-4 min-w-[16px] text-xs px-1 py-0 flex items-center justify-center"
                   >
-                    {(tab as any).badge > 9 ? '9+' : (tab as any).badge}
+                    {badge > 9 ? '9+' : badge}
                   </Badge>
                 )}
               </div>

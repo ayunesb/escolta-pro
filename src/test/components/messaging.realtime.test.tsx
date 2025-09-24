@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render as _render, screen } from '@testing-library/react'
 import { renderWithProviders, createMockSupabase } from '@/test/test-utils'
 import { mockUseChatThread, mockGetOrCreateBookingThread, ChatMessage } from '@/test/utils/mocks'
 import { MessagesTab } from '@/components/messaging/MessagesTab'

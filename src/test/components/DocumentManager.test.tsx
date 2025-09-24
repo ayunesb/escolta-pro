@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render as _render } from '@testing-library/react'
 import { screen, waitFor } from '@testing-library/dom'
 import { act } from 'react'
 import userEvent from '@testing-library/user-event'

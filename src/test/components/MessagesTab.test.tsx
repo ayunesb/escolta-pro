@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render as _render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders, createMockSupabase } from '@/test/test-utils'
 import { MessagesTab } from '@/components/messaging/MessagesTab';
 

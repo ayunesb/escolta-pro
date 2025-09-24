@@ -2,13 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Send, Paperclip, Phone, Video, AlertTriangle } from 'lucide-react';
+import { format } from 'date-fns';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMessaging } from '@/hooks/use-messaging';
 import { useAuth } from '@/contexts/AuthContext';
-import { Send, Paperclip, Phone, Video, Image, Mic, AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
 import HapticButton from '@/components/mobile/HapticButton';
 
 interface MessageThreadProps {
@@ -185,7 +185,6 @@ export const MessageThread = ({
                   <div className={`flex max-w-[80%] ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} items-end space-x-2`}>
                     {!isOwnMessage && (
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={message.sender_profile?.photo_url || ''} />
                         <AvatarFallback className="text-xs">
                           {senderName[0] || 'U'}
                         </AvatarFallback>
@@ -258,9 +257,8 @@ export const MessageThread = ({
         {/* Message Input */}
         <div className="p-4 border-t">
           {selectedMedia && (
-            <div className="mb-2 p-2 bg-muted rounded flex items-center justify-between">
+              <div className="mb-2 p-2 bg-muted rounded flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Image className="h-4 w-4" />
                 <span className="text-sm">{selectedMedia.name}</span>
               </div>
               <Button

@@ -1,13 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Image } from 'lucide-react';
+import { Send, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useRealtimeMessaging } from '@/hooks/use-realtime-messaging';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
+
+interface Message {
+  id: string;
+  text?: string;
+  media_url?: string | null;
+  sender_id?: string | null;
+  sender_profile?: { first_name?: string; last_name?: string } | null;
+  created_at: string;
+}
 
 interface MessageThreadProps {
   bookingId: string;
@@ -16,7 +25,11 @@ interface MessageThreadProps {
 
 const MessageThread = ({ bookingId, className }: MessageThreadProps) => {
   const { user } = useAuth();
-  const { messages, loading, sendMessage } = useRealtimeMessaging(bookingId);
+  const { messages, loading, sendMessage } = useRealtimeMessaging(bookingId) as {
+    messages: Message[];
+    loading: boolean;
+    sendMessage: (text: string) => Promise<boolean>;
+  };
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -45,7 +58,7 @@ const MessageThread = ({ bookingId, className }: MessageThreadProps) => {
     return formatDistanceToNow(new Date(dateString), { addSuffix: true });
   };
 
-  const getSenderName = (message: any) => {
+  const getSenderName = (message: Message) => {
     if (message.sender_id === user?.id) return 'You';
     
     const profile = message.sender_profile;
@@ -56,7 +69,7 @@ const MessageThread = ({ bookingId, className }: MessageThreadProps) => {
     return 'Unknown User';
   };
 
-  const getSenderInitials = (message: any) => {
+  const getSenderInitials = (message: Message) => {
     if (message.sender_id === user?.id) return 'Y';
     
     const profile = message.sender_profile;
