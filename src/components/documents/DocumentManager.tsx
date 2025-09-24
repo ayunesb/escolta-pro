@@ -17,9 +17,10 @@ import {
   Building,
   AlertCircle
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from '@/hooks/use-toast';
+import { i18n } from '@/lib/i18n';
 import { format } from 'date-fns';
 
 interface Document {
@@ -48,6 +49,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   maxSizeBytes = 10 * 1024 * 1024 // 10MB default
 }) => {
   const { user, hasRole } = useAuth();
+  const client = useSupabase();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -68,7 +70,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         ? `${user?.id}/${organizationId}` 
         : `${user?.id}`;
 
-      const { data: files, error } = await supabase.storage
+      const { data: files, error } = await client.storage
         .from('documents')
         .list(folderPath, {
           limit: 100,
@@ -175,7 +177,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         });
       }, 200);
 
-      const { data, error } = await supabase.storage
+      const { data, error } = await client.storage
         .from('documents')
         .upload(filePath, selectedFile, {
           cacheControl: '3600',
@@ -223,7 +225,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
 
   const downloadDocument = async (document: Document) => {
     try {
-      const { data } = await supabase.functions.invoke('document_signed_url', {
+  const { data } = await client.functions.invoke('document_signed_url', {
         body: { 
           document_path: document.name,
           expires_in: 300 // 5 minutes
@@ -253,7 +255,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         ? `${user?.id}/${organizationId}` 
         : `${user?.id}`;
       
-      const { error } = await supabase.storage
+      const { error } = await client.storage
         .from('documents')
         .remove([`${folderPath}/${document.name}`]);
 
@@ -303,10 +305,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
     <div className="space-y-6">
       {/* Upload Section */}
       <Card>
-        <CardHeader>
+          <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Upload Document
+            {i18n('documents.upload_title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -321,7 +323,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                 disabled={uploading}
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Max size: {(maxSizeBytes / 1024 / 1024).toFixed(1)}MB
+                {i18n('documents.max_size', { size: (maxSizeBytes / 1024 / 1024).toFixed(1) })}
               </p>
             </div>
             <div>

@@ -3,6 +3,7 @@ import { screen, waitFor } from '@testing-library/dom'
 import { act } from 'react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { toast } from '@/hooks/use-toast'
 import { DocumentManager } from '@/components/documents/DocumentManager'
 import { useAuth } from '@/contexts/AuthContext'
 import { renderWithProviders, createMockSupabase } from '@/test/test-utils'
@@ -163,5 +164,59 @@ describe('DocumentManager', () => {
     })
 
     expect(select).toHaveValue('license')
+  })
+
+  it('shows download error when signed-url generation fails', async () => {
+    const user = userEvent.setup()
+
+    await act(async () => {
+      const client = createMockSupabase()
+      // Provide one document so download button is rendered
+      client.storage = {
+        from: () => ({
+          list: vi.fn().mockResolvedValue({
+            data: [
+              {
+                id: 'doc-1',
+                name: 'test.pdf',
+                metadata: { size: 1024, mimetype: 'application/pdf' },
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              }
+            ],
+            error: null
+          })
+        })
+      }
+
+      // Simulate functions.invoke failing
+      client.functions = { invoke: vi.fn().mockRejectedValue(new Error('invoke failed')) }
+
+      renderWithProviders(<DocumentManager />, { client })
+      await Promise.resolve()
+    })
+
+    // Wait for the document to appear
+    await waitFor(() => {
+      expect(screen.getByText('test.pdf')).toBeInTheDocument()
+    })
+
+    // find the nearest ancestor that contains action buttons (download/delete)
+    let container = screen.getByText('test.pdf').parentElement
+    while (container && container.querySelectorAll('button').length === 0) {
+      container = container.parentElement
+    }
+
+    expect(container).toBeTruthy()
+    const buttons = container ? Array.from(container.querySelectorAll('button')) : []
+    expect(buttons.length).toBeGreaterThan(0)
+
+    await act(async () => {
+      await user.click(buttons[0])
+    })
+
+    // toast should be called with a download failed message
+    expect(vi.mocked(toast)).toHaveBeenCalled()
+    expect(vi.mocked(toast).mock.calls.some(call => call[0]?.title === 'Download failed')).toBeTruthy()
   })
 })
