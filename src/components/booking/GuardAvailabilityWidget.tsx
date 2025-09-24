@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Shield, Star, MapPin, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, Star, MapPin, Clock, CheckCircle } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { formatMXN } from '@/utils/pricing';
 
@@ -38,6 +38,7 @@ const GuardAvailabilityWidget = ({
 
   useEffect(() => {
     fetchAvailableGuards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, dateTime, armedRequired]);
 
   const fetchAvailableGuards = async () => {
@@ -146,10 +147,15 @@ const GuardAvailabilityWidget = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={guard.photo_url} />
-                    <AvatarFallback>
-                      <Shield className="h-6 w-6" />
-                    </AvatarFallback>
+                    {guard.photo_url ? (
+                      // eslint-disable-next-line jsx-a11y/img-redundant-alt
+                      // using an img tag inside Avatar to avoid AvatarImage import
+                      <img src={guard.photo_url} alt="guard" className="w-full h-full object-cover rounded" />
+                    ) : (
+                      <AvatarFallback>
+                        <Shield className="h-6 w-6" />
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   
                   <div>

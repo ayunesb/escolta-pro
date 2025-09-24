@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useRealtimeMessaging } from '@/hooks/use-realtime-messaging';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatDistanceToNow } from 'date-fns';
 
 interface Message {
   id: string;

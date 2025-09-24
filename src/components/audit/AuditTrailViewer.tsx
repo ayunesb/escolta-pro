@@ -1,22 +1,20 @@
 import { useState } from 'react';
+import { 
+  Database, 
+  Download, 
+  Filter, 
+  Search,
+  User,
+  FileText,
+  Clock
+} from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Database, 
-  Download, 
-  Filter, 
-  Search, 
-  Calendar,
-  User,
-  Activity,
-  FileText,
-  Clock
-} from 'lucide-react';
 import { useAuditTrail } from '@/hooks/use-audit-trail';
-import { formatDistanceToNow } from 'date-fns';
 import HapticButton from '@/components/mobile/HapticButton';
 import { OptimizedSkeleton } from '@/components/performance/OptimizedSkeleton';
 import { VirtualList } from '@/components/performance/VirtualList';
@@ -25,7 +23,7 @@ interface AuditTrailViewerProps {
   navigate?: (path: string) => void;
 }
 
-export const AuditTrailViewer = ({ navigate }: AuditTrailViewerProps) => {
+export const AuditTrailViewer = ({ navigate: _navigate }: AuditTrailViewerProps) => {
   const {
     entries,
     loading,
@@ -78,7 +76,7 @@ export const AuditTrailViewer = ({ navigate }: AuditTrailViewerProps) => {
     fetchAuditEntries(clearedFilters, 0, 50);
   };
 
-  const renderAuditEntry = ({ item: entry, index }: { item: any; index: number }) => (
+  const renderAuditEntry = ({ item: entry, index: _index }: { item: any; index: number }) => (
     <Card key={entry.id} className="mb-3">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">

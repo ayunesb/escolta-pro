@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
+import { Send, Paperclip, Phone, Video, AlertTriangle } from 'lucide-react';
+import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Paperclip, Phone, Video, AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
