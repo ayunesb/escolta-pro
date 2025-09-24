@@ -112,3 +112,19 @@ pnpm test
 pnpm build
 ```
 
+Quick health checks
+-------------------
+
+We included a couple of helpers to quickly validate your deployed Supabase Edge Functions:
+
+- `public/status.html` — a tiny static page you can deploy with the app. Enter your Supabase project ref (the short id) and click Check to call `/health` and `/validate_quote` on your functions endpoint.
+- `scripts/smoke-runner.js` — a Node 20+ script that calls the same endpoints from the CLI. Example:
+
+```bash
+# from project root
+node ./scripts/smoke-runner.js --ref=your-supabase-ref
+```
+
+These tools are optional but useful after deploying functions or rotating secrets.
+
+
