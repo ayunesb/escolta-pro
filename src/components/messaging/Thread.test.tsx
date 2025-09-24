@@ -4,8 +4,10 @@ import { describe, it, expect } from 'vitest';
 import Thread from './Thread';
 
 describe('Thread UI', () => {
-  it('renders without crashing', () => {
+  it('renders without crashing', async () => {
     render(<Thread bookingId="test" />);
-    expect(screen.getByText(/anónimo/i)).toBeTruthy();
+    // wait for the anonymous placeholder to appear (use findByText to await state updates)
+    const el = await screen.findByText(/anónimo/i);
+    expect(el).toBeTruthy();
   });
 });

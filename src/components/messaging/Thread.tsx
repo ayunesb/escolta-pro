@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useChat } from '../../hooks/use-chat';
 import Composer from './Composer';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+import { supabase } from '../../lib/storage';
 
 type Props = {
   bookingId: string;
