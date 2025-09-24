@@ -20,9 +20,9 @@
   "smoke": "node ./scripts/smoke-runner.js",
     "sync": "npm run build && npx cap sync",
     "ios": "npm run build && npx cap run ios",
-    "android": "npm run build && npx cap run android"
+  "android": "npm run build && npx cap run android",
+  "lint:runner": "node ./scripts/lint-runner.js --max-warnings=0"
   },
-  "lint:runner": "node ./scripts/lint-runner.js --max-warnings=0",
   "dependencies": {
     "@capacitor/android": "^7.4.3",
     "@capacitor/app": "^7.0.2",
