@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { Loader2, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/types/stripe';
 
 interface PaymentFormProps {
   bookingId: string;
@@ -38,7 +39,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
@@ -56,7 +57,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       return;
     }
 
-    try {
+  try {
       // Create payment intent via edge function
       const { data: paymentIntentData, error: intentError } = await supabase.functions.invoke(
         'create_payment_intent',
@@ -69,7 +70,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       );
 
       if (intentError || !paymentIntentData?.client_secret) {
-        throw new Error(intentError?.message || 'Failed to create payment intent');
+        throw new Error(getErrorMessage(intentError, 'Failed to create payment intent'));
       }
 
       // Confirm payment with Stripe
@@ -83,7 +84,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       );
 
       if (confirmError) {
-        throw new Error(confirmError.message);
+        throw new Error(getErrorMessage(confirmError, 'Payment confirmation failed'));
       }
 
       if (paymentIntent.status === 'succeeded') {
@@ -93,8 +94,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         });
         onSuccess?.();
       }
-    } catch (err: any) {
-      const errorMessage = err.message || 'Payment failed';
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'Payment failed');
       setError(errorMessage);
       onError?.(errorMessage);
       toast({

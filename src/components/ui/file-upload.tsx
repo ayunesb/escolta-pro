@@ -36,7 +36,8 @@ const FileUpload = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const fileList = event.currentTarget.files;
+    const file = fileList?.[0] ?? null;
     if (!file) return;
 
     // Validate file size

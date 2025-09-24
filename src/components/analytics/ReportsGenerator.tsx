@@ -156,7 +156,7 @@ export const ReportsGenerator: React.FC = () => {
       setProgress(100);
 
       if (error) {
-        throw new Error(error.message);
+        throw new Error((error as any)?.message || 'Unknown error');
       }
 
       // Handle successful report generation
@@ -171,9 +171,17 @@ export const ReportsGenerator: React.FC = () => {
       }
 
       toast.success('Report generated successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : (error && typeof error === 'object' && 'message' in error)
+          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (error as any).message
+          : 'Failed to generate report';
+
       console.error('Error generating report:', error);
-      toast.error(error.message || 'Failed to generate report');
+      toast.error(msg);
     } finally {
       setGenerating(false);
       setTimeout(() => setProgress(0), 1000);
@@ -198,13 +206,21 @@ export const ReportsGenerator: React.FC = () => {
       });
 
       if (error) {
-        throw new Error(error.message);
+        throw new Error((error as any)?.message || 'Unknown error');
       }
 
       toast.success('Report scheduled successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : (error && typeof error === 'object' && 'message' in error)
+          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (error as any).message
+          : 'Failed to schedule report';
+
       console.error('Error scheduling report:', error);
-      toast.error(error.message || 'Failed to schedule report');
+      toast.error(msg);
     }
   };
 
@@ -229,7 +245,7 @@ export const ReportsGenerator: React.FC = () => {
                     'cursor-pointer transition-colors',
                     config.type === type.id && 'ring-2 ring-primary'
                   )}
-                  onClick={() => setConfig(prev => ({ ...prev, type: type.id as any }))}
+                  onClick={() => setConfig(prev => ({ ...prev, type: type.id as ReportConfig['type'] }))}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
@@ -252,7 +268,7 @@ export const ReportsGenerator: React.FC = () => {
               <label className="text-sm font-medium mb-2 block">Output Format</label>
               <Select
                 value={config.format}
-                onValueChange={(value) => setConfig(prev => ({ ...prev, format: value as any }))}
+                onValueChange={(value) => setConfig(prev => ({ ...prev, format: value as ReportConfig['format'] }))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -383,7 +399,7 @@ export const ReportsGenerator: React.FC = () => {
                 <label className="text-sm text-muted-foreground mb-2 block">Schedule</label>
                 <Select
                   value={config.schedule}
-                  onValueChange={(value) => setConfig(prev => ({ ...prev, schedule: value as any }))}
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, schedule: value as ReportConfig['schedule'] }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
