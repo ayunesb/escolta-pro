@@ -45,3 +45,11 @@ jobs:
         with:
           name: vitest-coverage
           path: ./coverage
+
+      - name: Smoke checks (optional)
+        if: ${{ secrets.SUPABASE_REF != '' }}
+        run: |
+          echo "Running smoke-runner against SUPABASE_REF"
+          node ./scripts/smoke-runner.js --ref=${{ secrets.SUPABASE_REF }}
+        env:
+          CI: true
