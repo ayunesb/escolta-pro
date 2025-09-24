@@ -5,7 +5,8 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    project: false,
+  project: false,
+  ecmaFeatures: { jsx: true },
   },
   env: {
     es2022: true,
@@ -24,11 +25,25 @@ module.exports = {
     react: { version: 'detect' },
   },
   rules: {
-    'no-case-declarations': 'warn',
-    'react/prop-types': 'off',
+    // Keep real errors strict but allow common patterns during active dev
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true, caughtErrors: 'none' }
+    ],
     '@typescript-eslint/no-explicit-any': 'warn',
+    'react-hooks/exhaustive-deps': 'warn',
+    'import/order': 'warn',
+
+    // Small papercuts
+    'no-empty': 'warn',
+    'no-case-declarations': 'warn',
+
+    // Project uses the new JSX transform (React 17+): React doesn't need to be in scope.
+    'react/react-in-jsx-scope': 'off',
+    // Allow some unescaped entities in strings/JSX for convenience in content.
+    'react/no-unescaped-entities': 'off',
+    'react/prop-types': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
-    'import/order': ['warn', { 'newlines-between': 'always' }],
   },
   ignorePatterns: [
     'dist/',
