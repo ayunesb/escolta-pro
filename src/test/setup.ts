@@ -48,5 +48,5 @@ const IntersectionObserverMock = class IntersectionObserver {
   }
 } as any;
 
-IntersectionObserverMock.prototype = IntersectionObserver.prototype;
-global.IntersectionObserver = IntersectionObserverMock;
+// Assign mock directly to global. Don't reference native IntersectionObserver.prototype
+;(global as any).IntersectionObserver = IntersectionObserverMock;
