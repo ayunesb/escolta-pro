@@ -22,6 +22,7 @@
     "ios": "npm run build && npx cap run ios",
     "android": "npm run build && npx cap run android"
   },
+  "lint:runner": "node ./scripts/lint-runner.js --max-warnings=0",
   "dependencies": {
     "@capacitor/android": "^7.4.3",
     "@capacitor/app": "^7.0.2",
