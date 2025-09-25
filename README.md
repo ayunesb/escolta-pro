@@ -144,4 +144,70 @@ Security notes:
 - Consider adding rate limiting / audit logging for admin endpoints.
 - Rotate Stripe and Supabase secrets regularly; leverage environment-specific values.
 
+## Demo Mode (In-Memory Preview)
+
+This repository includes a zero-external dependency Demo Mode to showcase multi‑role flows (client / company / guard) without real Supabase or Stripe.
+
+### Running Demo Mode
+```bash
+pnpm i               # install deps (first time)
+pnpm dev -- --mode demo   # uses .env.demo (VITE_DEMO_MODE=true)
+```
+Or copy the sample:
+```bash
+cp .env.demo .env.local
+pnpm dev -- --mode demo
+```
+
+### Capabilities
+- Seeded users, bookings, messages, vehicles.
+- Simulated payments: Stripe fee (3.5% + 300¢) → 25% company cut → remainder guard payout.
+- In‑memory DB persisted to `localStorage` (`demo_state_v1`).
+- Lightweight realtime bus for new messages & ledger updates.
+- URL role override: `?as=client|company|guard` (persists to `localStorage.demo_role`).
+- Always-visible Role Switcher (demo only).
+- Company dashboard: Payment Simulator & ledger.
+- Guard home / bookings: Payout ledger slice.
+
+### Simulate a Payment
+1. Open company tab: `http://localhost:5173/?as=company`.
+2. Click "Simulate Payment" on a booking.
+3. Ledger row appears (fees, company share, guard payout); guard tab reflects new payout line.
+
+### End-to-End Smoke Script
+Open three tabs:
+- Client  `http://localhost:5173/?as=client`
+- Company `http://localhost:5173/?as=company`
+- Guard   `http://localhost:5173/?as=guard`
+
+Flow:
+1. Client creates or views booking.
+2. Company simulates payment.
+3. Guard sees payout entry.
+4. Send a message from one role; others receive (realtime shim).
+5. Refresh all tabs → state persists (localStorage snapshot).
+6. Switch roles via Role Switcher and confirm view changes.
+7. Repeat payment simulation to validate cumulative totals.
+
+### Reset Demo State
+Use DevTools console:
+```js
+localStorage.removeItem('demo_state_v1');
+localStorage.removeItem('demo_role');
+```
+Reload with a fresh seed.
+
+### Production vs Demo
+| Concern | Demo | Production |
+|---------|------|------------|
+| Flag | VITE_DEMO_MODE=true | (unset / false) |
+| Data | In-memory + localStorage | Supabase Postgres |
+| Auth | Seeded identities | Supabase Auth JWT |
+| Payments | Simulated splitter | Stripe (webhooks) |
+| Realtime | Local pub/sub | Supabase Realtime |
+
+Never enable Demo Mode in a real deployment environment.
+
+Stabilization branch: `release/preview-1` (bugfix-only; non-critical lint warnings intentionally deferred unless masking runtime issues).
+
 
