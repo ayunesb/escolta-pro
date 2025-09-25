@@ -127,6 +127,11 @@ function createDemoSupabase() {
       async signInWithPassword() { return { data: {}, error: null }; },
       async signUp() { return { data: {}, error: null }; },
       async signOut() { return { error: null }; },
+      onAuthStateChange(callback: (event: string, session: unknown) => void) {
+        // Immediately invoke with a synthetic signed-in event for demo user
+        try { callback('SIGNED_IN', { user: { id: user?.id } }); } catch {}
+        return { data: { subscription: { unsubscribe: () => {} } } } as const;
+      },
     },
     from(table: string) { return createDemoQuery(table); },
     channel(name: string) {
@@ -170,6 +175,10 @@ function createDemoSupabase() {
           async remove() { return { data: [], error: null }; },
         };
       }
+    },
+    // Minimal rpc shim - return empty data array unless specific procedure simulated later
+    async rpc(_fn: string, _args?: Record<string, unknown>) {
+      return { data: [], error: null };
     }
   } as unknown;
 }
