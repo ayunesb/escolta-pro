@@ -15,6 +15,19 @@ interface BookingDetails {
   duration: number;
 }
 
+interface BookingSubrecord {
+  pickup_address?: string;
+  start_ts: string;
+  end_ts: string;
+  [key: string]: unknown;
+}
+
+function isBookingSubrecord(value: unknown): value is BookingSubrecord {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.start_ts === 'string' && typeof v.end_ts === 'string';
+}
+
 const AssignmentDetailPage = ({ navigate, assignmentId }: AssignmentDetailPageProps) => {
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | undefined>();
   const [loading, setLoading] = useState(true);
@@ -40,8 +53,8 @@ const AssignmentDetailPage = ({ navigate, assignmentId }: AssignmentDetailPagePr
           return;
         }
 
-        if (assignment?.bookings) {
-          const booking = assignment.bookings as any;
+        if (assignment?.bookings && isBookingSubrecord(assignment.bookings)) {
+          const booking = assignment.bookings;
           const startTime = new Date(booking.start_ts);
           const endTime = new Date(booking.end_ts);
           const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60));

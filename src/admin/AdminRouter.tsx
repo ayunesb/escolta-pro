@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import SuperAdminPage from '@/guard/pages/SuperAdminPage';
 import SystemSettingsPage from '@/guard/pages/SystemSettingsPage';
 import AuthPage from '@/pages/AuthPage';
+import StripeFailedEventsPage from './pages/StripeFailedEventsPage';
 
 const AdminRouter = () => {
   const { user, loading, hasRole } = useAuth();
@@ -55,6 +56,8 @@ const AdminRouter = () => {
       return <SuperAdminPage navigate={navigate} />;
     case '/settings':
       return <SystemSettingsPage navigate={navigate} />;
+    case '/stripe-failed-events':
+      return <StripeFailedEventsPage />;
     default:
       return <SuperAdminPage navigate={navigate} />;
   }

@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Shield, Calendar, MapPin, User, Settings, Plus, Bell } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Shield, Calendar, MapPin, User, Settings, Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 import { useRealTimeAssignments, useRealTimeNotifications } from '@/hooks/use-real-time';
@@ -20,8 +18,14 @@ interface Assignment {
     pickup_address?: string;
     start_ts?: string;
     end_ts?: string;
-    client_id: string;
-  };
+    client_id?: string;
+  } | Record<string, unknown>;
+}
+
+function isBookingRecord(value: unknown): value is { pickup_address?: string; start_ts?: string; end_ts?: string; client_id?: string } {
+  if (!value || typeof value !== 'object') return false;
+  // soft presence checks
+  return true;
 }
 
 interface GuardHomePageProps {
@@ -181,29 +185,29 @@ const GuardHomePage = ({ navigate }: GuardHomePageProps) => {
                 <Card key={assignment.id}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <Badge className={getStatusColor(assignment.status)}>
-                        {assignment.status.replace('_', ' ').toUpperCase()}
+                      <Badge className={getStatusColor(String(assignment.status))}>
+                        {String(assignment.status).replace('_', ' ').toUpperCase()}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         #{assignment.id.slice(-8)}
                       </span>
                     </div>
                     
-                    {assignment.bookings?.pickup_address && (
+        {isBookingRecord(assignment.bookings) && assignment.bookings.pickup_address && (
                       <div className="flex items-center gap-2 mb-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
                         <span className="text-mobile-sm text-foreground">
-                          {assignment.bookings.pickup_address}
+          {assignment.bookings.pickup_address}
                         </span>
                       </div>
                     )}
                     
-                    {assignment.bookings?.start_ts && (
+        {isBookingRecord(assignment.bookings) && assignment.bookings.start_ts && (
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="text-mobile-sm text-foreground">
-                          {new Date(assignment.bookings.start_ts).toLocaleDateString()} at{' '}
-                          {new Date(assignment.bookings.start_ts).toLocaleTimeString('en-US', {
+          {new Date(assignment.bookings.start_ts).toLocaleDateString()} at{' '}
+          {new Date(assignment.bookings.start_ts).toLocaleTimeString('en-US', {
                             hour: 'numeric',
                             minute: '2-digit',
                             hour12: true

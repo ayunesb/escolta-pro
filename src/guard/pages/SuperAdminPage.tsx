@@ -113,7 +113,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
       });
 
       loadPendingItems();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving company:', error);
       toast({
         title: 'Error',
@@ -141,7 +141,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
       });
 
       loadPendingItems();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error suspending company:', error);
       toast({
         title: 'Error',
@@ -172,7 +172,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
       });
 
       loadPendingItems();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving guard:', error);
       toast({
         title: 'Error',
@@ -203,7 +203,7 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
       });
 
       loadPendingItems();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error suspending guard:', error);
       toast({
         title: 'Error',

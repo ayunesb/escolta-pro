@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ export const RouteGuard = ({
   }
 
   // Check if user has any of the allowed roles
-  const hasPermission = allowedRoles.some(role => hasRole(role as any));
+  const hasPermission = allowedRoles.some(role => hasRole(role as UserRole));
 
   if (!hasPermission) {
     return (

@@ -49,7 +49,7 @@ export function getErrorMessage(err: unknown, fallback = 'An error occurred'): s
   if (err instanceof Error) return err.message;
   if (err && typeof err === 'object' && 'message' in err) {
     try {
-      return String((err as any).message);
+      return String((err as Record<string, unknown>)['message']);
     } catch {
       return fallback;
     }

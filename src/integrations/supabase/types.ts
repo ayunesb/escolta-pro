@@ -776,6 +776,30 @@ export type Database = {
           },
         ]
       }
+      stripe_failed_events: {
+        Row: {
+          id: string
+          type: string
+          payload: Json
+          error: string
+          created_at: string
+        }
+        Insert: {
+          id: string
+          type: string
+          payload: Json
+          error: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          type?: string
+          payload?: Json
+          error?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       pricing_rules: {
         Row: {
           armed_multiplier: number

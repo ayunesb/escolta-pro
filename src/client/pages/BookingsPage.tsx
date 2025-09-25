@@ -135,11 +135,12 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
 
       // Refresh bookings
       fetchBookings();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accepting booking:', error);
+      const message = error instanceof Error ? error.message : 'Failed to accept booking';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to accept booking',
+        description: message,
         variant: 'destructive'
       });
     } finally {

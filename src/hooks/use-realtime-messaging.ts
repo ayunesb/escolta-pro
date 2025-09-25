@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -64,9 +64,10 @@ export const useRealtimeMessaging = (bookingId: string) => {
           table: 'messages',
           filter: `booking_id=eq.${bookingId}`,
         },
-        async (payload) => {
+        async (payload: unknown) => {
           console.warn('New message received:', payload);
-          const newMessage = payload.new as Message;
+          if (!payload || typeof payload !== 'object' || !('new' in payload)) return;
+          const newMessage = (payload as Record<string, unknown>).new as Message;
           
           // Fetch sender profile for the new message
           const { data: senderProfile } = await supabase

@@ -20,10 +20,8 @@ import UsersPage from './pages/UsersPage';
 import CompaniesPage from './pages/CompaniesPage';
 
 const ClientRouter = () => {
-  console.warn('ClientRouter loading...');
   const { user, loading } = useAuth();
   const [currentPath, setCurrentPath] = useState(window.location.hash.slice(1) || '/home');
-  console.warn('Current path:', currentPath, 'User:', user?.id, 'Loading:', loading);
 
   useEffect(() => {
     const handleHashChange = () => {

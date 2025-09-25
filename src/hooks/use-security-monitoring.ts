@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
+type Metadata = Record<string, unknown>;
+
 interface SecurityAlert {
   id: string;
   type: 'failed_login' | 'unusual_activity' | 'data_access' | 'permission_change';
@@ -10,7 +12,7 @@ interface SecurityAlert {
   message: string;
   timestamp: string;
   userId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Metadata;
 }
 
 interface SecurityMetrics {
@@ -48,13 +50,13 @@ export const useSecurityMonitoring = () => {
       }
 
       const securityAlerts: SecurityAlert[] = data.map(log => ({
-        id: log.id.toString(),
+        id: String(log.id),
         type: log.action as SecurityAlert['type'],
         severity: getSeverityFromAction(log.action),
         message: generateAlertMessage(log),
         timestamp: log.ts,
         userId: log.actor_id,
-        metadata: (log.diff && typeof log.diff === 'object') ? log.diff as Record<string, any> : {}
+        metadata: (log.diff && typeof log.diff === 'object') ? log.diff as Metadata : {}
       }));
 
       setAlerts(securityAlerts);
@@ -182,15 +184,24 @@ export const useSecurityMonitoring = () => {
         schema: 'public',
         table: 'audit_logs',
         filter: `action=in.(failed_login,unusual_activity,data_access,permission_change)`
-      }, (payload) => {
+      }, (payload: unknown) => {
+        if (!payload || typeof payload !== 'object' || !('new' in payload)) return;
+        const pl = payload as { new: Record<string, unknown> };
+        const row = pl.new;
+        const idVal = row.id;
+        if (typeof idVal !== 'string' && typeof idVal !== 'number') return;
+        const actionVal = row.action;
+        if (typeof actionVal !== 'string') return;
+        const tsVal = row.ts;
+        if (typeof tsVal !== 'string') return;
         const newAlert: SecurityAlert = {
-          id: payload.new.id.toString(),
-          type: payload.new.action as SecurityAlert['type'],
-          severity: getSeverityFromAction(payload.new.action),
-          message: generateAlertMessage(payload.new),
-          timestamp: payload.new.ts,
-          userId: payload.new.actor_id,
-          metadata: payload.new.diff
+          id: String(idVal),
+          type: actionVal as SecurityAlert['type'],
+          severity: getSeverityFromAction(actionVal),
+          message: generateAlertMessage(row),
+          timestamp: tsVal,
+          userId: typeof row.actor_id === 'string' ? row.actor_id : undefined,
+          metadata: (row.diff && typeof row.diff === 'object') ? row.diff as Metadata : {}
         };
 
         setAlerts(prev => [newAlert, ...prev]);

@@ -156,7 +156,10 @@ export const ReportsGenerator: React.FC = () => {
       setProgress(100);
 
       if (error) {
-        throw new Error((error as any)?.message || 'Unknown error');
+        const emsg = typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as Record<string, unknown>).message)
+          : 'Unknown error';
+        throw new Error(emsg);
       }
 
       // Handle successful report generation
@@ -176,8 +179,7 @@ export const ReportsGenerator: React.FC = () => {
         error instanceof Error
           ? error.message
           : (error && typeof error === 'object' && 'message' in error)
-          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (error as any).message
+          ? String((error as Record<string, unknown>)['message'])
           : 'Failed to generate report';
 
       console.error('Error generating report:', error);
@@ -206,7 +208,10 @@ export const ReportsGenerator: React.FC = () => {
       });
 
       if (error) {
-        throw new Error((error as any)?.message || 'Unknown error');
+        const emsg = typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as Record<string, unknown>).message)
+          : 'Unknown error';
+        throw new Error(emsg);
       }
 
       toast.success('Report scheduled successfully!');
@@ -215,8 +220,7 @@ export const ReportsGenerator: React.FC = () => {
         error instanceof Error
           ? error.message
           : (error && typeof error === 'object' && 'message' in error)
-          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (error as any).message
+      ? String((error as Record<string, unknown>)['message'])
           : 'Failed to schedule report';
 
       console.error('Error scheduling report:', error);

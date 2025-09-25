@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useProductionMonitoring } from './use-production-monitoring';
 import { useAuth } from '@/contexts/AuthContext';
+import { Metadata } from '@/types/observability';
 
 export const useProductionAnalytics = () => {
   const { trackPageView, trackInteraction, trackError, trackTiming } = useProductionMonitoring();
@@ -25,7 +26,7 @@ export const useProductionAnalytics = () => {
   const trackBookingEvent = useCallback((
     event: 'started' | 'completed' | 'cancelled',
     bookingId?: string,
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     trackInteraction(`booking_${event}`, 'booking_flow', {
       booking_id: bookingId,
@@ -38,7 +39,7 @@ export const useProductionAnalytics = () => {
   const trackPaymentEvent = useCallback((
     event: 'initiated' | 'completed' | 'failed',
     amount?: number,
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     trackInteraction(`payment_${event}`, 'payment_flow', {
       amount,
@@ -63,7 +64,7 @@ export const useProductionAnalytics = () => {
   const trackFeatureUsage = useCallback((
     feature: string,
     action: string,
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     trackInteraction(action, feature, {
       user_id: user?.id,
@@ -76,7 +77,7 @@ export const useProductionAnalytics = () => {
   const trackSearch = useCallback((
     query: string,
     results: number,
-    filters?: Record<string, any>
+    filters?: Metadata
   ) => {
     trackInteraction('search', 'search_system', {
       query,
@@ -91,7 +92,7 @@ export const useProductionAnalytics = () => {
   const trackBusinessError = useCallback((
     error: Error,
     context: 'booking' | 'payment' | 'auth' | 'general',
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     trackError(error, context, {
       user_id: user?.id,
@@ -105,7 +106,7 @@ export const useProductionAnalytics = () => {
   const trackBusinessTiming = useCallback((
     operation: 'booking_flow' | 'payment_flow' | 'search' | 'page_load',
     startTime: number,
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     trackTiming(operation, startTime, {
       user_id: user?.id,

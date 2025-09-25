@@ -1,5 +1,5 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import * as React from 'react';
+import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const roleRoutes: Record<string, string> = {
@@ -22,8 +22,11 @@ export const RoleSwitcher: React.FC = () => {
       <select
         value={activeRole ?? userRoles[0]}
         onChange={e => {
-          setRole(e.target.value as any);
-          navigate(roleRoutes[e.target.value] || '/');
+          const newRole = e.target.value as UserRole;
+          if (userRoles.includes(newRole)) {
+            setRole(newRole);
+            navigate(roleRoutes[newRole] || '/');
+          }
         }}
       >
         {userRoles.map(role => (

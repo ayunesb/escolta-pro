@@ -24,7 +24,28 @@ interface Vehicle {
   model?: string;
   year?: number;
   color?: string;
-  docs?: any;
+  docs?: VehicleDocs;
+}
+
+interface VehicleDocs {
+  make?: string;
+  model?: string;
+  year?: number | null;
+  color?: string;
+  armored_level?: string;
+  armed_deployment_ready?: boolean;
+  photo_url?: string;
+  registration_url?: string;
+  insurance_url?: string;
+  // Allow future-proof extension while keeping strong typing for known fields
+  [key: string]: unknown;
+}
+
+function isVehicleDocs(value: unknown): value is VehicleDocs {
+  if (!value || typeof value !== 'object') return false;
+  // Minimal structural check: at least one of the expected keys
+  const possible = ['make','model','year','color','armored_level','armed_deployment_ready','photo_url'];
+  return possible.some(k => k in (value as Record<string, unknown>));
 }
 
 interface VehicleFormPageProps {
@@ -79,24 +100,34 @@ const VehicleFormPage = ({ navigate, vehicleId }: VehicleFormPageProps) => {
       }
 
       if (data) {
-        setVehicle(data);
+        const normalized: Vehicle = {
+          id: data.id,
+          company_id: data.company_id,
+            // Keep only the fields we explicitly model; other supabase columns are ignored
+          type: data.type,
+          plates: data.plates,
+          armored: data.armored,
+          active: data.active,
+          docs: isVehicleDocs(data.docs) ? data.docs : undefined
+        };
+        setVehicle(normalized);
         setVehicleType(data.type || '');
         setPlates(data.plates || '');
         setArmored(data.armored ?? false);
         setActive(data.active ?? true);
         
         // Load additional fields from docs if available
-        const docs = data.docs as any;
-        if (docs) {
-          setMake(docs.make || '');
-          setModel(docs.model || '');
-          setYear(docs.year?.toString() || '');
-          setColor(docs.color || '');
-          setArmoredLevel(docs.armored_level || 'None');
-          setArmedDeploymentReady(docs.armed_deployment_ready ?? false);
-          setVehiclePhotoUrl(docs.photo_url || '');
-          setRegistrationUrl(docs.registration_url || '');
-          setInsuranceUrl(docs.insurance_url || '');
+        const rawDocs: unknown = data.docs;
+        if (isVehicleDocs(rawDocs)) {
+          setMake(typeof rawDocs.make === 'string' ? rawDocs.make : '');
+          setModel(typeof rawDocs.model === 'string' ? rawDocs.model : '');
+          setYear(typeof rawDocs.year === 'number' ? rawDocs.year.toString() : '');
+          setColor(typeof rawDocs.color === 'string' ? rawDocs.color : '');
+          setArmoredLevel(typeof rawDocs.armored_level === 'string' ? rawDocs.armored_level : 'None');
+          setArmedDeploymentReady(typeof rawDocs.armed_deployment_ready === 'boolean' ? rawDocs.armed_deployment_ready : false);
+          setVehiclePhotoUrl(typeof rawDocs.photo_url === 'string' ? rawDocs.photo_url : '');
+          setRegistrationUrl(typeof rawDocs.registration_url === 'string' ? rawDocs.registration_url : '');
+          setInsuranceUrl(typeof rawDocs.insurance_url === 'string' ? rawDocs.insurance_url : '');
         }
       }
     } catch (error) {
@@ -166,8 +197,9 @@ const VehicleFormPage = ({ navigate, vehicleId }: VehicleFormPageProps) => {
       }
 
       navigate('/company-vehicles');
-    } catch (error: any) {
-      console.error('Error saving vehicle:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error saving vehicle:', message, error);
       toast.error('Failed to save vehicle');
     } finally {
       setLoading(false);

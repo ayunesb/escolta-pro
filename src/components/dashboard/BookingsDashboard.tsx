@@ -23,6 +23,13 @@ interface Booking {
   created_at: string;
 }
 
+interface MatchCriteria {
+  armedRequired: boolean;
+  vehicleRequired: boolean;
+  startTime: Date;
+  duration: number;
+}
+
 export const BookingsDashboard = () => {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const { matchingGuards, isMatching, matchingProgress, findMatchingGuards, resetMatching } = useBookingMatching();
@@ -44,7 +51,7 @@ export const BookingsDashboard = () => {
   });
 
   // Handle finding matches for a booking
-  const handleFindMatches = async (bookingId: string, criteria: any) => {
+  const handleFindMatches = async (bookingId: string, criteria: MatchCriteria) => {
     setSelectedBooking(bookingId);
     
     await findMatchingGuards({
@@ -253,7 +260,7 @@ interface BookingCardProps {
   booking: Booking;
   onSelect: (id: string) => void;
   showMatchButton?: boolean;
-  onFindMatches?: (bookingId: string, criteria: any) => void;
+  onFindMatches?: (bookingId: string, criteria: MatchCriteria) => void;
 }
 
 const BookingCard = ({ booking, onSelect, showMatchButton, onFindMatches }: BookingCardProps) => {
@@ -323,8 +330,6 @@ const BookingCard = ({ booking, onSelect, showMatchButton, onFindMatches }: Book
           <div className="mt-3">
             <HapticButton
               onClick={() => onFindMatches(booking.id, {
-                location: { lat: 0, lng: 0 }, // Would get from booking
-                requiredSkills: [],
                 armedRequired: booking.armed_required,
                 vehicleRequired: booking.vehicle_required,
                 startTime: new Date(booking.start_ts),

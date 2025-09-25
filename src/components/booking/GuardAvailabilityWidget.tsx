@@ -55,7 +55,7 @@ const GuardAvailabilityWidget = ({
       if (armedRequired) {
         filteredGuards = filteredGuards.filter(guard => {
           const s = guard.skills;
-          return typeof s === 'object' && s !== null && 'armed' in s && (s as any).armed === true;
+          return typeof s === 'object' && s !== null && 'armed' in s && (s as Record<string, unknown>).armed === true;
         });
       }
 
@@ -180,7 +180,7 @@ const GuardAvailabilityWidget = ({
                         Available Now
                       </Badge>
                       
-                      {(typeof guard.skills === 'object' && guard.skills !== null && 'armed' in guard.skills && (guard.skills as any).armed) && (
+                      {(typeof guard.skills === 'object' && guard.skills !== null && 'armed' in guard.skills && (guard.skills as Record<string, unknown>).armed === true) && (
                         <Badge variant="outline" className="text-xs text-amber-600">
                           Armed
                         </Badge>

@@ -1,13 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessagesTab } from '@/components/messaging/MessagesTab';
-import { LiveMap } from '@/components/tracking/LiveMap';
-import { EmergencyPanel } from '@/components/emergency/EmergencyPanel';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -20,6 +11,15 @@ import {
   Video,
   MessageCircle
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MessagesTab } from '@/components/messaging/MessagesTab';
+import { LiveMap } from '@/components/tracking/LiveMap';
+import { EmergencyPanel } from '@/components/emergency/EmergencyPanel';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { mxn } from '@/utils/money';
 import BottomNav from '@/components/mobile/BottomNav';

@@ -1,9 +1,5 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   BarChart,
   Bar,
@@ -17,8 +13,11 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { TrendingUp, TrendingDown, Download, Users, DollarSign, Activity, Clock, Star, Award } from 'lucide-react';
 import { subDays, startOfMonth } from 'date-fns';
 import { useBookingAnalytics, useGuardAnalytics, useCompanyAnalytics } from '@/hooks/use-analytics';
@@ -31,7 +30,7 @@ interface AnalyticsDashboardProps {
 }
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userType = 'client' }) => {
-  const { user, hasRole } = useAuth();
+  const { user: _user, hasRole } = useAuth();
   const [dateRange, setDateRange] = useState({
     start: subDays(new Date(), 30),
     end: new Date(),

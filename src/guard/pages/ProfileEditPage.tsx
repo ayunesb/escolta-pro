@@ -93,34 +93,34 @@ export default function ProfileEditPage() {
         {avatar && <img src={avatar} alt="avatar" className="w-24 h-24 rounded-full object-cover" />}
         <div>
           <label>Foto</label>
-          <input type="file" accept="image/*" {...register('photo_file' as any)} />
+          <input type="file" accept="image/*" {...register('photo_file' as const)} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label>Nombre</label>
-            <input {...register('first_name' as any)} />
+            <input {...register('first_name' as const)} />
           </div>
           <div>
             <label>Apellido</label>
-            <input {...register('last_name' as any)} />
+            <input {...register('last_name' as const)} />
           </div>
         </div>
         <div>
           <label>Teléfono (E.164)</label>
-          <input placeholder="+521234567890" {...register('phone_e164' as any)} />
+          <input placeholder="+521234567890" {...register('phone_e164' as const)} />
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label>Tarifa por hora (MXN)</label>
-            <input type="number" min={0} {...register('hourly_rate_mxn_cents' as any)} />
+            <input type="number" min={0} {...register('hourly_rate_mxn_cents' as const)} />
           </div>
           <div>
             <label>¿Disponible armado?</label>
-            <input type="checkbox" {...register('armed_available' as any)} />
+            <input type="checkbox" {...register('armed_available' as const)} />
           </div>
           <div>
             <label>¿Disponible con vehículo?</label>
-            <input type="checkbox" {...register('vehicle_available' as any)} />
+            <input type="checkbox" {...register('vehicle_available' as const)} />
           </div>
         </div>
 
@@ -128,11 +128,11 @@ export default function ProfileEditPage() {
           <h2 className="font-medium">Identificación (KYC)</h2>
           <div>
             <label>INE/ID – Frente</label>
-            <input type="file" accept="image/*,application/pdf" {...register('id_front' as any)} />
+            <input type="file" accept="image/*,application/pdf" {...register('id_front' as const)} />
           </div>
           <div>
             <label>INE/ID – Reverso</label>
-            <input type="file" accept="image/*,application/pdf" {...register('id_back' as any)} />
+            <input type="file" accept="image/*,application/pdf" {...register('id_back' as const)} />
           </div>
           <p className="text-xs">Los archivos se guardan de forma privada. Blindado usa URLs firmadas por 1 hora.</p>
         </div>

@@ -1,5 +1,5 @@
-import React from 'react'
-import { render } from '@testing-library/react'
+import * as React from 'react'
+import { render, RenderOptions } from '@testing-library/react'
 import { SupabaseProvider } from '../contexts/SupabaseContext'
 import { createMockSupabase as baseCreateMockSupabase } from '../lib/storage'
 import { vi } from 'vitest'
@@ -16,14 +16,19 @@ export function createMockChannel() {
   return channel
 }
 
+interface SupabaseMock {
+  channel: ReturnType<typeof vi.fn>
+  removeChannel: ReturnType<typeof vi.fn>
+  [key: string]: unknown
+}
+
 export function createMockSupabase(overrides: PartialSupabase = {}) {
-  const client = baseCreateMockSupabase()
-  // attach channel helpers
+  const base = baseCreateMockSupabase() as Record<string, unknown>
+  const client = base as SupabaseMock
   client.channel = vi.fn(() => createMockChannel())
   client.removeChannel = vi.fn()
-  // apply overrides shallowly
   Object.assign(client, overrides)
-  return client
+  return client as unknown
 }
 
 export function withAuth(user: Record<string, unknown> = {}) {
@@ -46,16 +51,20 @@ export function mockFrom<T>(rows: T[]) {
   return fn
 }
 
+interface ProviderOptions extends Omit<RenderOptions, 'wrapper'> {
+  client?: unknown
+}
+
 export function renderWithProviders(
   ui: React.ReactElement,
-  options?: { client?: unknown } & Record<string, unknown>
+  options: ProviderOptions = {}
 ) {
-  const mockClient = options?.client ?? createMockSupabase()
+  const { client, ...renderOptions } = options
+  const mockClient = client ?? createMockSupabase()
   function Wrapper({ children }: { children?: React.ReactNode }) {
-    return <SupabaseProvider client={mockClient as any}>{children}</SupabaseProvider>
+    return <SupabaseProvider client={mockClient}>{children}</SupabaseProvider>
   }
-  const { client, ...renderOptions } = options ?? {}
-  return render(ui, { wrapper: Wrapper as any, ...(renderOptions as any) })
+  return render(ui, { wrapper: Wrapper, ...renderOptions })
 }
 
 export * from '@testing-library/react'

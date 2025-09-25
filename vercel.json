@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/stripe/webhook.ts": {
+      "runtime": "nodejs20.x",
+      "memory": 256,
+      "maxDuration": 10
+    }
+  },
+  "routes": [
+    { "src": "/api/stripe/webhook", "dest": "/api/stripe/webhook.ts" }
+  ]
+}

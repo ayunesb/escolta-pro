@@ -19,7 +19,7 @@ type SupabaseLike = {
 
 const isRecord = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null;
 
-function getNestedUserId(user: unknown): string | null {
+function _getNestedUserId(user: unknown): string | null {
   if (!isRecord(user)) return null;
   const data = user.data;
   if (!isRecord(data)) return null;
@@ -52,9 +52,9 @@ export function useChat(bookingId: string) {
 
     if (supabase && typeof supabase === 'object' && typeof (supabase as SupabaseLike).channel === 'function') {
       const s = supabase as SupabaseLike;
-      // channel API shape is dynamic; cast locally and guard method calls
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ch: any = typeof s.channel === 'function' ? (s.channel!(`public:messages:booking:${bookingId}`)) : null;
+      // channel API shape is dynamic; guard method calls without `any`
+      const maybeChannel = typeof s.channel === 'function' ? s.channel!(`public:messages:booking:${bookingId}`) : null;
+      const ch = maybeChannel as unknown as Record<string, unknown> | null;
       if (ch && typeof ch.on === 'function') {
         try {
           ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${bookingId}` }, (payload: unknown) => {
@@ -69,7 +69,7 @@ export function useChat(bookingId: string) {
         }
       }
 
-      subRef.current = ch;
+  subRef.current = ch;
     }
 
     return () => {
@@ -83,7 +83,7 @@ export function useChat(bookingId: string) {
         // swallow cleanup errors to avoid breaking unmount
       }
     };
-  }, [bookingId]);
+  }, [bookingId, supabase]);
 
   const send = async (body: string) => {
     if (!bookingId || !body) return null;
@@ -91,8 +91,8 @@ export function useChat(bookingId: string) {
     let user: unknown = null;
     if (s?.auth && typeof (s.auth as Record<string, unknown>).getUser === 'function') {
       // getUser returns platform-specific object; keep unknown and extract id via helper
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - runtime call guarded above
+      // call via unknown and guard result
+      // @ts-ignore runtime boundary
       user = await (s.auth as Record<string, unknown>).getUser();
     }
   const res = await sendMessage(supabase, bookingId, body);
@@ -131,11 +131,18 @@ export async function sendMessage(client: unknown, bookingId: string, body: stri
   // client is the supabase client; use runtime guards instead of `any` where possible
   if (!client || typeof client !== 'object') throw new Error('invalid client');
   const c = client as SupabaseLike;
-  const user = c.auth && typeof (c.auth as any).getUser === 'function' ? await (c.auth as any).getUser() : null;
-  const sender_id = (user as any)?.data?.user?.id ?? null;
-  if (!c.from || typeof (c.from as any) !== 'function') throw new Error('invalid client');
-  const fromFn = c.from as unknown as ((...args: unknown[]) => unknown);
-  const promise = (fromFn as any)('messages').insert({ booking_id: bookingId, sender_id, body }).select().single?.() ?? (fromFn as any)('messages').insert({ booking_id: bookingId, sender_id, body }).select();
+  const auth = c.auth as Record<string, unknown> | undefined;
+  const maybeUser = auth && typeof auth.getUser === 'function' ? await (auth.getUser as unknown as () => Promise<unknown>)() : null;
+  const sender_id = isRecord(maybeUser) && isRecord(maybeUser['data']) && isRecord(maybeUser['data']['user']) && typeof (maybeUser['data']['user'] as Record<string, unknown>)['id'] === 'string'
+    ? ((maybeUser['data'] as Record<string, unknown>)['user'] as Record<string, unknown>)['id'] as string
+    : null;
+  if (!c.from || typeof c.from !== 'function') throw new Error('invalid client');
+  const fromFn = c.from as unknown as (...args: unknown[]) => unknown;
+  const fromFnFn = fromFn as (...args: unknown[]) => unknown;
+  const insertCall = fromFnFn('messages');
+  // call insert/select dynamically and guard result
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const promise = (insertCall as any).insert({ booking_id: bookingId, sender_id, body }).select()?.single?.() ?? (insertCall as any).insert({ booking_id: bookingId, sender_id, body }).select();
   const res = await Promise.resolve(promise);
-  return (res?.data as Message) ?? null;
+  return isRecord(res) && 'data' in res ? (res.data as Message) : null;
 }

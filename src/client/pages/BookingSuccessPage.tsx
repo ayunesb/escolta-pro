@@ -11,8 +11,28 @@ interface BookingSuccessPageProps {
   bookingId?: string;
 }
 
+interface BookingRecord {
+  id: string;
+  pickup_address?: string;
+  start_ts: string;
+  end_ts: string;
+  armed_required?: boolean;
+  vehicle_required?: boolean;
+  vehicle_type?: string;
+  min_hours?: number;
+  total_mxn_cents?: number;
+  status?: string;
+  [key: string]: unknown;
+}
+
+function isBookingRecord(value: unknown): value is BookingRecord {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.id === 'string' && typeof v.start_ts === 'string' && typeof v.end_ts === 'string';
+}
+
 const BookingSuccessPage = ({ navigate, bookingId }: BookingSuccessPageProps) => {
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<BookingRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +50,7 @@ const BookingSuccessPage = ({ navigate, bookingId }: BookingSuccessPageProps) =>
           .single();
 
         if (error) throw error;
-        setBooking(data);
+  setBooking(isBookingRecord(data) ? data : null);
 
         // Atomic update: only set status to 'matching' if current status is 'pending'
         await supabase

@@ -23,6 +23,19 @@ interface StaffMember {
   status?: string;
 }
 
+interface StaffSkills {
+  armed?: boolean;
+  driver?: boolean;
+  [key: string]: unknown;
+}
+
+function isStaffSkills(value: unknown): value is StaffSkills {
+  if (!value || typeof value !== 'object') return false;
+  // Accept if it has at least one known skill flag
+  const obj = value as Record<string, unknown>;
+  return 'armed' in obj || 'driver' in obj;
+}
+
 interface CompanyStaffDetailPageProps {
   navigate: (path: string) => void;
   staffId: string;
@@ -66,8 +79,13 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
         setHourlyRate(data.hourly_rate?.toString() || '');
         setCity(data.city || '');
         setActive(data.active ?? true);
-  setArmed((data.skills && typeof data.skills === 'object' && 'armed' in data.skills) ? (data.skills as any).armed ?? false : false);
-  setWithVehicle((data.skills && typeof data.skills === 'object' && 'driver' in data.skills) ? (data.skills as any).driver ?? false : false);
+  if (isStaffSkills(data.skills)) {
+    setArmed(typeof data.skills.armed === 'boolean' ? data.skills.armed : false);
+    setWithVehicle(typeof data.skills.driver === 'boolean' ? data.skills.driver : false);
+  } else {
+    setArmed(false);
+    setWithVehicle(false);
+  }
 
         // Fetch documents
         fetchDocuments(data.id);
@@ -124,7 +142,7 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
           city,
           active,
           skills: {
-            ...(typeof staff.skills === 'object' && staff.skills ? (staff.skills as Record<string, unknown>) : {}),
+            ...(isStaffSkills(staff.skills) ? staff.skills : {}),
             armed,
             driver: withVehicle
           }
@@ -142,7 +160,7 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
         hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
         city,
         active,
-  skills: { ...(typeof prev?.skills === 'object' && prev?.skills ? (prev.skills as Record<string, unknown>) : {}), armed, driver: withVehicle }
+  skills: { ...(isStaffSkills(prev?.skills) ? prev!.skills : {}), armed, driver: withVehicle }
       } : null);
     } catch (err: unknown) {
       console.error('Error updating staff member:', err);
@@ -349,7 +367,7 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
                 required
               />
 
-              {(armed || (staff.skills as any)?.armed) && (
+              {(armed || (isStaffSkills(staff.skills) && staff.skills.armed)) && (
                 <FileUpload
                   label="Gun Permit"
                   bucketName="licenses"
@@ -361,7 +379,7 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
                 />
               )}
 
-              {(withVehicle || (staff.skills as any)?.driver) && (
+              {(withVehicle || (isStaffSkills(staff.skills) && staff.skills.driver)) && (
                 <FileUpload
                   label="Driver's License"
                   bucketName="licenses"

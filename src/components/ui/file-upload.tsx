@@ -90,9 +90,14 @@ const FileUpload = ({
         fileInputRef.current.value = '';
       }
     } catch (err: unknown) {
-      // normalize unknown error to string
       console.error('Upload error:', err);
-      const errorMessage = (err && typeof err === 'object' && 'message' in err && (err as any).message) ? (err as any).message : 'Upload failed';
+      let errorMessage = 'Upload failed';
+      if (err instanceof Error && err.message) {
+        errorMessage = err.message;
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        const maybeMsg = (err as { message?: unknown }).message;
+        if (typeof maybeMsg === 'string') errorMessage = maybeMsg;
+      }
       toast.error(errorMessage);
       onUploadError?.(errorMessage);
     } finally {

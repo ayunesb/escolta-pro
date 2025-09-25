@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+// (No direct supabase usage; left placeholder import removed.)
 
 interface SystemMetrics {
   uptime: number;
@@ -24,10 +24,13 @@ export const useSystemMetrics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  type MetricType = 'response_time' | 'error_rate' | 'active_users' | 'bookings';
+  type Metadata = import('@/types/observability').Metadata;
+
   const trackMetric = useCallback(async (
-    type: 'response_time' | 'error_rate' | 'active_users' | 'bookings',
+    type: MetricType,
     value: number,
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     try {
       console.warn('Tracking metric:', { type, value, metadata });
@@ -38,7 +41,7 @@ export const useSystemMetrics = () => {
 
   const trackEvent = useCallback(async (
     event: string,
-    properties?: Record<string, any>
+    properties?: Metadata
   ) => {
     try {
       console.warn('Tracking event:', { event, properties });
@@ -49,8 +52,8 @@ export const useSystemMetrics = () => {
           totalBookings: prev.totalBookings + 1
         }));
       }
-    } catch (error) {
-      console.error('Error tracking event:', error);
+    } catch (error: unknown) {
+      console.error('Error tracking event:', error instanceof Error ? error.message : error);
     }
   }, []);
 

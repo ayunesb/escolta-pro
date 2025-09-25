@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { uploadWithSignedUrl } from '../../lib/storage';
 
@@ -12,8 +12,18 @@ type FormData = {
   license?: FileList;
 };
 
-export const ProfileForm: React.FC<{ initial?: Partial<FormData>; onSubmit: (d: FormData) => Promise<void> }> = ({ initial = {}, onSubmit }) => {
-  const { register, handleSubmit, watch } = useForm<FormData>({ defaultValues: initial as any });
+export const ProfileForm: FC<{ initial?: Partial<FormData>; onSubmit: (d: FormData) => Promise<void> }> = ({ initial = {}, onSubmit }) => {
+  const init: Partial<FormData> = initial;
+  // We deliberately narrow the partial initial values to the expected shape without using 'any'.
+  const safeDefaults: Partial<FormData> = {
+    first_name: init.first_name ?? '',
+    last_name: init.last_name ?? '',
+    phone: init.phone ?? '',
+    hourly_rate: init.hourly_rate ?? 0,
+    armed: init.armed ?? false,
+    // FileList fields intentionally omitted from defaults to avoid synthetic File objects.
+  };
+  const { register, handleSubmit } = useForm<FormData>({ defaultValues: safeDefaults as FormData });
 
   const submit = handleSubmit(async (data) => {
     try {
@@ -24,8 +34,9 @@ export const ProfileForm: React.FC<{ initial?: Partial<FormData>; onSubmit: (d: 
         await uploadWithSignedUrl(data.license[0], `licenses/${Date.now()}_${data.license[0].name}`);
       }
       await onSubmit(data);
-    } catch (err) {
-      console.error(err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Profile form submission failed:', message, err);
       alert('Upload failed');
     }
   });

@@ -29,35 +29,24 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock IntersectionObserver
-const IntersectionObserverMock = class IntersectionObserver {
-  root = null
+const IntersectionObserverMock: typeof IntersectionObserver = class IntersectionObserver {
+  root: Element | Document | null = null
   rootMargin = ''
-  thresholds = []
-  
-  constructor() {}
-  observe() {
-    return null
-  }
-  disconnect() {
-    return null
-  }
-  unobserve() {
-    return null
-  }
-  takeRecords() {
-    return []
-  }
-} as any;
+  thresholds: ReadonlyArray<number> = []
+  observe() { /* no-op */ }
+  disconnect() { /* no-op */ }
+  unobserve() { /* no-op */ }
+  takeRecords() { return [] as IntersectionObserverEntry[] }
+};
 
-// Assign mock directly to global. Don't reference native IntersectionObserver.prototype
-;(global as any).IntersectionObserver = IntersectionObserverMock;
+(globalThis as unknown as { IntersectionObserver: typeof IntersectionObserver }).IntersectionObserver = IntersectionObserverMock;
 
 // Mock ResizeObserver used by some UI libs (radix, etc.)
-const ResizeObserverMock = class ResizeObserver {
-  observe() { return null }
-  unobserve() { return null }
-  disconnect() { return null }
-}
-;(global as any).ResizeObserver = ResizeObserverMock;
+const ResizeObserverMock: typeof ResizeObserver = class ResizeObserver {
+  observe() { /* no-op */ }
+  unobserve() { /* no-op */ }
+  disconnect() { /* no-op */ }
+};
+(globalThis as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver = ResizeObserverMock;
 
 // Tests should use createMockSupabase() from test utils; no global mock exported anymore.

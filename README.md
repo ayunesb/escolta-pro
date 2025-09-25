@@ -86,6 +86,7 @@ Follow these minimal steps to deploy the web app and wire serverless functions.
 		- VITE_SUPABASE_URL
 		- VITE_SUPABASE_ANON_KEY
 		- VITE_STRIPE_PUBLISHABLE_KEY
+		- VITE_ADMIN_API_SECRET (one-way hash/secret to call protected admin proxy endpoints like /api/admin/stripe-failed-events)
 		- VITE_GA4_ID (optional)
 		- VITE_SENTRY_DSN (optional)
 	- Do NOT store secret/service keys in the Vercel web env (e.g. SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECRET_KEY, webhook secrets).
@@ -97,6 +98,7 @@ Follow these minimal steps to deploy the web app and wire serverless functions.
 		- STRIPE_SECRET_KEY
 		- SUPABASE_URL
 		- SUPABASE_SERVICE_ROLE_KEY
+		- ADMIN_API_SECRET (must match VITE_ADMIN_API_SECRET for admin proxy auth)
 
 - Stripe
 	- Put publishable key in Vercel as `VITE_STRIPE_PUBLISHABLE_KEY`.
@@ -113,7 +115,6 @@ pnpm build
 ```
 
 Quick health checks
--------------------
 
 We included a couple of helpers to quickly validate your deployed Supabase Edge Functions:
 
@@ -126,5 +127,19 @@ node ./scripts/smoke-runner.js --ref=your-supabase-ref
 ```
 
 These tools are optional but useful after deploying functions or rotating secrets.
+
+### Admin / Observability Additions
+
+- A dead-letter table `stripe_failed_events` captures Stripe webhook events that exhausted retries.
+- An admin route `#/stripe-failed-events` (hash-based in `AdminRouter`) renders a table of recent failed events.
+- Backend proxy endpoint: `GET /api/admin/stripe-failed-events` (requires header `X-Admin-Secret: <ADMIN_API_SECRET>`).
+- Required env pairing:
+	- Server (Vercel / Supabase secrets): `ADMIN_API_SECRET`
+	- Client (public, only if you intentionally allow browser access in trusted admin build): `VITE_ADMIN_API_SECRET`
+
+Hardening recommendations:
+	- Prefer moving admin pages behind authenticated role checks plus server session instead of static header secret.
+	- Rotate `ADMIN_API_SECRET` regularly; never commit it.
+	- Consider adding rate limiting / IP allow list for admin proxy endpoints.
 
 

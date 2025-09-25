@@ -1,13 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-interface PerformanceMetric {
-  operation: string;
-  duration_ms: number;
-  success: boolean;
-  error?: string;
-  metadata?: Record<string, any>;
-}
+import { Metadata, PerformanceMetric } from '@/types/observability';
 
 interface UseProductionMonitoringOptions {
   enabled?: boolean;
@@ -72,7 +65,7 @@ export const useProductionMonitoring = (options: UseProductionMonitoringOptions 
   const trackInteraction = useCallback((
     action: string, 
     element: string, 
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     if (!enabled) return;
 
@@ -95,7 +88,7 @@ export const useProductionMonitoring = (options: UseProductionMonitoringOptions 
   const trackError = useCallback((
     error: Error, 
     context: string, 
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     if (!enabled) return;
 
@@ -120,7 +113,7 @@ export const useProductionMonitoring = (options: UseProductionMonitoringOptions 
   const trackTiming = useCallback((
     operation: string,
     startTime: number,
-    metadata?: Record<string, any>
+    metadata?: Metadata
   ) => {
     if (!enabled) return;
 

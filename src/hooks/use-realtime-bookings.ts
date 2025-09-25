@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 
 interface Booking {
   id: string;
@@ -88,9 +88,10 @@ export const useRealtimeBookings = () => {
           table: 'bookings',
           ...(filter && { filter }),
         },
-        (payload) => {
+        (payload: unknown) => {
           console.warn('Booking updated:', payload);
-          const updatedBooking = payload.new as Booking;
+          if (!payload || typeof payload !== 'object' || !('new' in payload)) return;
+          const updatedBooking = (payload as Record<string, unknown>).new as Booking;
           
           setBookings(prev => 
             prev.map(b => b.id === updatedBooking.id ? updatedBooking : b)
@@ -138,9 +139,10 @@ export const useRealtimeBookings = () => {
           table: 'bookings',
           filter: 'status=eq.matching',
         },
-        (payload) => {
+        (payload: unknown) => {
           console.warn('New booking opportunity:', payload);
-          const newBooking = payload.new as Booking;
+          if (!payload || typeof payload !== 'object' || !('new' in payload)) return;
+          const newBooking = (payload as Record<string, unknown>).new as Booking;
           
           setBookings(prev => [newBooking, ...prev]);
           setActiveBookings(prev => [newBooking, ...prev]);
