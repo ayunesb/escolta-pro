@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import HapticButton from '@/components/mobile/HapticButton';
@@ -24,12 +24,17 @@ export const AssignmentTracker = ({ assignmentId, bookingDetails }: AssignmentTr
     startLocationTracking 
   } = useAssignmentTracking(assignmentId);
 
-  useEffect(() => {
+  const beginTracking = useCallback(() => {
     if (assignment?.status === 'accepted' || assignment?.status === 'in_progress') {
-      const stopTracking = startLocationTracking();
-      return stopTracking;
+      return startLocationTracking();
     }
-  }, [assignment?.status]);
+    return undefined;
+  }, [assignment?.status, startLocationTracking]);
+
+  useEffect(() => {
+    const cleanup = beginTracking();
+    return cleanup;
+  }, [beginTracking]);
 
   if (!assignment) {
     return (

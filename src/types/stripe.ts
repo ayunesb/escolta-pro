@@ -45,14 +45,15 @@ export type StripeActionResult<T> = {
  * Safely extract a human-friendly message from unknown errors.
  * Prefer using this helper instead of casting `any` at call sites.
  */
-export function getErrorMessage(err: unknown, fallback = 'An error occurred'): string {
+export function getErrorMessage(err: unknown, fallback = 'Something went wrong'): string {
   if (err instanceof Error) return err.message;
-  if (err && typeof err === 'object' && 'message' in err) {
-    try {
-      return String((err as Record<string, unknown>)['message']);
-    } catch {
-      return fallback;
-    }
+  if (typeof err === 'object' && err !== null && 'message' in err) {
+    const m = (err as { message?: unknown }).message;
+    if (typeof m === 'string') return m;
   }
-  return fallback;
+  try {
+    return String(err);
+  } catch {
+    return fallback;
+  }
 }

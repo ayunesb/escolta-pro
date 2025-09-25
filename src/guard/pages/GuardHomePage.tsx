@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Calendar, MapPin, User, Settings, Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { getPaymentLedger } from '@/lib/api';
 import GuardBottomNav from '@/components/mobile/GuardBottomNav';
 import { useRealTimeAssignments, useRealTimeNotifications } from '@/hooks/use-real-time';
 import HapticButton from '@/components/mobile/HapticButton';
@@ -34,6 +36,8 @@ interface GuardHomePageProps {
 
 const GuardHomePage = ({ navigate }: GuardHomePageProps) => {
   const { user, hasRole } = useAuth();
+  const demo = import.meta.env.VITE_DEMO_MODE === 'true';
+  const [payouts, setPayouts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   
   // Use real-time assignments hook
   const { assignments, loading } = useRealTimeAssignments();
@@ -45,6 +49,26 @@ const GuardHomePage = ({ navigate }: GuardHomePageProps) => {
     // Request notification permission on mount
     requestNotificationPermission();
   }, [requestNotificationPermission]);
+
+  // Periodically refresh demo payment payouts for this guard
+  useEffect(() => {
+    if (!demo || !user?.id) return;
+    let alive = true;
+    async function refresh() {
+      try {
+        const ledger = getPaymentLedger() as any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const { data } = await (supabase as any)
+          .from('bookings')
+          .select('id,assigned_user_id');
+        const assignedMap = new Map((data || []).map((b: any) => [b.id, b.assigned_user_id])); // eslint-disable-line @typescript-eslint/no-explicit-any
+        const filtered = ledger.filter(row => assignedMap.get(row.booking_id) === user.id);
+        if (alive) setPayouts(filtered);
+      } catch (e) { /* swallow */ }
+    }
+    refresh();
+    const id = setInterval(refresh, 2000);
+    return () => { alive = false; clearInterval(id); };
+  }, [demo, user?.id]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -221,6 +245,41 @@ const GuardHomePage = ({ navigate }: GuardHomePageProps) => {
             </div>
           )}
         </div>
+
+        {demo && payouts.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-mobile-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+              Payouts (Demo)
+              <Badge variant="outline" className="text-[10px]">{payouts.length}</Badge>
+            </h2>
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr>
+                    <th className="p-2 text-left">Booking</th>
+                    <th className="p-2 text-left">Total</th>
+                    <th className="p-2 text-left">Your Share</th>
+                    <th className="p-2 text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payouts.slice().reverse().map(p => (
+                    <tr key={p.id} className="border-t">
+                      <td className="p-2 font-mono">{p.booking_id}</td>
+                      <td className="p-2">${'{'}(p.amount_cents/100).toFixed(2){'}'}</td>
+                      <td className="p-2 text-success font-medium">${'{'}(p.guard_payout_cents/100).toFixed(2){'}'}</td>
+                      <td className="p-2">
+                        <Badge variant={p.status === 'succeeded' ? 'default' : 'secondary'} className="text-[10px]">
+                          {p.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation */}

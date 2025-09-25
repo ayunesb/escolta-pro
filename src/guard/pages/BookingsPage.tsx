@@ -7,6 +7,7 @@ import { mxn } from '@/utils/money';
 import { MapPin, Clock, Shield, Car, Briefcase, ArrowLeft } from 'lucide-react';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import GuardBottomNav from '@/components/mobile/GuardBottomNav';
+import { getPaymentLedger } from '@/lib/api';
 
 type Booking = {
   id: string;
@@ -28,11 +29,13 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
   const [tab, setTab] = useState<'available'|'mine'>('available');
   const [items, setItems] = useState<Booking[]>([]);
   const [busy, setBusy] = useState(false);
+  const demo = import.meta.env.VITE_DEMO_MODE === 'true';
+  const [payouts, setPayouts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   async function load(scope:'available'|'mine') {
     setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke('bookings_guard_list', {
+  const { data, error } = await (supabase as any).functions.invoke('bookings_guard_list', { // eslint-disable-line @typescript-eslint/no-explicit-any
         body: { scope }
       });
 
@@ -54,10 +57,17 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
     load(tab); 
   }, [tab]);
 
+  useEffect(() => {
+    if (!demo) return;
+    const id = setInterval(() => setPayouts(getPaymentLedger() as any[]), 2500); // eslint-disable-line @typescript-eslint/no-explicit-any
+    setPayouts(getPaymentLedger() as any[]); // initial
+    return () => clearInterval(id);
+  }, [demo]);
+
   async function accept(booking_id: string) {
     setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke('booking_accept', {
+  const { data, error } = await (supabase as any).functions.invoke('booking_accept', { // eslint-disable-line @typescript-eslint/no-explicit-any
         body: { booking_id }
       });
 
@@ -130,6 +140,19 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
           </div>
         )}
 
+        {demo && payouts.length > 0 && tab === 'mine' && (
+          <div className="border rounded p-3 text-xs mb-4">
+            <div className="font-semibold mb-2">Recent Payouts (Demo)</div>
+            <div className="space-y-1 max-h-40 overflow-auto">
+              {payouts.slice(-5).reverse().map(p => (
+                <div key={p.id} className="flex justify-between">
+                  <span className="font-mono truncate mr-2">{p.booking_id}</span>
+                  <span>${'{'}(p.guard_payout_cents/100).toFixed(2){'}'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="space-y-3">
           {items.map(b => (
             <Card key={b.id} className="overflow-hidden">

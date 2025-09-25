@@ -1,7 +1,11 @@
-import React from 'react'
+import * as React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+// Load demo seed early if demo mode
+if (import.meta.env.VITE_DEMO_MODE === 'true') {
+  import('./demo/seed');
+}
 import { QueryContextProvider } from './contexts/QueryContext'
 import { AccessibilityProvider } from '@/components/AccessibilityProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';

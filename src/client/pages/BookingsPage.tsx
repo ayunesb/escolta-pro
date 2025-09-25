@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -69,12 +69,13 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
     };
   };
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     try {
       if (hasRole('client')) {
         // Clients see their own bookings
-        const { data, error } = await supabase
+  // supabase is unknown (demo or real) - cast for chain methods
+  const { data, error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
           .from('bookings')
           .select('*')
           .order('created_at', { ascending: false });
@@ -85,13 +86,13 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
         // Guards and companies see available + assigned bookings
         const [availableRes, assignedRes] = await Promise.all([
           // Available bookings (matching status)
-          supabase
+          (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
             .from('bookings')
             .select('*')
             .eq('status', 'matching')
             .order('created_at', { ascending: false }),
           // My assigned bookings
-          supabase
+          (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
             .from('bookings')
             .select('*')
             .not('status', 'eq', 'matching')
@@ -114,7 +115,7 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [hasRole, toast]);
 
   // Accept booking (for guards)
   const acceptBooking = async (bookingId: string) => {
@@ -122,7 +123,7 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
     
     setAccepting(bookingId);
     try {
-      const { data, error } = await supabase.functions.invoke('booking_accept', {
+  const { data, error } = await (supabase as any).functions.invoke('booking_accept', { // eslint-disable-line @typescript-eslint/no-explicit-any
         body: { booking_id: bookingId }
       });
 
@@ -150,7 +151,7 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

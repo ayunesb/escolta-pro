@@ -7,7 +7,8 @@ import { BookingMatchCard } from '@/components/booking/BookingMatchCard';
 import { useBookingMatching } from '@/hooks/use-booking-matching';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, MapPin, Users, Shield, Clock, TrendingUp } from 'lucide-react';
+import { Calendar, MapPin, Users, Shield, Clock, TrendingUp, BanknoteIcon } from 'lucide-react';
+import { getPaymentLedger, simulatePayment } from '@/lib/api';
 
 interface Booking {
   id: string;
@@ -33,12 +34,22 @@ interface MatchCriteria {
 export const BookingsDashboard = () => {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const { matchingGuards, isMatching, matchingProgress, findMatchingGuards, resetMatching } = useBookingMatching();
+  const [ledger, setLedger] = useState<ReturnType<typeof getPaymentLedger>>([] as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const demo = import.meta.env.VITE_DEMO_MODE === 'true';
+
+  useEffect(() => {
+    if (demo) {
+      const id = setInterval(() => setLedger(getPaymentLedger() as any), 1500); // eslint-disable-line @typescript-eslint/no-explicit-any
+      setLedger(getPaymentLedger() as any);
+      return () => clearInterval(id);
+    }
+  }, [demo]);
 
   // Fetch bookings
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ['bookings-dashboard'],
     queryFn: async () => {
-      const { data, error } = await supabase
+  const { data, error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
         .from('bookings')
         .select('*')
         .order('created_at', { ascending: false })
@@ -66,7 +77,7 @@ export const BookingsDashboard = () => {
   // Handle assigning a guard to a booking
   const handleAssignGuard = async (bookingId: string, guardId: string) => {
     try {
-      const { error } = await supabase
+  const { error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
         .from('bookings')
         .update({ 
           assigned_user_id: guardId,
@@ -134,7 +145,7 @@ export const BookingsDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Statistics Cards */}
+  {/* Statistics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -184,6 +195,52 @@ export const BookingsDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {demo && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BanknoteIcon className="w-5 h-5 text-accent" /> Payment Simulator
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            {ledger.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No payments yet. Complete a booking payment to see the split.</div>
+            ) : (
+              <table className="w-full text-xs md:text-sm">
+                <thead className="text-muted-foreground text-[10px] uppercase">
+                  <tr className="text-left">
+                    <th className="p-1">ID</th>
+                    <th className="p-1">Booking</th>
+                    <th className="p-1">Total</th>
+                    <th className="p-1">Fees</th>
+                    <th className="p-1">Company</th>
+                    <th className="p-1">Guard</th>
+                    <th className="p-1">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ledger.slice().reverse().map((row: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                    <tr key={row.id} className="border-t">
+                      <td className="p-1 font-mono">{row.id.replace('pay_','')}</td>
+                      <td className="p-1 font-mono">{row.booking_id}</td>
+                      <td className="p-1">${'{'}(row.amount_cents/100).toFixed(2){'}'}</td>
+                      <td className="p-1">${'{'}(row.stripe_fees_cents/100).toFixed(2){'}'}</td>
+                      <td className="p-1">${'{'}(row.company_cut_cents/100).toFixed(2){'}'}</td>
+                      <td className="p-1">${'{'}(row.guard_payout_cents/100).toFixed(2){'}'}</td>
+                      <td className="p-1">
+                        <Badge className="text-[10px]" variant={row.status === 'succeeded' ? 'default' : 'secondary'}>
+                          {row.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Bookings Management */}
       <Tabs defaultValue="active" className="w-full">
@@ -274,6 +331,11 @@ const BookingCard = ({ booking, onSelect, showMatchButton, onFindMatches }: Book
       default: return 'bg-muted text-muted-foreground';
     }
   };
+  const demo = import.meta.env.VITE_DEMO_MODE === 'true';
+  const handleSimPay = () => {
+    if (!booking.total_mxn_cents) return;
+    simulatePayment(booking.id, booking.total_mxn_cents);
+  };
 
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer">
@@ -340,6 +402,18 @@ const BookingCard = ({ booking, onSelect, showMatchButton, onFindMatches }: Book
               className="w-full"
             >
               Find Guards
+            </HapticButton>
+          </div>
+        )}
+        {demo && booking.total_mxn_cents && booking.status !== 'completed' && (
+          <div className="mt-2">
+            <HapticButton
+              onClick={handleSimPay}
+              size="sm"
+              variant="secondary"
+              className="w-full"
+            >
+              Simulate Payment
             </HapticButton>
           </div>
         )}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Star, MapPin, Shield, ArrowRight, Users, Building, DollarSign, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,12 +55,12 @@ const HomePage = ({ navigate }: HomePageProps) => {
   
   const { isLoaded: isImageLoaded } = useImagePreloader(guardImageUrls);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       if (hasRole('client')) {
         // Clients see available guards
-        const { data: guards, error } = await supabase
+  const { data: guards, error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
           .from('guards')
           .select('id, photo_url, skills, rating, city, hourly_rate_mxn_cents, armed_hourly_surcharge_mxn_cents, active')
           .eq('active', true);
@@ -69,7 +69,7 @@ const HomePage = ({ navigate }: HomePageProps) => {
       } else if (hasRole('freelancer')) {
         // Guards see recent job opportunities
         const [bookingsRes] = await Promise.all([
-          supabase
+          (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
             .from('bookings')
             .select('*')
             .eq('status', 'matching')
@@ -82,11 +82,11 @@ const HomePage = ({ navigate }: HomePageProps) => {
       } else if (hasRole('company_admin')) {
         // Company admins see dashboard stats
         const [bookingsRes, guardsRes] = await Promise.all([
-          supabase
+          (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
             .from('bookings')
             .select('*')
             .not('assigned_company_id', 'is', null),
-          supabase
+          (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
             .from('guards')
             .select('*')
             .eq('status', 'active')
@@ -101,8 +101,8 @@ const HomePage = ({ navigate }: HomePageProps) => {
       } else if (hasRole('super_admin')) {
         // Super admin sees global stats + all guards
         const [bookingsRes, guardsRes] = await Promise.all([
-          supabase.from('bookings').select('*'),
-          supabase.from('guards').select('*')
+          (supabase as any).from('bookings').select('*'), // eslint-disable-line @typescript-eslint/no-explicit-any
+          (supabase as any).from('guards').select('*') // eslint-disable-line @typescript-eslint/no-explicit-any
         ]);
 
         setGuards((guardsRes.data || []) as Guard[]);
@@ -118,11 +118,9 @@ const HomePage = ({ navigate }: HomePageProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [hasRole]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const formatPrice = (cents: number) => {
     return new Intl.NumberFormat('es-MX', {

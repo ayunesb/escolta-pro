@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, File as FileIcon, Download, Trash2, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
+import { Upload, File as FileIcon, Download, Trash2, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from '@/hooks/use-toast';
 import { i18n } from '@/lib/i18n';
-import { format } from 'date-fns';
 
 interface Document {
   id: string;
@@ -48,11 +47,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   const [selectedFileData, setSelectedFileData] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState('general');
 
-  useEffect(() => {
-    loadDocuments();
-  }, [organizationId]);
-
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -61,7 +56,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         ? `${user?.id}/${organizationId}` 
         : `${user?.id}`;
 
-      const { data: files, error } = await client.storage
+  const { data: files, error } = await (client as any).storage // eslint-disable-line @typescript-eslint/no-explicit-any
         .from('documents')
         .list(folderPath, {
           limit: 100,
@@ -103,7 +98,11 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [client, organizationId, user?.id, documentType, maxSizeBytes]);
+
+  useEffect(() => {
+    loadDocuments();
+  }, [loadDocuments]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
   const file = event.target.files?.[0];
@@ -168,7 +167,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         });
       }, 200);
 
-      const { data, error } = await client.storage
+  const { data, error } = await (client as any).storage // eslint-disable-line @typescript-eslint/no-explicit-any
         .from('documents')
         .upload(filePath, selectedFileData as File, {
           cacheControl: '3600',
@@ -216,7 +215,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
 
   const downloadDocument = async (document: Document) => {
     try {
-      const { data: signedUrlData } = await client.functions.invoke('document_signed_url', {
+  const { data: signedUrlData } = await (client as any).functions.invoke('document_signed_url', { // eslint-disable-line @typescript-eslint/no-explicit-any
         body: { 
           document_path: document.name,
           expires_in: 300 // 5 minutes
@@ -246,7 +245,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         ? `${user?.id}/${organizationId}` 
         : `${user?.id}`;
       
-      const { error } = await client.storage
+  const { error } = await (client as any).storage // eslint-disable-line @typescript-eslint/no-explicit-any
         .from('documents')
         .remove([`${folderPath}/${document.name}`]);
 
