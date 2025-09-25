@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import * as React from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -38,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserRoles = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+  const { data, error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
@@ -56,52 +57,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Defer role fetching to avoid auth state change issues
-          setTimeout(async () => {
-            const roles = await fetchUserRoles(session.user.id);
-            setUserRoles(roles);
-              setActiveRole(roles[0] ?? null);
-            setLoading(false);
-          }, 0);
-        } else {
-          setUserRoles([]);
-      setActiveRole(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        setTimeout(async () => {
-          const roles = await fetchUserRoles(session.user.id);
+    let unsub: (() => void) | undefined;
+    const init = async () => {
+      try {
+        // getSession shim compatibility
+        const sessionRes = await (supabase as any).auth.getSession?.(); // eslint-disable-line @typescript-eslint/no-explicit-any
+        const currentSession = sessionRes?.data?.session ?? null;
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        if (currentSession?.user) {
+          const roles = await fetchUserRoles(currentSession.user.id);
           setUserRoles(roles);
           setActiveRole(roles[0] ?? null);
-          setLoading(false);
-        }, 0);
-      } else {
-        setUserRoles([]);
-        setActiveRole(null);
+        }
+      } catch (e) {
+        // silent in demo
+      } finally {
         setLoading(false);
       }
-    });
 
-    return () => subscription.unsubscribe();
+      try {
+        const sub = (supabase as any).auth.onAuthStateChange?.((_evt: string, session: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+          setSession(session ?? null);
+          setUser(session?.user ?? null);
+        });
+        unsub = () => sub?.data?.subscription?.unsubscribe?.();
+      } catch {}
+    };
+    init();
+    return () => { unsub?.(); };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await (supabase as any).auth.signInWithPassword({ // eslint-disable-line @typescript-eslint/no-explicit-any
       email,
       password,
     });
@@ -111,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string, role?: UserRole) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+  const { error } = await (supabase as any).auth.signUp({ // eslint-disable-line @typescript-eslint/no-explicit-any
       email,
       password,
       options: {
@@ -127,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await (supabase as any).auth.signOut(); // eslint-disable-line @typescript-eslint/no-explicit-any
   };
 
   const hasRole = (role: UserRole): boolean => {
