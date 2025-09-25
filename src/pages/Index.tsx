@@ -12,7 +12,7 @@ interface Guard {
   hourly_rate_mxn_cents: number;
   armed_hourly_surcharge_mxn_cents: number;
   company_id?: string | null;
-  skills?: any;
+  skills?: unknown;
 }
 
 const Index = () => {

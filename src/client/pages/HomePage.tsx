@@ -23,7 +23,7 @@ import { useRealtimeBookings } from '@/hooks/use-realtime-bookings';
 interface Guard {
   id: string;
   photo_url?: string;
-  skills?: any;
+  skills?: unknown;
   rating: number;
   city?: string;
   hourly_rate_mxn_cents?: number;

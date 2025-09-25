@@ -44,18 +44,19 @@ export function useRealTimeBookings() {
           table: 'bookings',
           filter: `client_id=eq.${user.id}`
         },
-        (payload: any) => {
-          const newRecord = payload.new as Booking | undefined;
-          const oldRecord = payload.old as Booking | undefined;
-          if (payload.eventType === 'INSERT' && newRecord) {
+        (payload: unknown) => {
+          const p = payload as Record<string, unknown> | undefined;
+          const newRecord = p?.['new'] as Booking | undefined;
+          const oldRecord = p?.['old'] as Booking | undefined;
+          if (p?.eventType === 'INSERT' && newRecord) {
             setBookings(prev => [newRecord, ...prev]);
-          } else if (payload.eventType === 'UPDATE' && newRecord) {
+          } else if (p?.eventType === 'UPDATE' && newRecord) {
             setBookings(prev => 
               prev.map(booking => 
                 booking.id === newRecord.id ? newRecord : booking
               )
             );
-          } else if (payload.eventType === 'DELETE' && oldRecord) {
+          } else if (p?.eventType === 'DELETE' && oldRecord) {
             setBookings(prev => 
               prev.filter(booking => booking.id !== oldRecord.id)
             );
@@ -131,18 +132,19 @@ export function useRealTimeAssignments() {
           table: 'assignments',
           filter: `guard_id=eq.${user.id}`
         },
-        (payload: any) => {
-          const newRecord = payload.new as Assignment | undefined;
-          const oldRecord = payload.old as Assignment | undefined;
-          if (payload.eventType === 'INSERT' && newRecord) {
+        (payload: unknown) => {
+          const p = payload as Record<string, unknown> | undefined;
+          const newRecord = p?.['new'] as Assignment | undefined;
+          const oldRecord = p?.['old'] as Assignment | undefined;
+          if (p?.eventType === 'INSERT' && newRecord) {
             setAssignments(prev => [newRecord, ...prev]);
-          } else if (payload.eventType === 'UPDATE' && newRecord) {
+          } else if (p?.eventType === 'UPDATE' && newRecord) {
             setAssignments(prev => 
               prev.map(assignment => 
                 assignment.id === newRecord.id ? newRecord : assignment
               )
             );
-          } else if (payload.eventType === 'DELETE' && oldRecord) {
+          } else if (p?.eventType === 'DELETE' && oldRecord) {
             setAssignments(prev => 
               prev.filter(assignment => assignment.id !== oldRecord.id)
             );
@@ -184,7 +186,7 @@ export function useRealTimeAssignments() {
 
 export function useRealTimeNotifications() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -200,9 +202,10 @@ export function useRealTimeNotifications() {
           table: 'bookings',
           filter: `client_id=eq.${user.id}`
         },
-        (payload) => {
-          const oldStatus = payload.old?.status;
-          const newStatus = payload.new?.status;
+        (payload: unknown) => {
+          const p = payload as Record<string, unknown> | undefined;
+          const oldStatus = (p?.old as Record<string, unknown> | undefined)?.['status'] as string | undefined;
+          const newStatus = (p?.new as Record<string, unknown> | undefined)?.['status'] as string | undefined;
           
           if (oldStatus !== newStatus) {
             const notification = {
@@ -211,7 +214,7 @@ export function useRealTimeNotifications() {
               title: 'Booking Update',
               message: `Your booking status changed to ${newStatus}`,
               timestamp: new Date().toISOString(),
-              data: payload.new
+              data: p?.new as Record<string, unknown> | undefined
             };
             
             setNotifications(prev => [notification, ...prev].slice(0, 10));

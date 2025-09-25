@@ -31,30 +31,37 @@ export const useAssignmentTracking = (assignmentId?: string) => {
         schema: 'public',
         table: 'assignments',
         filter: `id=eq.${assignmentId}`
-      }, (payload: any) => {
-        const newData = payload.new as Record<string, unknown> | undefined;
-        const gpsTrail: Array<{ lat: number; lng: number; timestamp: string }> = 
-          Array.isArray(newData?.gps_trail) ? 
-            (newData!.gps_trail as unknown[])
-              .filter((item): item is { lat: number; lng: number; timestamp: string } => 
-                item !== null && 
-                typeof item === 'object' && 
-                'lat' in (item as any) && 'lng' in (item as any) &&
-                typeof ((item as any).lat) === 'number' && 
-                typeof ((item as any).lng) === 'number' &&
-                typeof ((item as any).timestamp) === 'string'
-              ) : [];
+      }, (payload: unknown) => {
+        const payloadObj = payload as Record<string, unknown>;
+        const newData = (payloadObj && payloadObj['new']) as Record<string, unknown> | undefined;
+
+        const gpsTrail: Array<{ lat: number; lng: number; timestamp: string }> =
+          Array.isArray(newData?.['gps_trail'])
+            ? (newData!['gps_trail'] as unknown[]).filter(
+                (item): item is { lat: number; lng: number; timestamp: string } => {
+                  if (item === null || typeof item !== 'object') return false;
+                  const it = item as Record<string, unknown>;
+                  return (
+                    'lat' in it &&
+                    'lng' in it &&
+                    typeof it['lat'] === 'number' &&
+                    typeof it['lng'] === 'number' &&
+                    typeof it['timestamp'] === 'string'
+                  );
+                }
+              )
+            : [];
 
         setAssignment({
-          id: String((newData && (newData as any).id) ?? ''),
-          bookingId: String((newData && (newData as any).booking_id) ?? ''),
-          guardId: String((newData && (newData as any).guard_id) ?? ''),
-          status: String((newData && (newData as any).status) ?? 'offered') as Assignment['status'],
-          checkInTs: (newData && (newData as any).check_in_ts) ?? undefined,
-          checkOutTs: (newData && (newData as any).check_out_ts) ?? undefined,
-          onSiteTs: (newData && (newData as any).on_site_ts) ?? undefined,
-          inProgressTs: (newData && (newData as any).in_progress_ts) ?? undefined,
-          gpsTrail
+          id: String((newData && newData['id']) ?? ''),
+          bookingId: String((newData && newData['booking_id']) ?? ''),
+          guardId: String((newData && newData['guard_id']) ?? ''),
+          status: String((newData && newData['status']) ?? 'offered') as Assignment['status'],
+          checkInTs: (newData && typeof newData['check_in_ts'] === 'string') ? (newData['check_in_ts'] as string) : undefined,
+          checkOutTs: (newData && typeof newData['check_out_ts'] === 'string') ? (newData['check_out_ts'] as string) : undefined,
+          onSiteTs: (newData && typeof newData['on_site_ts'] === 'string') ? (newData['on_site_ts'] as string) : undefined,
+          inProgressTs: (newData && typeof newData['in_progress_ts'] === 'string') ? (newData['in_progress_ts'] as string) : undefined,
+          gpsTrail,
         });
       })
       .subscribe();
@@ -85,28 +92,33 @@ export const useAssignmentTracking = (assignmentId?: string) => {
       return;
     }
 
-    const gpsTrail: Array<{ lat: number; lng: number; timestamp: string }> = 
-      Array.isArray(data.gps_trail) ? 
-        (data.gps_trail as unknown[])
-          .filter((item): item is { lat: number; lng: number; timestamp: string } => 
-            item !== null && 
-            typeof item === 'object' && 
-            'lat' in (item as any) && 'lng' in (item as any) &&
-            typeof ((item as any).lat) === 'number' && 
-            typeof ((item as any).lng) === 'number' &&
-            typeof ((item as any).timestamp) === 'string'
-          ) : [];
+    const d = data as Record<string, unknown> | null;
+    if (!d) return;
+
+    const gpsTrail: Array<{ lat: number; lng: number; timestamp: string }> =
+      Array.isArray(d['gps_trail'])
+        ? (d['gps_trail'] as unknown[]).filter((item): item is { lat: number; lng: number; timestamp: string } => {
+            if (item === null || typeof item !== 'object') return false;
+            const it = item as Record<string, unknown>;
+            return (
+              'lat' in it && 'lng' in it && 'timestamp' in it &&
+              typeof it['lat'] === 'number' &&
+              typeof it['lng'] === 'number' &&
+              typeof it['timestamp'] === 'string'
+            );
+          })
+        : [];
 
     setAssignment({
-      id: data.id,
-      bookingId: data.booking_id,
-      guardId: data.guard_id,
-      status: data.status as Assignment['status'],
-      checkInTs: data.check_in_ts,
-      checkOutTs: data.check_out_ts,
-      onSiteTs: data.on_site_ts,
-      inProgressTs: data.in_progress_ts,
-      gpsTrail
+      id: String(d['id'] ?? ''),
+      bookingId: String(d['booking_id'] ?? ''),
+      guardId: String(d['guard_id'] ?? ''),
+      status: (typeof d['status'] === 'string' ? (d['status'] as Assignment['status']) : 'offered'),
+      checkInTs: typeof d['check_in_ts'] === 'string' ? (d['check_in_ts'] as string) : undefined,
+      checkOutTs: typeof d['check_out_ts'] === 'string' ? (d['check_out_ts'] as string) : undefined,
+      onSiteTs: typeof d['on_site_ts'] === 'string' ? (d['on_site_ts'] as string) : undefined,
+      inProgressTs: typeof d['in_progress_ts'] === 'string' ? (d['in_progress_ts'] as string) : undefined,
+      gpsTrail,
     });
   };
 

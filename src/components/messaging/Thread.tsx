@@ -17,10 +17,20 @@ export default function Thread({ bookingId }: Props) {
 
   React.useEffect(() => {
     let mounted = true;
-    supabase.auth.getUser().then((res) => {
-      if (!mounted) return;
-      setCurrentUserId(res.data.user?.id ?? null);
-    });
+    // `useSupabase()` returns `unknown` at the type boundary; guard before using
+    if (supabase && typeof supabase === 'object' && 'auth' in supabase) {
+      const auth = (supabase as Record<string, unknown>).auth as unknown;
+      if (auth && typeof (auth as Record<string, unknown>).getUser === 'function') {
+        (auth as any).getUser().then((res: unknown) => {
+          if (!mounted) return;
+          const r = res as Record<string, unknown> | undefined;
+          const data = r && typeof r['data'] === 'object' ? (r['data'] as Record<string, unknown>) : undefined;
+          const user = data && typeof data['user'] === 'object' ? (data['user'] as Record<string, unknown>) : undefined;
+          const id = user && typeof user['id'] === 'string' ? (user['id'] as string) : null;
+          setCurrentUserId(id);
+        });
+      }
+    }
     return () => { mounted = false };
   }, [supabase]);
 
@@ -58,7 +68,7 @@ export default function Thread({ bookingId }: Props) {
             )}
             <div className="text-xs text-gray-400 mt-1">{new Date(m.created_at).toLocaleString()}</div>
             {/* show Edit if this message is by current user (simple check) */}
-            {m.sender_id === currentUserId && messages.length && messages[messages.length - 1].id === m.id && (
+            {m.sender_id === currentUserId && messages.length > 0 && messages[messages.length - 1].id === m.id && (
               <div className="mt-1">
                 <button
                   className="text-xs text-blue-600"

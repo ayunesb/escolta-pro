@@ -17,7 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuditTrail } from '@/hooks/use-audit-trail';
 import HapticButton from '@/components/mobile/HapticButton';
 import { OptimizedSkeleton } from '@/components/performance/OptimizedSkeleton';
-import { VirtualList } from '@/components/performance/VirtualList';
 
 interface AuditTrailViewerProps {
   navigate?: (path: string) => void;
@@ -76,48 +75,66 @@ export const AuditTrailViewer = ({ navigate: _navigate }: AuditTrailViewerProps)
     fetchAuditEntries(clearedFilters, 0, 50);
   };
 
-  const renderAuditEntry = ({ item: entry, index: _index }: { item: any; index: number }) => (
-    <Card key={entry.id} className="mb-3">
+  const renderAuditEntry = ({ item: entry, index: _index }: { item: unknown; index: number }) => {
+    const isRecord = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null;
+    const e = isRecord(entry) ? entry : {} as Record<string, unknown>;
+    const action = String(e.action ?? '');
+    const entity = String(e.entity ?? '');
+    const timestamp = String(e.ts ?? e.timestamp ?? '');
+    const actorEmail = String((e.profiles as Record<string, unknown> | undefined)?.email ?? e.actor_email ?? e.actor_id ?? '');
+    const entityId = String(e.entity_id ?? e.entityId ?? '');
+    const changes = isRecord(e.diff ?? e.changes) ? (e.diff ?? e.changes) as Record<string, unknown> : {};
+
+    return (
+      <Card key={entityId || String(e.id ?? Math.random())} className="mb-3">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className={`px-2 py-1 rounded-md text-xs font-medium ${getActionColor(entry.action)}`}>
-              {entry.action.replace('_', ' ').toUpperCase()}
+            <div className={`px-2 py-1 rounded-md text-xs font-medium ${getActionColor(action)}`}>
+              {action.replace('_', ' ').toUpperCase()}
             </div>
             <Badge variant="outline" className="text-xs">
-              {entry.entity}
+              {entity}
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })}
+            {timestamp ? formatDistanceToNow(new Date(timestamp), { addSuffix: true }) : ''}
           </div>
         </div>
 
         <div className="space-y-2">
-          <p className="text-mobile-sm font-medium text-foreground">
-            {formatActionDescription(entry)}
+            <p className="text-mobile-sm font-medium text-foreground">
+            {formatActionDescription({
+              id: String(e.id ?? ''),
+              action,
+              entity,
+              entityId,
+              actorId: String(e.actor_id ?? ''),
+              timestamp,
+              changes,
+              actorEmail: actorEmail || undefined
+            })}
           </p>
           
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <User className="h-3 w-3" />
-            <span>{entry.actorEmail || entry.actorId}</span>
-            {entry.entityId && (
+            <span>{actorEmail || String(e.actor_id ?? '')}</span>
+            {entityId && (
               <>
                 <span>•</span>
-                <span>ID: {entry.entityId.slice(-8)}</span>
+                <span>ID: {entityId.slice(-8)}</span>
               </>
             )}
           </div>
-
-          {Object.keys(entry.changes).length > 0 && (
+          {Object.keys(changes).length > 0 && (
             <details className="mt-2">
               <summary className="text-xs text-accent cursor-pointer hover:underline">
-                View Changes ({Object.keys(entry.changes).length} fields)
+                View Changes ({Object.keys(changes).length} fields)
               </summary>
               <div className="mt-2 p-3 bg-muted rounded-md">
                 <pre className="text-xs text-muted-foreground overflow-x-auto">
-                  {JSON.stringify(entry.changes, null, 2)}
+                  {JSON.stringify(changes, null, 2)}
                 </pre>
               </div>
             </details>
@@ -126,6 +143,7 @@ export const AuditTrailViewer = ({ navigate: _navigate }: AuditTrailViewerProps)
       </CardContent>
     </Card>
   );
+  };
 
   return (
     <div className="space-y-6">

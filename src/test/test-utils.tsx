@@ -4,7 +4,7 @@ import { SupabaseProvider } from '../contexts/SupabaseContext'
 import { createMockSupabase as baseCreateMockSupabase } from '../lib/storage'
 import { vi } from 'vitest'
 
-type PartialSupabase = Partial<any>
+type PartialSupabase = Partial<Record<string, unknown>>
 
 export function createMockChannel() {
   const channel = {
@@ -26,7 +26,7 @@ export function createMockSupabase(overrides: PartialSupabase = {}) {
   return client
 }
 
-export function withAuth(user: any = {}) {
+export function withAuth(user: Record<string, unknown> = {}) {
   const me = { id: 'u_test', email: 'test@example.com', ...user }
   const client = createMockSupabase({
     auth: { getUser: async () => ({ data: { user: me } }) }
@@ -46,12 +46,16 @@ export function mockFrom<T>(rows: T[]) {
   return fn
 }
 
-export function renderWithProviders(ui: React.ReactElement, { client, ...renderOptions } = {} as any) {
-  const mockClient = client ?? createMockSupabase()
+export function renderWithProviders(
+  ui: React.ReactElement,
+  options?: { client?: unknown } & Record<string, unknown>
+) {
+  const mockClient = options?.client ?? createMockSupabase()
   function Wrapper({ children }: { children?: React.ReactNode }) {
-    return <SupabaseProvider client={mockClient}>{children}</SupabaseProvider>
+    return <SupabaseProvider client={mockClient as any}>{children}</SupabaseProvider>
   }
-  return render(ui, { wrapper: Wrapper as any, ...renderOptions })
+  const { client, ...renderOptions } = options ?? {}
+  return render(ui, { wrapper: Wrapper as any, ...(renderOptions as any) })
 }
 
 export * from '@testing-library/react'

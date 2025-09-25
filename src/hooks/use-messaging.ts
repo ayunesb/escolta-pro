@@ -97,11 +97,15 @@ export const useMessaging = (bookingId: string) => {
         }
       )
       .on('presence', { event: 'sync' }, () => {
-        const presenceState = channel.presenceState();
+        const presenceState = channel.presenceState() as Record<string, unknown>;
         const typingUsers = Object.values(presenceState)
           .flat()
-          .filter((presence: any) => presence.typing && presence.user_id !== user?.id)
-          .map((presence: any) => presence.user_id);
+          .filter((presence: unknown) => {
+            if (!presence || typeof presence !== 'object') return false;
+            const p = presence as Record<string, unknown>;
+            return Boolean(p['typing'] && p['user_id'] !== user?.id);
+          })
+          .map((presence: unknown) => (presence as Record<string, unknown>)['user_id'] as string);
         
         setTyping(typingUsers);
       })

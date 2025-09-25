@@ -15,7 +15,7 @@ interface Guard {
   hourly_rate_mxn_cents?: number;
   armed_hourly_surcharge_mxn_cents?: number;
   availability_status?: string;
-  skills?: any;
+  skills?: unknown;
 }
 
 interface GuardAvailabilityWidgetProps {
@@ -53,9 +53,10 @@ const GuardAvailabilityWidget = ({
       
       // Filter by armed requirement
       if (armedRequired) {
-        filteredGuards = filteredGuards.filter(guard => 
-          guard.skills?.armed === true
-        );
+        filteredGuards = filteredGuards.filter(guard => {
+          const s = guard.skills;
+          return typeof s === 'object' && s !== null && 'armed' in s && (s as any).armed === true;
+        });
       }
 
       // Filter by availability status
@@ -179,7 +180,7 @@ const GuardAvailabilityWidget = ({
                         Available Now
                       </Badge>
                       
-                      {guard.skills?.armed && (
+                      {(typeof guard.skills === 'object' && guard.skills !== null && 'armed' in guard.skills && (guard.skills as any).armed) && (
                         <Badge variant="outline" className="text-xs text-amber-600">
                           Armed
                         </Badge>

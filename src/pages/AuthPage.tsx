@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,9 +52,10 @@ const AuthPage = () => {
           toast.success('Login successful!');
         }
       }
-    } catch (error: any) {
-      setErrorMsg(error.message || 'Unexpected error.');
-      toast.error(error.message || 'Unexpected error.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : (err && typeof err === 'object' && 'message' in err ? String((err as Record<string, unknown>).message) : 'Unexpected error.');
+      setErrorMsg(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -99,7 +100,7 @@ const AuthPage = () => {
             {isSignUp && (
               <div>
                 <Label htmlFor="userType">Account Type</Label>
-                <Select value={userType} onValueChange={v => setUserType(v as any)}>
+                <Select value={userType} onValueChange={v => setUserType(v as 'client' | 'freelancer' | 'company_admin')}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>

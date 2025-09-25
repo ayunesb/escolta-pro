@@ -12,7 +12,7 @@ interface Notification {
   message: string;
   read: boolean;
   action_url?: string;
-  metadata: any;
+  metadata?: Record<string, unknown>;
   created_at: string;
 }
 
@@ -38,8 +38,19 @@ export const useRealtimeNotifications = () => {
         return;
       }
 
-      setNotifications(data || []);
-      setUnreadCount((data || []).filter(n => !n.read).length);
+      // Normalize metadata fields coming from Supabase's Json type into a safe Record
+      const normalized = (data || []).map((n: unknown) => {
+        if (!n || typeof n !== 'object') return null;
+        const asObj = n as Record<string, unknown>;
+        return {
+          // spread unknown-backed object into a Notification; keep runtime guards for metadata
+          ...(asObj as Record<string, unknown>),
+          metadata: (asObj.metadata && typeof asObj.metadata === 'object') ? asObj.metadata as Record<string, unknown> : {}
+        } as Notification;
+      }).filter(Boolean) as Notification[];
+
+      setNotifications(normalized);
+      setUnreadCount(normalized.filter(n => !n.read).length);
     };
 
     fetchNotifications();
@@ -55,10 +66,14 @@ export const useRealtimeNotifications = () => {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        (payload: unknown) => {
           console.warn('New notification received:', payload);
-          const newNotification = payload.new as Notification;
-          
+          // safely extract payload.new and validate shape before using
+          if (!payload || typeof payload !== 'object' || !('new' in payload)) return;
+          const maybeNew = (payload as Record<string, unknown>).new as unknown;
+          if (!maybeNew || typeof maybeNew !== 'object' || !('id' in maybeNew)) return;
+          const newNotification = maybeNew as Notification;
+
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
 
@@ -86,14 +101,17 @@ export const useRealtimeNotifications = () => {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        (payload: unknown) => {
           console.warn('Notification updated:', payload);
-          const updatedNotification = payload.new as Notification;
-          
+          if (!payload || typeof payload !== 'object' || !('new' in payload)) return;
+          const maybeUpdated = (payload as Record<string, unknown>).new as unknown;
+          if (!maybeUpdated || typeof maybeUpdated !== 'object' || !('id' in maybeUpdated)) return;
+          const updatedNotification = maybeUpdated as Notification;
+
           setNotifications(prev => 
             prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
           );
-          
+
           // Update unread count
           setNotifications(current => {
             setUnreadCount(current.filter(n => !n.read).length);

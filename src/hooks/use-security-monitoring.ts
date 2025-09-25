@@ -94,8 +94,11 @@ export const useSecurityMonitoring = () => {
     }
   };
 
-  const generateAlertMessage = (log: any): string => {
-    switch (log.action) {
+  const generateAlertMessage = (log: unknown): string => {
+    if (!log || typeof log !== 'object') return 'Security event';
+    const l = log as Record<string, unknown>;
+    const action = typeof l.action === 'string' ? l.action : 'unknown';
+    switch (action) {
       case 'failed_login':
         return `Failed login attempt detected`;
       case 'unusual_activity':
@@ -105,7 +108,7 @@ export const useSecurityMonitoring = () => {
       case 'permission_change':
         return `User permissions modified`;
       default:
-        return `Security event: ${log.action}`;
+        return `Security event: ${action}`;
     }
   };
 

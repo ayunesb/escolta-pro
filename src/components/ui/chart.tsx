@@ -27,6 +27,19 @@ export type ChartDatum =
     }
   | Record<string, unknown>
 
+// Small runtime helpers to avoid repeated unsafe casts
+function isRecord(x: unknown): x is Record<string, unknown> {
+  return typeof x === "object" && x !== null
+}
+
+function getFieldAsString(obj: unknown, key: string): string | undefined {
+  if (!isRecord(obj)) return undefined
+  const v = obj[key]
+  if (typeof v === "string") return v
+  if (typeof v === "number" || typeof v === "boolean") return String(v)
+  return undefined
+}
+
 type ChartContextProps = {
   config: ChartConfig
 }
@@ -161,9 +174,9 @@ const ChartTooltipContent = React.forwardRef<
       if (explicit) return explicit
       if (typeof item !== 'object' || item === null) return undefined
       // prefer payload.fill, then .color
-      const payload = 'payload' in item && typeof item.payload === 'object' ? (item.payload as any) : undefined
-      if (payload && payload?.fill) return String(payload.fill)
-      if ('color' in item && typeof (item as any).color === 'string') return (item as any).color
+  const payload = 'payload' in item && typeof item.payload === 'object' ? (item.payload as unknown) : undefined
+  if (payload && typeof (payload as Record<string, unknown>).fill !== 'undefined') return String((payload as Record<string, unknown>).fill)
+  if ('color' in item && typeof (item as unknown as Record<string, unknown>).color === 'string') return (item as unknown as Record<string, unknown>).color as string
       return undefined
     }
 
@@ -172,9 +185,9 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      const [item] = payload
-      const key = `${labelKey || item.dataKey || item.name || "value"}`
-      const itemConfig = getPayloadConfigFromPayload(config, item, key)
+  const [item] = payload
+  const key = `${labelKey || getFieldAsString(item, "dataKey") || getFieldAsString(item, "name") || "value"}`
+  const itemConfig = getPayloadConfigFromPayload(config, item, key)
       const rawValue =
         !labelKey && typeof label === "string"
           ? config[label as keyof typeof config]?.label || label
@@ -223,7 +236,7 @@ const ChartTooltipContent = React.forwardRef<
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
             {payload.map((item, index) => {
-              const key = `${nameKey || item.name || item.dataKey || 'value'}`
+              const key = `${nameKey || getFieldAsString(item, "name") || getFieldAsString(item, "dataKey") || 'value'}`
               const itemConfig = getPayloadConfigFromPayload(config, item, key)
               const indicatorColor = getIndicatorColor(item, color)
 
@@ -235,13 +248,13 @@ const ChartTooltipContent = React.forwardRef<
                     indicator === 'dot' && 'items-center'
                   )}
                 >
-                    {formatter && (item as any)?.value !== undefined && (item as any).name ? (
+                    {formatter && typeof item === 'object' && item !== null && 'value' in item && (item as Record<string, unknown>).value !== undefined && 'name' in item ? (
                       formatter(
-                        (item as any).value as number | string,
-                        (item as any).name as string | undefined,
+                        ((item as Record<string, unknown>).value as number | string),
+                        ((item as Record<string, unknown>).name as string | undefined),
                         item,
                         index,
-                        (item as any).payload
+                        (item as Record<string, unknown>).payload
                       )
                     ) : (
                   <>
@@ -278,12 +291,12 @@ const ChartTooltipContent = React.forwardRef<
                       <div className="grid gap-1.5">
                         {nestLabel ? tooltipLabel : null}
                         <span className="text-muted-foreground">
-                          {itemConfig?.label || (typeof item === 'object' && item !== null ? (item as any).name : undefined)}
+                              {itemConfig?.label || getFieldAsString(item, "name")}
                         </span>
                       </div>
-                      {typeof (item as any).value === 'number' && (
+                      {isRecord(item) && typeof item.value === 'number' && (
                         <span className="font-mono font-medium tabular-nums text-foreground">
-                          {Number((item as any).value).toLocaleString()}
+                          {Number(item.value).toLocaleString()}
                         </span>
                       )}
                     </div>
@@ -304,7 +317,7 @@ const ChartLegend = RechartsPrimitive.Legend
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    payload?: Array<any>
+  payload?: Array<ChartDatum>
     verticalAlign?: "top" | "bottom"
     hideIcon?: boolean
     nameKey?: string
@@ -330,9 +343,10 @@ const ChartLegendContent = React.forwardRef<
         )}
       >
         {payload.map((item, i) => {
-          const key = `${nameKey || item.dataKey || 'value'}`
+          const key = `${nameKey || getFieldAsString(item, "dataKey") || 'value'}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
-
+          // safe read for color
+          const color = getFieldAsString(item, "color")
           return (
             <div
               key={String(item.dataKey ?? item.name ?? i)}
@@ -346,7 +360,7 @@ const ChartLegendContent = React.forwardRef<
                 <div
                   className="h-2 w-2 shrink-0 rounded-[2px]"
                   style={{
-                    backgroundColor: (item as any).color,
+                    backgroundColor: color,
                   }}
                 />
               )}

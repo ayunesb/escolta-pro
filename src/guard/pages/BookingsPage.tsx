@@ -41,9 +41,10 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
       }
 
       setItems(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      console.error('Load error:', e);
-      toast({ title: 'Error', description: e.message || 'Failed to load' });
+    } catch (err: unknown) {
+      console.error('Load error:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Error', description: msg || 'Failed to load' });
     } finally { 
       setBusy(false); 
     }
@@ -67,9 +68,10 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
       toast({ title: 'Assigned', description: 'You accepted this job.' });
       await load('mine'); 
       setTab('mine');
-    } catch (e: any) {
-      console.error('Accept error:', e);
-      toast({ title: 'Cannot accept', description: e.message || 'Try again' });
+    } catch (err: unknown) {
+      console.error('Accept error:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Cannot accept', description: msg || 'Try again' });
     } finally { 
       setBusy(false); 
     }

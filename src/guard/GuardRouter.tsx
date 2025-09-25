@@ -49,7 +49,7 @@ const GuardRouter = () => {
   }
 
   // Route parsing
-  const [basePath, queryString] = currentPath.split('?');
+  const [basePath, _queryString] = currentPath.split('?');
   const pathParts = basePath.split('/');
 
   // Role-based route protection

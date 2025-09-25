@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -21,22 +19,10 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import {
-  TrendingUp,
-  TrendingDown,
-  Calendar as CalendarIcon,
-  Download,
-  Users,
-  DollarSign,
-  Activity,
-  Clock,
-  Star,
-  Award,
-} from 'lucide-react';
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { TrendingUp, TrendingDown, Download, Users, DollarSign, Activity, Clock, Star, Award } from 'lucide-react';
+import { subDays, startOfMonth } from 'date-fns';
 import { useBookingAnalytics, useGuardAnalytics, useCompanyAnalytics } from '@/hooks/use-analytics';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
 
@@ -196,7 +182,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userType
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${(Number(percent) * 100).toFixed(0)}%`}
                 >
                   {Object.entries(bookingAnalytics.revenueByService).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

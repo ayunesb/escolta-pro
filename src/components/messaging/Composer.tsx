@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 
 type Props = {
-  onSend: (body: string) => Promise<any>;
+  onSend: (body: string) => Promise<void>;
 };
 
 export default function Composer({ onSend }: Props) {
