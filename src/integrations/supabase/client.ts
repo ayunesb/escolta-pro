@@ -124,6 +124,7 @@ function createDemoSupabase() {
   return {
     auth: {
       async getUser() { return { data: { user: { id: user?.id } } }; },
+  async getSession() { return { data: { session: { user: { id: user?.id } } }, error: null }; },
       async signInWithPassword() { return { data: {}, error: null }; },
       async signUp() { return { data: {}, error: null }; },
       async signOut() { return { error: null }; },
