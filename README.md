@@ -86,7 +86,6 @@ Follow these minimal steps to deploy the web app and wire serverless functions.
 		- VITE_SUPABASE_URL
 		- VITE_SUPABASE_ANON_KEY
 		- VITE_STRIPE_PUBLISHABLE_KEY
-		- VITE_ADMIN_API_SECRET (one-way hash/secret to call protected admin proxy endpoints like /api/admin/stripe-failed-events)
 		- VITE_GA4_ID (optional)
 		- VITE_SENTRY_DSN (optional)
 	- Do NOT store secret/service keys in the Vercel web env (e.g. SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECRET_KEY, webhook secrets).
@@ -98,7 +97,6 @@ Follow these minimal steps to deploy the web app and wire serverless functions.
 		- STRIPE_SECRET_KEY
 		- SUPABASE_URL
 		- SUPABASE_SERVICE_ROLE_KEY
-		- ADMIN_API_SECRET (must match VITE_ADMIN_API_SECRET for admin proxy auth)
 
 - Stripe
 	- Put publishable key in Vercel as `VITE_STRIPE_PUBLISHABLE_KEY`.
@@ -139,7 +137,7 @@ These tools are optional but useful after deploying functions or rotating secret
 	- Allowed roles: `company_admin` or `super_admin` (adjust list in `src/server/auth.ts`).
 
 Removed:
-- `X-Admin-Secret` header and `VITE_ADMIN_API_SECRET` dependency for this endpoint (delete those envs if no longer used elsewhere).
+	(Legacy) The previous `X-Admin-Secret` / `VITE_ADMIN_API_SECRET` mechanism has been removed.
 
 Security notes:
 - Keep service key only on server (never expose to client).
