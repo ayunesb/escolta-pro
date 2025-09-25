@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FailedStripeEventRow {
   id: string;
@@ -19,9 +20,10 @@ export function StripeFailedEventsPage() {
   async function load() {
       setLoading(true);
       try {
-    const adminSecret = import.meta.env.VITE_ADMIN_API_SECRET;
-    if (!adminSecret) throw new Error('Missing admin secret');
-    const resp = await fetch('/api/admin/stripe-failed-events', { headers: { 'X-Admin-Secret': adminSecret } });
+  const { data: sessionRes } = await supabase.auth.getSession();
+  const access = sessionRes.session?.access_token;
+  if (!access) throw new Error('No session');
+  const resp = await fetch('/api/admin/stripe-failed-events', { headers: { 'Authorization': `Bearer ${access}` } });
     if (!resp.ok) throw new Error(`Failed to load (${resp.status})`);
     const json = await resp.json();
     if (!cancelled) setRows(json.events as FailedStripeEventRow[]);

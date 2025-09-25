@@ -4,6 +4,7 @@ import SuperAdminPage from '@/guard/pages/SuperAdminPage';
 import SystemSettingsPage from '@/guard/pages/SystemSettingsPage';
 import AuthPage from '@/pages/AuthPage';
 import StripeFailedEventsPage from './pages/StripeFailedEventsPage';
+import AdminLayout from './components/AdminLayout';
 
 const AdminRouter = () => {
   const { user, loading, hasRole } = useAuth();
@@ -50,17 +51,21 @@ const AdminRouter = () => {
     );
   }
 
-  // Route to appropriate page
+  let page: JSX.Element;
   switch (currentPath) {
-    case '/dashboard':
-      return <SuperAdminPage navigate={navigate} />;
     case '/settings':
-      return <SystemSettingsPage navigate={navigate} />;
+      page = <SystemSettingsPage navigate={navigate} />; break;
     case '/stripe-failed-events':
-      return <StripeFailedEventsPage />;
+      page = <StripeFailedEventsPage />; break;
+    case '/dashboard':
     default:
-      return <SuperAdminPage navigate={navigate} />;
+      page = <SuperAdminPage navigate={navigate} />; break;
   }
+  return (
+    <AdminLayout currentPath={currentPath} onNavigate={navigate}>
+      {page}
+    </AdminLayout>
+  );
 };
 
 export default AdminRouter;

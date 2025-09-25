@@ -130,16 +130,20 @@ These tools are optional but useful after deploying functions or rotating secret
 
 ### Admin / Observability Additions
 
-- A dead-letter table `stripe_failed_events` captures Stripe webhook events that exhausted retries.
-- An admin route `#/stripe-failed-events` (hash-based in `AdminRouter`) renders a table of recent failed events.
-- Backend proxy endpoint: `GET /api/admin/stripe-failed-events` (requires header `X-Admin-Secret: <ADMIN_API_SECRET>`).
-- Required env pairing:
-	- Server (Vercel / Supabase secrets): `ADMIN_API_SECRET`
-	- Client (public, only if you intentionally allow browser access in trusted admin build): `VITE_ADMIN_API_SECRET`
+- Dead-letter table: `stripe_failed_events` captures Stripe webhook events that exhausted retries (see `supabase/migrations/*stripe_failed_events*`).
+- Persistent Admin layout (sidebar) with routes: Dashboard, Settings, Stripe Failed Events.
+- Admin route `#/stripe-failed-events` renders recent failed events.
+- Backend endpoint: `GET /api/admin/stripe-failed-events` now uses **role-based bearer token auth** (Supabase access token) instead of a static header secret.
+	- Client sends: `Authorization: Bearer <access_token>` (taken from `supabase.auth.getSession()`).
+	- Server validates token via service client and loads roles from `user_roles`.
+	- Allowed roles: `company_admin` or `super_admin` (adjust list in `src/server/auth.ts`).
 
-Hardening recommendations:
-	- Prefer moving admin pages behind authenticated role checks plus server session instead of static header secret.
-	- Rotate `ADMIN_API_SECRET` regularly; never commit it.
-	- Consider adding rate limiting / IP allow list for admin proxy endpoints.
+Removed:
+- `X-Admin-Secret` header and `VITE_ADMIN_API_SECRET` dependency for this endpoint (delete those envs if no longer used elsewhere).
+
+Security notes:
+- Keep service key only on server (never expose to client).
+- Consider adding rate limiting / audit logging for admin endpoints.
+- Rotate Stripe and Supabase secrets regularly; leverage environment-specific values.
 
 
