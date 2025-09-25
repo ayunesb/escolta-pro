@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Button, ButtonProps } from '@/components/ui/button';
 import { useHaptics } from '@/hooks/use-haptics';
 import { useAccessibility } from '@/components/AccessibilityProvider';
@@ -25,7 +25,15 @@ const HapticButton = ({
   ...props 
 }: HapticButtonProps) => {
   const haptics = useHaptics();
-  const { settings, announceToScreenReader } = useAccessibility();
+  let settings: any = { reduceMotion: false }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let announceToScreenReader: (msg: string) => void = () => {};
+  try {
+    const acc = useAccessibility();
+    settings = acc.settings;
+    announceToScreenReader = acc.announceToScreenReader;
+  } catch {
+    // context missing (demo bootstrap path before provider) - fall back silently
+  }
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
