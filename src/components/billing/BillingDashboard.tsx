@@ -1,25 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { Elements } from '@stripe/react-stripe-js';
+import { Loader2, Receipt, CreditCard, DollarSign, Download, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+
+import { PaymentMethodsManager } from './PaymentMethodsManager';
+
+import { supabase } from '@/integrations/supabase/client';
+import { stripePromise } from '@/lib/stripe';
+import { getErrorMessage } from '@/types/stripe';
+import { useToast } from '@/hooks/use-toast';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Receipt, 
-  CreditCard, 
-  DollarSign, 
-  Download,
-  Clock,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-  Loader2
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { PaymentMethodsManager } from './PaymentMethodsManager';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/lib/stripe';
+// ...existing code...
 
 interface PaymentRecord {
   id: string;
@@ -98,10 +93,11 @@ export const BillingDashboard: React.FC = () => {
 
       setPayments(paymentsData || []);
       setPayouts(payoutsData || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Failed to fetch billing data');
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch billing data',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -149,6 +145,7 @@ export const BillingDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchBillingData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {

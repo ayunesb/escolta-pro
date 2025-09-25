@@ -65,7 +65,7 @@ jobs:
         run: npm test
 
       - name: Run linting
-        run: npm run lint || true
+        run: npm run lint:ci || true
 
   ios-build:
     runs-on: macos-latest

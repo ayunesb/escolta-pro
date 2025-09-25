@@ -13,8 +13,8 @@ interface AuthContextType {
   activeRole: UserRole | null;
   setRole: (role: UserRole) => void;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, firstName?: string, lastName?: string, role?: UserRole) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: unknown }>;
+  signUp: (email: string, password: string, firstName?: string, lastName?: string, role?: UserRole) => Promise<{ error: unknown }>;
   signOut: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
 }

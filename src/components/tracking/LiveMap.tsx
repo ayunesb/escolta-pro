@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { MapPin, Navigation, Clock, Route, Play, Square, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLiveTracking } from '@/hooks/use-live-tracking';
-import { MapPin, Navigation, Clock, Route, Play, Square, AlertTriangle } from 'lucide-react';
 import HapticButton from '@/components/mobile/HapticButton';
 
 interface LiveMapProps {

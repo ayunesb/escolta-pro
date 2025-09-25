@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Upload, File as FileIcon, Download, Trash2, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,20 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Upload, 
-  File, 
-  Download, 
-  Trash2, 
-  Eye, 
-  Calendar,
-  User,
-  Building,
-  AlertCircle
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from '@/hooks/use-toast';
+import { i18n } from '@/lib/i18n';
 import { format } from 'date-fns';
 
 interface Document {
@@ -47,12 +39,13 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   allowedTypes = ['image/*', 'application/pdf', '.doc,.docx'],
   maxSizeBytes = 10 * 1024 * 1024 // 10MB default
 }) => {
-  const { user, hasRole } = useAuth();
+  const { user } = useAuth();
+  const client = useSupabase();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFileData, setSelectedFileData] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState('general');
 
   useEffect(() => {
@@ -68,7 +61,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         ? `${user?.id}/${organizationId}` 
         : `${user?.id}`;
 
-      const { data: files, error } = await supabase.storage
+      const { data: files, error } = await client.storage
         .from('documents')
         .list(folderPath, {
           limit: 100,
@@ -113,7 +106,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const file = event.target.files?.[0];
     if (!file) return;
 
     // Check file size
@@ -147,11 +140,11 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       return;
     }
 
-    setSelectedFile(file);
+  setSelectedFileData(file);
   };
 
   const uploadDocument = async () => {
-    if (!selectedFile || !user) return;
+    if (!selectedFileData || !user) return;
 
     try {
       setUploading(true);
@@ -161,7 +154,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         ? `${user.id}/${organizationId}` 
         : `${user.id}`;
       
-      const fileName = `${Date.now()}_${selectedFile.name}`;
+  const fileName = `${Date.now()}_${selectedFileData?.name}`;
       const filePath = `${folderPath}/${fileName}`;
 
       // Simulate upload progress
@@ -175,15 +168,15 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         });
       }, 200);
 
-      const { data, error } = await supabase.storage
+      const { data, error } = await client.storage
         .from('documents')
-        .upload(filePath, selectedFile, {
+        .upload(filePath, selectedFileData as File, {
           cacheControl: '3600',
           upsert: false,
           metadata: {
             owner_type: organizationId ? 'company' : 'user',
             document_type: documentType,
-            original_name: selectedFile.name
+            original_name: selectedFileData?.name
           }
         });
 
@@ -205,7 +198,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         description: 'Your document has been uploaded successfully'
       });
 
-      setSelectedFile(null);
+  setSelectedFileData(null);
       setUploadProgress(0);
       loadDocuments();
 
@@ -223,15 +216,15 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
 
   const downloadDocument = async (document: Document) => {
     try {
-      const { data } = await supabase.functions.invoke('document_signed_url', {
+      const { data: signedUrlData } = await client.functions.invoke('document_signed_url', {
         body: { 
           document_path: document.name,
           expires_in: 300 // 5 minutes
         }
       });
 
-      if (data?.signed_url) {
-        window.open(data.signed_url, '_blank');
+      if (signedUrlData?.signed_url) {
+        window.open(signedUrlData.signed_url, '_blank');
       } else {
         throw new Error('Failed to generate signed download link');
       }
@@ -253,7 +246,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         ? `${user?.id}/${organizationId}` 
         : `${user?.id}`;
       
-      const { error } = await supabase.storage
+      const { error } = await client.storage
         .from('documents')
         .remove([`${folderPath}/${document.name}`]);
 
@@ -303,10 +296,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
     <div className="space-y-6">
       {/* Upload Section */}
       <Card>
-        <CardHeader>
+          <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Upload Document
+            {i18n('documents.upload_title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -321,7 +314,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                 disabled={uploading}
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Max size: {(maxSizeBytes / 1024 / 1024).toFixed(1)}MB
+                {i18n('documents.max_size', { size: (maxSizeBytes / 1024 / 1024).toFixed(1) })}
               </p>
             </div>
             <div>
@@ -342,13 +335,13 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
             </div>
           </div>
 
-          {selectedFile && (
+          {selectedFileData && (
             <div className="p-4 border rounded-lg bg-muted/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{selectedFile.name}</p>
+                  <p className="font-medium">{selectedFileData?.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatFileSize(selectedFile.size)}
+                    {selectedFileData ? formatFileSize(selectedFileData.size) : ''}
                   </p>
                 </div>
                 <Button onClick={uploadDocument} disabled={uploading}>
@@ -369,7 +362,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <File className="h-5 w-5" />
+            <FileIcon className="h-5 w-5" />
             Documents ({documents.length})
           </CardTitle>
         </CardHeader>
@@ -380,7 +373,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
             </div>
           ) : documents.length === 0 ? (
             <div className="text-center py-8">
-              <File className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <FileIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No documents yet</h3>
               <p className="text-muted-foreground">
                 Upload your first document to get started

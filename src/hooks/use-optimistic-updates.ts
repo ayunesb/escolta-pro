@@ -4,7 +4,7 @@ import { toast } from '@/hooks/use-toast';
 export function useOptimisticUpdate<T extends { id: string }>(
   initialData: T[],
   updateFn: (id: string, updates: Partial<T>) => Promise<void>,
-  onError?: (error: any) => void
+  onError?: (error: unknown) => void
 ) {
   const [data, setData] = useState<T[]>(initialData);
 
@@ -40,7 +40,7 @@ export function useOptimisticUpdate<T extends { id: string }>(
       setData(previousData);
       
       if (onError) {
-        onError(error);
+        onError(error as unknown);
       } else {
         toast({
           title: 'Update failed',
@@ -61,7 +61,7 @@ export function useOptimisticUpdate<T extends { id: string }>(
 export function useOptimisticAdd<T extends { id: string }>(
   initialData: T[],
   addFn: (item: Partial<T>) => Promise<T>,
-  onError?: (error: any) => void
+  onError?: (error: unknown) => void
 ) {
   const [data, setData] = useState<T[]>(initialData);
   const [isAdding, setIsAdding] = useState(false);
@@ -100,7 +100,7 @@ export function useOptimisticAdd<T extends { id: string }>(
       );
       
       if (onError) {
-        onError(error);
+        onError(error as unknown);
       } else {
         toast({
           title: 'Failed to add item',

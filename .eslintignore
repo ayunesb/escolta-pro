@@ -1,0 +1,10 @@
+# Ignore build and generated assets
+dist/
+build/
+public/assets/
+ios/DerivedData/
+android/
+node_modules/
+.next/
+/.turbo/
+**/*.bundle.js

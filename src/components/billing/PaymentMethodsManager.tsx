@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Elements } from '@stripe/react-stripe-js';
+import { Plus, CreditCard, Trash2, Loader2 } from 'lucide-react';
+
+import { PaymentMethodForm } from './PaymentMethodForm';
+
+import { supabase } from '@/integrations/supabase/client';
+import { stripePromise } from '@/lib/stripe';
+import { getErrorMessage } from '@/types/stripe';
+import { useToast } from '@/hooks/use-toast';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, CreditCard, Trash2, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/lib/stripe';
-import { PaymentMethodForm } from './PaymentMethodForm';
 
 interface PaymentMethod {
   id: string;
@@ -24,11 +28,11 @@ interface PaymentMethod {
 }
 
 interface PaymentMethodsManagerProps {
-  customerId?: string;
+  _customerId?: string;
 }
 
 export const PaymentMethodsManager: React.FC<PaymentMethodsManagerProps> = ({
-  customerId,
+  _customerId,
 }) => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,25 +40,25 @@ export const PaymentMethodsManager: React.FC<PaymentMethodsManagerProps> = ({
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
 
-  const fetchPaymentMethods = async () => {
+  const fetchPaymentMethods = useCallback(async () => {
     try {
       const { data, error } = await supabase.functions.invoke('get_payment_methods');
-      
       if (error) {
-        throw new Error(error.message);
+        throw new Error(getErrorMessage(error, 'Failed to fetch'));
       }
 
       setPaymentMethods(data?.payment_methods || []);
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const msg = getErrorMessage(err, 'Failed to fetch payment methods');
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch payment methods',
+        description: msg,
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const deletePaymentMethod = async (paymentMethodId: string) => {
     setDeleting(paymentMethodId);
@@ -65,7 +69,7 @@ export const PaymentMethodsManager: React.FC<PaymentMethodsManagerProps> = ({
       });
 
       if (error) {
-        throw new Error(error.message);
+        throw new Error(getErrorMessage(error, 'Failed to delete'));
       }
 
       setPaymentMethods(prev => prev.filter(pm => pm.id !== paymentMethodId));
@@ -73,10 +77,11 @@ export const PaymentMethodsManager: React.FC<PaymentMethodsManagerProps> = ({
         title: 'Success',
         description: 'Payment method removed successfully',
       });
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const errMsg = getErrorMessage(err, 'Failed to delete payment method');
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete payment method',
+        description: errMsg,
         variant: 'destructive',
       });
     } finally {
@@ -94,8 +99,8 @@ export const PaymentMethodsManager: React.FC<PaymentMethodsManagerProps> = ({
   };
 
   useEffect(() => {
-    fetchPaymentMethods();
-  }, []);
+    void fetchPaymentMethods();
+  }, [fetchPaymentMethods]);
 
   if (loading) {
     return (

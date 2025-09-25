@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AuditEntry {
@@ -9,7 +10,7 @@ interface AuditEntry {
   entityId: string;
   actorId: string;
   timestamp: string;
-  changes: Record<string, any>;
+  changes: Record<string, unknown>;
   actorEmail?: string;
 }
 
@@ -75,16 +76,27 @@ export const useAuditTrail = () => {
         return;
       }
 
-      const auditEntries: AuditEntry[] = (data || []).map(entry => ({
-        id: entry.id.toString(),
-        action: entry.action || '',
-        entity: entry.entity || '',
-        entityId: entry.entity_id || '',
-        actorId: entry.actor_id || '',
-        timestamp: entry.ts || '',
-        changes: (entry.diff && typeof entry.diff === 'object') ? entry.diff as Record<string, any> : {},
-        actorEmail: (entry.profiles as any)?.email
-      }));
+      // runtime guards for untyped supabase response
+      const isRecord = (x: unknown): x is Record<string, unknown> => {
+        return typeof x === 'object' && x !== null;
+      };
+
+      const auditEntries: AuditEntry[] = (data || []).map((entry: unknown) => {
+        const e = isRecord(entry) ? entry : {}
+        const diff = isRecord(e.diff) ? e.diff : {}
+        const profiles = isRecord(e.profiles) ? e.profiles : undefined
+
+        return {
+          id: String(e.id ?? ''),
+          action: String(e.action ?? ''),
+          entity: String(e.entity ?? ''),
+          entityId: String(e.entity_id ?? ''),
+          actorId: String(e.actor_id ?? ''),
+          timestamp: String(e.ts ?? ''),
+          changes: diff as Record<string, unknown>,
+          actorEmail: profiles ? String(profiles.email ?? '') : undefined,
+        }
+      })
 
       setEntries(page === 0 ? auditEntries : prev => [...prev, ...auditEntries]);
       setTotalCount(count || 0);
@@ -100,7 +112,7 @@ export const useAuditTrail = () => {
     action: string,
     entity: string,
     entityId: string,
-    changes: Record<string, any> = {}
+    changes: Record<string, unknown> = {}
   ) => {
     if (!user) return;
 
@@ -112,7 +124,8 @@ export const useAuditTrail = () => {
           action,
           entity,
           entity_id: entityId,
-          diff: changes
+          // Supabase client expects Json for the `diff` column. Cast at the adapter boundary.
+          diff: changes as unknown as Json
         });
     } catch (error) {
       console.error('Error logging audit entry:', error);

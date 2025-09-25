@@ -1,3 +1,20 @@
+// Minimal i18n helper: returns translations for a small set of keys and falls back to key.
+const messages: Record<string, string> = {
+  'documents.upload_title': 'Upload Document',
+  'documents.max_size': 'Max size: {size}MB',
+  'documents.no_documents': 'No documents yet',
+  'documents.uploaded': 'Document uploaded',
+  'documents.upload_failed': 'Upload failed'
+}
+
+export function translate(key: string, vars?: Record<string, string | number>) {
+  const raw = messages[key] ?? key
+  if (!vars) return raw
+  return Object.keys(vars).reduce((s, k) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(vars[k])), raw)
+}
+
+export const i18n = translate
+export default i18n
 export type Lang = 'en' | 'es';
 
 export const t = (key: string, lang: Lang): string => {

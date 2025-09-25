@@ -18,21 +18,27 @@ export function useDebounce<T>(value: T, delay: number): T {
 }
 
 // Throttle hook for scroll events and frequent updates
-export function useThrottle<T extends (...args: any[]) => any>(
+export function useThrottle<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number
-): T {
+): (...args: Parameters<T>) => void {
   const lastRun = useRef(Date.now());
-  
-  return useCallback(
-    ((...args) => {
+
+  const throttled = useCallback(
+    (...args: Parameters<T>) => {
       if (Date.now() - lastRun.current >= delay) {
-        callback(...args);
+        // forward parameters to original callback
+        // we intentionally ignore the return value to keep signature simple
+        // and behavior-preserving for typical event callbacks
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(callback as unknown as (...a: Parameters<T>) => unknown)(...args)
         lastRun.current = Date.now();
       }
-    }) as T,
+    },
     [callback, delay]
   );
+
+  return throttled;
 }
 
 // Intersection Observer hook for lazy loading
@@ -109,11 +115,16 @@ export function useVirtualScroll<T>(
 }
 
 // Memory optimization hook
-export function useMemoizedCallback<T extends (...args: any[]) => any>(
+export function useMemoizedCallback<T extends (...args: unknown[]) => unknown>(
   callback: T,
   deps: React.DependencyList
 ): T {
-  return useCallback(callback, deps);
+  // Wrap original callback to satisfy useCallback typing without using `any`.
+  const wrapped = useCallback((...args: Parameters<T>) => {
+    return (callback as unknown as (...a: Parameters<T>) => ReturnType<T>)(...args)
+  }, deps)
+
+  return wrapped as unknown as T
 }
 
 // Image preloading hook

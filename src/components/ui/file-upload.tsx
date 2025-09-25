@@ -36,7 +36,8 @@ const FileUpload = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const fileList = event.currentTarget.files;
+    const file = fileList?.[0] ?? null;
     if (!file) return;
 
     // Validate file size
@@ -88,9 +89,10 @@ const FileUpload = ({
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      const errorMessage = error.message || 'Upload failed';
+    } catch (err: unknown) {
+      // normalize unknown error to string
+      console.error('Upload error:', err);
+      const errorMessage = (err && typeof err === 'object' && 'message' in err && (err as any).message) ? (err as any).message : 'Upload failed';
       toast.error(errorMessage);
       onUploadError?.(errorMessage);
     } finally {

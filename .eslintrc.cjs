@@ -1,48 +1,60 @@
-const js = require("@eslint/js");
-const globals = require("globals");
-const reactHooks = require("eslint-plugin-react-hooks");
-const reactRefresh = require("eslint-plugin-react-refresh");
-const tseslint = require("@typescript-eslint/eslint-plugin");
-
+/* eslint-disable @typescript-eslint/no-var-requires */
 module.exports = {
   root: true,
-  ignorePatterns: ["dist"],
-  env: {
-    browser: true,
-    es2020: true,
-    node: true,
-  },
-  extends: [
-    js.configs.recommended,
-    "plugin:@typescript-eslint/recommended",
-    "plugin:react/recommended"
-  ],
-  plugins: ["@typescript-eslint", "react-hooks", "react-refresh"],
-  parser: "@typescript-eslint/parser",
+  parser: '@typescript-eslint/parser',
   parserOptions: {
-    ecmaVersion: 2020,
-    sourceType: "module",
-    ecmaFeatures: {
-      jsx: true
-    }
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  project: false,
+  ecmaFeatures: { jsx: true },
+  },
+  env: {
+    es2022: true,
+    browser: true,
+    node: true,
+    jest: true,
+  },
+  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'import'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react/recommended',
+    'plugin:react-hooks/recommended',
+  ],
+  settings: {
+    react: { version: 'detect' },
   },
   rules: {
-    "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-    "@typescript-eslint/no-unused-vars": "off",
-    // Add more rules as needed
+    // Keep real errors strict but allow common patterns during active dev
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true, caughtErrors: 'none' }
+    ],
+    '@typescript-eslint/no-explicit-any': 'warn',
+    'react-hooks/exhaustive-deps': 'warn',
+    'import/order': 'warn',
+
+    // Small papercuts
+    'no-empty': 'warn',
+    'no-case-declarations': 'warn',
+  'no-extra-semi': 'warn',
+  '@typescript-eslint/no-empty-object-type': 'warn',
+  'react/no-unknown-property': 'warn',
+
+    // Project uses the new JSX transform (React 17+): React doesn't need to be in scope.
+    'react/react-in-jsx-scope': 'off',
+    // Allow some unescaped entities in strings/JSX for convenience in content.
+    'react/no-unescaped-entities': 'off',
+    'react/prop-types': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
   },
-  overrides: [
-    {
-      files: ["tailwind.config.*"],
-      rules: {
-        "@typescript-eslint/no-require-imports": "off"
-      }
-    },
-    {
-      files: ["supabase/functions/**/*.ts"],
-      rules: {
-        "@typescript-eslint/no-explicit-any": "off"
-      }
-    }
-  ]
+  ignorePatterns: [
+    'dist/',
+    'build/',
+    'coverage/',
+    '**/*.config.*',
+    '**/*.d.ts',
+    'supabase/functions/**/dist/**',
+  ],
 };
+

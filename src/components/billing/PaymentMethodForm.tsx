@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-
+import { getErrorMessage } from '@/types/stripe';
 interface PaymentMethodFormProps {
   onSuccess?: () => void;
   onError?: (error: string) => void;
@@ -31,7 +31,7 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
@@ -57,7 +57,7 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       });
 
       if (stripeError) {
-        throw new Error(stripeError.message);
+        throw new Error(getErrorMessage(stripeError, 'Failed to create payment method'));
       }
 
       // Save payment method via edge function
@@ -68,12 +68,13 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       });
 
       if (saveError) {
-        throw new Error(saveError.message);
+        throw new Error(getErrorMessage(saveError, 'Failed to save payment method'));
       }
 
       onSuccess?.();
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to add payment method';
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'Failed to add payment method');
+
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {

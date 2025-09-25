@@ -16,9 +16,10 @@ function run(files) {
   }
 
   try {
-    const args = ['eslint', '--config', '.eslintrc.cjs', '--ext', '.ts,.tsx', ...files];
-    console.log('Running: npx ' + args.join(' '));
-    const res = spawnSync('npx', args, { stdio: 'inherit', cwd: repoRoot });
+  const eslintBin = path.resolve(repoRoot, 'node_modules', '.bin', 'eslint');
+  const args = ['--config', '.eslintrc.cjs', '--ext', '.ts,.tsx', ...files];
+  console.log('Running: ' + eslintBin + ' ' + args.join(' '));
+  const res = spawnSync(eslintBin, args, { stdio: 'inherit', cwd: repoRoot });
     return res.status;
   } finally {
     // restore package.json

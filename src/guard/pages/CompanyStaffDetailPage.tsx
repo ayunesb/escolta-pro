@@ -15,7 +15,7 @@ interface StaffMember {
   id: string;
   user_id?: string;
   company_id?: string;
-  skills: any;
+  skills: unknown;
   rating: number;
   active: boolean;
   hourly_rate?: number;
@@ -66,13 +66,13 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
         setHourlyRate(data.hourly_rate?.toString() || '');
         setCity(data.city || '');
         setActive(data.active ?? true);
-        setArmed((data.skills as any)?.armed ?? false);
-        setWithVehicle((data.skills as any)?.driver ?? false);
+  setArmed((data.skills && typeof data.skills === 'object' && 'armed' in data.skills) ? (data.skills as any).armed ?? false : false);
+  setWithVehicle((data.skills && typeof data.skills === 'object' && 'driver' in data.skills) ? (data.skills as any).driver ?? false : false);
 
         // Fetch documents
         fetchDocuments(data.id);
-      } catch (error) {
-        console.error('Error fetching staff member:', error);
+      } catch (err: unknown) {
+        console.error('Error fetching staff member:', err);
         toast.error('Failed to load staff member');
         navigate('/company-staff');
       } finally {
@@ -124,7 +124,7 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
           city,
           active,
           skills: {
-            ...staff.skills,
+            ...(typeof staff.skills === 'object' && staff.skills ? (staff.skills as Record<string, unknown>) : {}),
             armed,
             driver: withVehicle
           }
@@ -142,10 +142,10 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
         hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
         city,
         active,
-        skills: { ...prev.skills, armed, driver: withVehicle }
+  skills: { ...(typeof prev?.skills === 'object' && prev?.skills ? (prev.skills as Record<string, unknown>) : {}), armed, driver: withVehicle }
       } : null);
-    } catch (error: any) {
-      console.error('Error updating staff member:', error);
+    } catch (err: unknown) {
+      console.error('Error updating staff member:', err);
       toast.error('Failed to update staff member');
     } finally {
       setSaving(false);
@@ -179,8 +179,8 @@ const CompanyStaffDetailPage = ({ navigate, staffId }: CompanyStaffDetailPagePro
           setDriverLicenseUrl(url);
           break;
       }
-    } catch (error: any) {
-      console.error('Error saving document:', error);
+    } catch (err: unknown) {
+      console.error('Error saving document:', err);
       toast.error('Failed to save document');
     }
   };

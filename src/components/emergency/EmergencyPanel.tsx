@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertTriangle, Phone, Shield, Camera, Mic, MapPin, Clock } from 'lucide-react';
+import { AlertTriangle, Phone, Shield, Camera, MapPin, Clock } from 'lucide-react';
 import HapticButton from '@/components/mobile/HapticButton';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -36,7 +36,6 @@ export const EmergencyPanel = ({ bookingId, assignmentId }: EmergencyPanelProps)
     media: []
   });
   const [submitting, setSubmitting] = useState(false);
-  const [recording, setRecording] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -261,7 +260,7 @@ export const EmergencyPanel = ({ bookingId, assignmentId }: EmergencyPanelProps)
             <label className="text-sm font-medium text-red-700">Emergency Type</label>
             <Select 
               value={emergencyReport.type} 
-              onValueChange={(value: any) => setEmergencyReport(prev => ({ ...prev, type: value }))}
+              onValueChange={(value: string) => setEmergencyReport(prev => ({ ...prev, type: value as EmergencyReport['type'] }))}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -280,7 +279,7 @@ export const EmergencyPanel = ({ bookingId, assignmentId }: EmergencyPanelProps)
             <label className="text-sm font-medium text-red-700">Severity</label>
             <Select 
               value={emergencyReport.severity} 
-              onValueChange={(value: any) => setEmergencyReport(prev => ({ ...prev, severity: value }))}
+              onValueChange={(value: string) => setEmergencyReport(prev => ({ ...prev, severity: value as EmergencyReport['severity'] }))}
             >
               <SelectTrigger>
                 <SelectValue />

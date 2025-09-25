@@ -99,8 +99,9 @@ export const BookingDetailPage = ({ navigate, bookingId }: BookingDetailPageProp
           table: 'bookings',
           filter: `id=eq.${bookingId}`,
         },
-        (payload: any) => {
-          const updatedBooking = payload.new as Partial<BookingDetail> | undefined;
+        (payload: unknown) => {
+          const p = payload as Record<string, unknown> | undefined;
+          const updatedBooking = p && p.new ? (p.new as Partial<BookingDetail>) : undefined;
 
           setBooking(prev => prev ? { ...prev, ...(updatedBooking || {}) } : null);
           

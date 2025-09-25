@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient({
@@ -6,10 +6,13 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry on 4xx errors
-        if (error?.status >= 400 && error?.status < 500) {
-          return false;
+        if (error && typeof error === 'object' && 'status' in error) {
+          const status = (error as Record<string, unknown>).status as unknown;
+          if (typeof status === 'number' && status >= 400 && status < 500) {
+            return false;
+          }
         }
         return failureCount < 3;
       },
@@ -23,10 +26,10 @@ const queryClient = new QueryClient({
 });
 
 interface QueryContextProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const QueryContextProvider: React.FC<QueryContextProviderProps> = ({ children }) => {
+export const QueryContextProvider = ({ children }: QueryContextProviderProps) => {
   return (
     <QueryClientProvider client={queryClient}>
       {children}

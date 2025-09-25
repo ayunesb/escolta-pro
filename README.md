@@ -71,3 +71,60 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Quick deploy checklist (Vercel / Supabase / Stripe)
+
+Follow these minimal steps to deploy the web app and wire serverless functions.
+
+- Vercel (web app)
+	- Root directory: ./ (this is a Vite app)
+	- Framework preset: Vite
+	- Install: pnpm i --frozen-lockfile
+	- Build command: pnpm build
+	- Output dir: dist
+	- Required public envs (set in Vercel Environment Variables):
+		- VITE_SUPABASE_URL
+		- VITE_SUPABASE_ANON_KEY
+		- VITE_STRIPE_PUBLISHABLE_KEY
+		- VITE_GA4_ID (optional)
+		- VITE_SENTRY_DSN (optional)
+	- Do NOT store secret/service keys in the Vercel web env (e.g. SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECRET_KEY, webhook secrets).
+
+- Supabase (Edge Functions & secrets)
+	- Deploy functions under `supabase/functions/*` (e.g. `stripe_webhook`, `booking_accept`, `validate_quote`, `health`).
+	- Set secrets with `supabase secrets set --env-file ./supabase/.env` and include:
+		- STRIPE_WEBHOOK_SECRET
+		- STRIPE_SECRET_KEY
+		- SUPABASE_URL
+		- SUPABASE_SERVICE_ROLE_KEY
+
+- Stripe
+	- Put publishable key in Vercel as `VITE_STRIPE_PUBLISHABLE_KEY`.
+	- Put secret key and webhook secret into Supabase function secrets (not public envs).
+	- Webhook URL: https://<project-ref>.functions.supabase.co/stripe_webhook
+
+Quick local commands:
+
+```bash
+pnpm i
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Quick health checks
+-------------------
+
+We included a couple of helpers to quickly validate your deployed Supabase Edge Functions:
+
+- `public/status.html` — a tiny static page you can deploy with the app. Enter your Supabase project ref (the short id) and click Check to call `/health` and `/validate_quote` on your functions endpoint.
+- `scripts/smoke-runner.js` — a Node 20+ script that calls the same endpoints from the CLI. Example:
+
+```bash
+# from project root
+node ./scripts/smoke-runner.js --ref=your-supabase-ref
+```
+
+These tools are optional but useful after deploying functions or rotating secrets.
+
+

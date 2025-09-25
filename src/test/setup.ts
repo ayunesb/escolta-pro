@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom'
 import { beforeAll, afterEach, afterAll } from 'vitest'
 import { server } from './mocks/server'
+import { createMockSupabase } from '../lib/storage'
 
 // Establish API mocking before all tests
 beforeAll(() => server.listen())
@@ -48,5 +49,15 @@ const IntersectionObserverMock = class IntersectionObserver {
   }
 } as any;
 
-IntersectionObserverMock.prototype = IntersectionObserver.prototype;
-global.IntersectionObserver = IntersectionObserverMock;
+// Assign mock directly to global. Don't reference native IntersectionObserver.prototype
+;(global as any).IntersectionObserver = IntersectionObserverMock;
+
+// Mock ResizeObserver used by some UI libs (radix, etc.)
+const ResizeObserverMock = class ResizeObserver {
+  observe() { return null }
+  unobserve() { return null }
+  disconnect() { return null }
+}
+;(global as any).ResizeObserver = ResizeObserverMock;
+
+// Tests should use createMockSupabase() from test utils; no global mock exported anymore.

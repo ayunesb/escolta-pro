@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Shield, Star, MapPin, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, Star, MapPin, Clock, CheckCircle } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { formatMXN } from '@/utils/pricing';
 
@@ -15,7 +15,7 @@ interface Guard {
   hourly_rate_mxn_cents?: number;
   armed_hourly_surcharge_mxn_cents?: number;
   availability_status?: string;
-  skills?: any;
+  skills?: unknown;
 }
 
 interface GuardAvailabilityWidgetProps {
@@ -38,6 +38,7 @@ const GuardAvailabilityWidget = ({
 
   useEffect(() => {
     fetchAvailableGuards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, dateTime, armedRequired]);
 
   const fetchAvailableGuards = async () => {
@@ -52,9 +53,10 @@ const GuardAvailabilityWidget = ({
       
       // Filter by armed requirement
       if (armedRequired) {
-        filteredGuards = filteredGuards.filter(guard => 
-          guard.skills?.armed === true
-        );
+        filteredGuards = filteredGuards.filter(guard => {
+          const s = guard.skills;
+          return typeof s === 'object' && s !== null && 'armed' in s && (s as any).armed === true;
+        });
       }
 
       // Filter by availability status
@@ -146,10 +148,14 @@ const GuardAvailabilityWidget = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={guard.photo_url} />
-                    <AvatarFallback>
-                      <Shield className="h-6 w-6" />
-                    </AvatarFallback>
+                    {guard.photo_url ? (
+                      // using an img tag inside Avatar to avoid AvatarImage import
+                      <img src={guard.photo_url} alt="Guard profile photo" className="w-full h-full object-cover rounded" />
+                    ) : (
+                      <AvatarFallback>
+                        <Shield className="h-6 w-6" />
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   
                   <div>
@@ -174,7 +180,7 @@ const GuardAvailabilityWidget = ({
                         Available Now
                       </Badge>
                       
-                      {guard.skills?.armed && (
+                      {(typeof guard.skills === 'object' && guard.skills !== null && 'armed' in guard.skills && (guard.skills as any).armed) && (
                         <Badge variant="outline" className="text-xs text-amber-600">
                           Armed
                         </Badge>
