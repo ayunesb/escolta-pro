@@ -74,11 +74,13 @@ const BookingsPage = ({ navigate }: BookingsPageProps) => {
     try {
       if (hasRole('client')) {
         // Clients see their own bookings
-  // supabase is unknown (demo or real) - cast for chain methods
-  const { data, error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+        // In demo, the table snapshot returns all bookings; filter by current user id if available.
+        const userId = (await (supabase as any).auth?.getSession?.())?.data?.session?.user?.id; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const qb = (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
           .from('bookings')
           .select('*')
           .order('created_at', { ascending: false });
+        const { data, error } = userId ? await qb.eq('client_id', userId) : await qb;
         
         if (error) throw error;
         setMyBookings(data || []);

@@ -4,10 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { mxn } from '@/utils/money';
-import { MapPin, Clock, Shield, Car, Briefcase, ArrowLeft } from 'lucide-react';
+import { MapPin, Clock, Shield, Car, Briefcase, ArrowLeft, Copy } from 'lucide-react';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import GuardBottomNav from '@/components/mobile/GuardBottomNav';
-import { getPaymentLedger } from '@/lib/api';
+// import { getPaymentLedger } from '@/lib/api';
 
 type Booking = {
   id: string;
@@ -31,6 +31,7 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
   const [busy, setBusy] = useState(false);
   const demo = import.meta.env.VITE_DEMO_MODE === 'true';
   const [payouts, setPayouts] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [codes, setCodes] = useState<Record<string, string>>({});
 
   async function load(scope:'available'|'mine') {
     setBusy(true);
@@ -57,11 +58,49 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
     load(tab); 
   }, [tab]);
 
+  // Realtime refresh when bookings update (demo emits on 'bookings' channel)
+  useEffect(() => {
+    const channel = (supabase as any).channel?.('bookings') // eslint-disable-line @typescript-eslint/no-explicit-any
+      ?.on?.('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+        load(tab);
+      })
+      ?.subscribe?.();
+    return () => {
+      try { channel?.unsubscribe?.(); } catch { /* no-op */ }
+    };
+  }, [tab]);
+
+  // Demo-only: fetch start codes for the guard's own jobs and cache them
+  useEffect(() => {
+    if (!demo || tab !== 'mine' || items.length === 0) return;
+    let cancelled = false;
+    async function fetchCodes() {
+      const missing = items.filter(b => !codes[b.id]);
+      for (const b of missing) {
+        try {
+          const { data } = await (supabase as any).functions.invoke('get_start_code', { body: { booking_id: b.id } }); // eslint-disable-line @typescript-eslint/no-explicit-any
+          if (!cancelled && data?.start_code) {
+            setCodes(prev => ({ ...prev, [b.id]: String(data.start_code) }));
+          }
+        } catch {}
+      }
+    }
+    fetchCodes();
+    return () => { cancelled = true; };
+  }, [demo, tab, items, codes]);
+
   useEffect(() => {
     if (!demo) return;
-    const id = setInterval(() => setPayouts(getPaymentLedger() as any[]), 2500); // eslint-disable-line @typescript-eslint/no-explicit-any
-    setPayouts(getPaymentLedger() as any[]); // initial
-    return () => clearInterval(id);
+    let active = true;
+    async function loadPayouts() {
+      try {
+        const { data } = await (supabase as any).functions.invoke('payouts_list', { body: {} }); // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (active) setPayouts((data?.payouts || []) as any[]); // eslint-disable-line @typescript-eslint/no-explicit-any
+      } catch {}
+    }
+    loadPayouts();
+    const id = setInterval(loadPayouts, 3000);
+    return () => { active = false; clearInterval(id); };
   }, [demo]);
 
   async function accept(booking_id: string) {
@@ -144,10 +183,10 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
           <div className="border rounded p-3 text-xs mb-4">
             <div className="font-semibold mb-2">Recent Payouts (Demo)</div>
             <div className="space-y-1 max-h-40 overflow-auto">
-              {payouts.slice(-5).reverse().map(p => (
+        {payouts.slice(-5).reverse().map((p: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                 <div key={p.id} className="flex justify-between">
-                  <span className="font-mono truncate mr-2">{p.booking_id}</span>
-                  <span>${'{'}(p.guard_payout_cents/100).toFixed(2){'}'}</span>
+          <span className="font-mono truncate mr-2">{p.booking_id}</span>
+          <span>${(p.amount_mxn_cents/100).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -201,6 +240,16 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
                   </div>
                 </div>
 
+                {demo && tab === 'mine' && b.status === 'assigned' && codes[b.id] && (
+                  <div className="mb-3 inline-flex items-center gap-2 text-xs bg-muted/40 rounded px-2 py-1">
+                    <span className="opacity-70">Start Code:</span>
+                    <span className="font-mono tracking-widest text-sm">{codes[b.id]}</span>
+                    <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(codes[b.id])}>
+                      <Copy className="h-3 w-3 mr-1" /> Copy
+                    </Button>
+                  </div>
+                )}
+
                 {tab === 'available' && (
                   <Button 
                     onClick={() => accept(b.id)}
@@ -209,6 +258,23 @@ export default function BookingsPage({ navigate }: BookingsPageProps) {
                   >
                     Accept Job
                   </Button>
+                )}
+                {tab === 'mine' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate(`/job/${b.id}`)}
+                      disabled={busy}
+                    >
+                      Manage Job
+                    </Button>
+                    <Button 
+                      onClick={() => navigate(`/job/${b.id}`)}
+                      disabled={busy}
+                    >
+                      Start Code
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

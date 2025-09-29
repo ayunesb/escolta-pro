@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, MapPin, Shield, Car } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Shield, Car, Receipt } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatMXN } from '@/utils/pricing';
 
@@ -34,6 +34,16 @@ function isBookingRecord(value: unknown): value is BookingRecord {
 const BookingSuccessPage = ({ navigate, bookingId }: BookingSuccessPageProps) => {
   const [booking, setBooking] = useState<BookingRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [payment, setPayment] = useState<
+    | {
+        id: string;
+        booking_id: string;
+        amount_cents: number;
+        status: string;
+        created_at: string;
+      }
+    | null
+  >(null);
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -52,12 +62,25 @@ const BookingSuccessPage = ({ navigate, bookingId }: BookingSuccessPageProps) =>
         if (error) throw error;
   setBooking(isBookingRecord(data) ? data : null);
 
-        // Atomic update: only set status to 'matching' if current status is 'pending'
-        await supabase
-          .from('bookings')
-          .update({ status: 'matching' })
-          .eq('id', bookingId)
-          .eq('status', 'pending');
+        // Atomic update: set status to 'matching' when newly created
+        try {
+          await supabase
+            .from('bookings')
+            .update({ status: 'matching' })
+            .eq('id', bookingId)
+            .in('status', ['pending', null as any]); // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch {}
+
+        // Load payment receipt for this booking (demo mode provides a payments snapshot)
+        try {
+          const { data: payData } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+            .from('payments')
+            .select('*')
+            .eq('booking_id', bookingId)
+            .order('created_at', { ascending: false })
+            .single();
+          if (payData) setPayment(payData as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch {}
 
       } catch (error) {
         console.error('Error fetching booking:', error);
@@ -99,13 +122,13 @@ const BookingSuccessPage = ({ navigate, bookingId }: BookingSuccessPageProps) =>
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
     return {
-      date: date.toLocaleDateString('en-US', { 
+  date: date.toLocaleDateString('es-MX', { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
       }),
-      time: date.toLocaleTimeString('en-US', { 
+  time: date.toLocaleTimeString('es-MX', { 
         hour: 'numeric', 
         minute: '2-digit', 
         hour12: true 
@@ -217,6 +240,38 @@ const BookingSuccessPage = ({ navigate, bookingId }: BookingSuccessPageProps) =>
             )}
           </CardContent>
         </Card>
+
+        {/* Payment Receipt */}
+        {payment && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-muted-foreground" />
+                Payment Receipt
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span>Status</span>
+                <Badge variant={payment.status === 'succeeded' ? 'default' : 'secondary'}>
+                  {payment.status}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Amount</span>
+                <span className="font-medium">{formatMXN(payment.amount_cents)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Receipt ID</span>
+                <span className="font-mono text-xs">{payment.id}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Date</span>
+                <span>{new Date(payment.created_at).toLocaleString('es-MX')}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Actions */}
         <div className="space-y-3">

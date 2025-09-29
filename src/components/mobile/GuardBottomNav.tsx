@@ -73,9 +73,11 @@ const GuardBottomNav = ({ currentPath, navigate }: GuardBottomNavProps) => {
   ];
 
   // Determine which tabs to show based on role
+  // In demo and for better UX, show Bookings to all guards (freelancers too) so they can accept jobs.
+  // Company admins get an extra Company tab.
   const tabs = hasRole('company_admin') 
     ? [baseTabs[0], baseTabs[1], baseTabs[2], ...companyTabs, baseTabs[3]] // Home, Assignments, Bookings, Company, Account
-    : baseTabs.filter(tab => tab.id !== 'bookings'); // Home, Assignments, Account for freelancers
+    : baseTabs; // Home, Assignments, Bookings, Account for freelancers
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-bottom z-nav">

@@ -77,22 +77,15 @@ export const BookingsDashboard = () => {
   // Handle assigning a guard to a booking
   const handleAssignGuard = async (bookingId: string, guardId: string) => {
     try {
-  const { error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-        .from('bookings')
-        .update({ 
-          assigned_user_id: guardId,
-          status: 'assigned'
-        })
-        .eq('id', bookingId);
-
+      // Use function so demo mode updates in-memory DB and emits realtime
+      const { error } = await (supabase as any).functions.invoke('assignment_update', { // eslint-disable-line @typescript-eslint/no-explicit-any
+        body: { booking_id: bookingId, assigned_user_id: guardId, status: 'assigned' }
+      });
       if (error) throw error;
-      
+
       // Reset matching state
       resetMatching();
       setSelectedBooking(null);
-      
-      // Refresh bookings data
-      // This would trigger a refetch of the bookings query
     } catch (error) {
       console.error('Error assigning guard:', error);
     }

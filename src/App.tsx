@@ -16,6 +16,17 @@ const queryClient = new QueryClient();
 
 const App = () => {
   console.warn('✅ Main App component rendered');
+  // In demo mode, if the main shell is opened with a role hint, push users to the right entry HTML.
+  if (typeof window !== 'undefined' && import.meta.env.VITE_DEMO_MODE === 'true') {
+    const isRootShell = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
+    if (isRootShell) {
+      const qs = window.location.search || '';
+      const as = new URLSearchParams(qs).get('as');
+      if (as === 'company') window.location.replace(`/admin.html${qs}`);
+      else if (as === 'guard') window.location.replace(`/guard.html${qs}`);
+      else if (as === 'client') window.location.replace(`/client.html${qs}`);
+    }
+  }
   
   return (
     <ErrorBoundary>
@@ -28,6 +39,11 @@ const App = () => {
                 <Sonner />
                 <BrowserRouter>
                   <Routes>
+                    {/* Support direct navigation to /index.html by redirecting to root while preserving query params */}
+                    <Route
+                      path="/index.html"
+                      element={<Navigate to={`/${typeof window !== 'undefined' ? window.location.search : ''}`} replace />}
+                    />
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/client" element={<Navigate to="/client.html" replace />} />

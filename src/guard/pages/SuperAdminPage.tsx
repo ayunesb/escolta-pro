@@ -9,7 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { formatMXN } from '@/utils/pricing';
 import { t, getPreferredLanguage } from '@/lib/i18n';
-import { Shield, Building, CheckCircle, XCircle, Eye, User } from 'lucide-react';
+import { Shield, Building, CheckCircle, XCircle, Eye, User, Calendar as CalendarIcon } from 'lucide-react';
+import { BookingsDashboard } from '@/components/dashboard/BookingsDashboard';
 
 interface SuperAdminPageProps {
   navigate: (path: string) => void;
@@ -251,6 +252,10 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
               <Shield className="h-4 w-4" />
               {t('guards', currentLang)} ({pendingGuards.length})
             </TabsTrigger>
+            <TabsTrigger value="bookings" className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              Bookings
+            </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <Eye className="h-4 w-4" />
               Analytics
@@ -320,6 +325,10 @@ const SuperAdminPage = ({ navigate }: SuperAdminPageProps) => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="bookings" className="space-y-4 mt-6">
+            <BookingsDashboard />
           </TabsContent>
 
           <TabsContent value="guards" className="space-y-4 mt-6">

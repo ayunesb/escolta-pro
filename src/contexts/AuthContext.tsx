@@ -1,145 +1,136 @@
+/* @refresh reset */
 import * as React from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { demoAuth, seedDemoData } from '@/demo/shims';
 
-type UserRole = 'client' | 'freelancer' | 'company_admin' | 'super_admin';
+type Role = 'client' | 'company' | 'guard';
+type AuthUser = { id: string; role: Role } | null;
 
-export type { UserRole };
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  userRoles: UserRole[];
-  activeRole: UserRole | null;
-  setRole: (role: UserRole) => void;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: unknown }>;
-  signUp: (email: string, password: string, firstName?: string, lastName?: string, role?: UserRole) => Promise<{ error: unknown }>;
+type AuthCtx = {
+  user: AuthUser;
+  signInAs: (role: Role) => Promise<void>;
   signOut: () => Promise<void>;
-  hasRole: (role: UserRole) => boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  hasRole: (r: string) => boolean; // added helper
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
-  const [loading, setLoading] = useState(true);
-    const [activeRole, setActiveRole] = useState<UserRole | null>(null);
+export const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
-  const fetchUserRoles = async (userId: string) => {
+const DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
+
+function getDemoRole(): Role {
+  if (typeof window === 'undefined') return 'client';
+  const url = new URL(window.location.href);
+  const qp = url.searchParams.get('as');
+  const stored = localStorage.getItem('demo.role');
+  const candidate = (qp || stored) as Role | null;
+  if (candidate === 'client' || candidate === 'company' || candidate === 'guard') {
+    try { localStorage.setItem('demo.role', candidate); } catch {}
+    return candidate;
+  }
+  return 'client';
+}
+
+async function fetchUserRoles(userId: string): Promise<string[]> {
+  if (DEMO) {
     try {
-  const { data, error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      
-      if (error) {
-        console.error('Error fetching user roles:', error);
-        return [];
-      }
-      
-      return data?.map(r => r.role as UserRole) || [];
-    } catch (error) {
-      console.error('Error fetching user roles:', error);
-      return [];
+      const { role } = demoAuth();
+      return [role];
+    } catch {
+      return ['client'];
     }
-  };
+  }
+  const { data } = await (supabase as any).from('user_roles').select('*').eq('user_id', userId); // eslint-disable-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((r: any) => r.role); // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<AuthUser>(null);
 
   useEffect(() => {
-    let unsub: (() => void) | undefined;
-    const init = async () => {
-      try {
-        // getSession shim compatibility
-        const sessionRes = await (supabase as any).auth.getSession?.(); // eslint-disable-line @typescript-eslint/no-explicit-any
-        const currentSession = sessionRes?.data?.session ?? null;
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        if (currentSession?.user) {
-          const roles = await fetchUserRoles(currentSession.user.id);
-          setUserRoles(roles);
-          setActiveRole(roles[0] ?? null);
-        }
-      } catch (e) {
-        // silent in demo
-      } finally {
-        setLoading(false);
+    let sub: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    (async () => {
+      if (DEMO) {
+        // Seed & synthetic session
+        try { seedDemoData(); } catch {}
+        const role = getDemoRole();
+        const roleUserMap: Record<Role, string> = {
+          client: 'u_client_1',
+          company: 'u_company_1',
+          guard: 'u_guard_1'
+        };
+        setUser({ id: roleUserMap[role], role });
+        return; // skip real supabase wiring in demo
       }
-
-      try {
-        const sub = (supabase as any).auth.onAuthStateChange?.((_evt: string, session: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-          setSession(session ?? null);
-          setUser(session?.user ?? null);
-        });
-        unsub = () => sub?.data?.subscription?.unsubscribe?.();
-      } catch {}
-    };
-    init();
-    return () => { unsub?.(); };
+      const { data } = await (supabase as any).auth.getSession(); // eslint-disable-line @typescript-eslint/no-explicit-any
+      const sessionUser = (data as any)?.session?.user ?? null; // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (sessionUser) {
+        const roles = await fetchUserRoles(sessionUser.id);
+        sessionUser.role = roles[0] || 'client';
+      }
+      setUser(sessionUser);
+      const res = await (supabase as any).auth.onAuthStateChange?.((_evt: any, session: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (DEMO) return; // demo handled by full page reload on role change
+        const u = session?.user ?? null;
+        if (u) {
+          fetchUserRoles(u.id).then(rs => {
+            u.role = rs[0] || 'client';
+            setUser({ ...u });
+          });
+        } else {
+          setUser(null);
+        }
+      });
+      sub = res?.data?.subscription;
+    })();
+    return () => sub?.unsubscribe?.();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await (supabase as any).auth.signInWithPassword({ // eslint-disable-line @typescript-eslint/no-explicit-any
-      email,
-      password,
-    });
-    return { error };
-  };
-
-  const signUp = async (email: string, password: string, firstName?: string, lastName?: string, role?: UserRole) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-  const { error } = await (supabase as any).auth.signUp({ // eslint-disable-line @typescript-eslint/no-explicit-any
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          first_name: firstName || '',
-          last_name: lastName || '',
-          role: role || 'client'
-        }
-      }
-    });
-    return { error };
+  const signInAs = async (role: Role) => {
+    localStorage.setItem('demo.role', role);
+    const url = new URL(window.location.href);
+    url.searchParams.set('as', role);
+    // Redirect to correct entrypoint html to load appropriate shell quickly
+    if (DEMO) {
+      if (role === 'company') url.pathname = '/admin.html';
+      else if (role === 'client') url.pathname = '/client.html';
+      else if (role === 'guard') url.pathname = '/guard.html';
+    }
+    window.location.href = url.toString();
   };
 
   const signOut = async () => {
-    await (supabase as any).auth.signOut(); // eslint-disable-line @typescript-eslint/no-explicit-any
-  };
-
-  const hasRole = (role: UserRole): boolean => {
-    return userRoles.includes(role);
-  };
-
-  const setRole = (role: UserRole) => {
-    if (userRoles.includes(role)) {
-      setActiveRole(role);
+  await (supabase as any).auth.signOut?.(); // eslint-disable-line @typescript-eslint/no-explicit-any
+    localStorage.removeItem('demo.role');
+    if (DEMO) {
+      window.location.href = '/?as=client';
+    } else {
+      window.location.reload();
     }
   };
 
-  const value = {
-    user,
-    session,
-    userRoles,
-    activeRole,
-    setRole: setRole,
-    loading,
-    signIn,
-    signUp,
+  const value = useMemo(() => ({ 
+    user, 
+    signInAs, 
     signOut,
-    hasRole,
-  };
-
+    hasRole: (r: string) => {
+      if (!user) return false;
+      // map legacy roles expected by UI to demo roles
+      const roleMap: Record<string, Role> = {
+        client: 'client',
+        company_admin: 'company',
+        freelancer: 'guard',
+        super_admin: 'company' // treat super admin as company in demo
+      };
+      const target = roleMap[r] || (r as Role);
+      return user.role === target;
+    }
+  }), [user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}
+
+export function useAuth(): AuthCtx {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+}

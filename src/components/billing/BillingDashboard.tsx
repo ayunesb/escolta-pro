@@ -217,9 +217,10 @@ export const BillingDashboard: React.FC = () => {
 
             <TabsContent value="payments" className="space-y-4">
               <ScrollArea className="h-96">
-                {payments.length === 0 ? (
+        {payments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No payment records found
+          No payment records found
+          <div className="text-xs mt-1">Complete a booking to generate a payment.</div>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -232,7 +233,7 @@ export const BillingDashboard: React.FC = () => {
                           {getStatusIcon(payment.status)}
                           <div>
                             <div className="font-medium">
-                              {formatCurrency(payment.amount_captured || payment.amount_preauth || 0)}
+                {formatCurrency(payment.amount_captured || payment.amount_preauth || 0)}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {payment.booking?.pickup_address || 'Booking Payment'}

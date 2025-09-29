@@ -20,6 +20,15 @@ interface BookingSeed {
   total_mxn_cents: number;
   client_id: string;
   assigned_user_id?: string;
+  armed_required?: boolean;
+  vehicle_required?: boolean;
+  vehicle_type?: string;
+  start_code?: string; // 6-digit code the guard shares with client
+  service_start_ts?: string; // when client confirms code
+  service_end_ts?: string; // when service is marked complete
+  // Demo extension support
+  service_end_planned_ts?: number; // planned end (ms epoch)
+  hourly_rate_mxn?: number; // simple hourly rate in MXN for extensions
 }
 
 interface MessageSeed {
@@ -41,12 +50,24 @@ interface PaymentLedgerRow {
   created_at: string;
 }
 
+interface PayoutRow {
+  id: string;
+  booking_id: string;
+  guard_id: string;
+  amount_cents: number;
+  status: 'initiated' | 'succeeded' | 'failed';
+  created_at: string;
+}
+
 interface DemoState {
   users: DemoUser[];
   bookings: BookingSeed[];
   messages: MessageSeed[];
   payments: PaymentLedgerRow[];
+  payouts: PayoutRow[];
   vehicles?: { id: string; label: string; plate: string; owner_user_id: string }[];
+  profiles?: { id: string; full_name: string; role: DemoUserRole }[];
+  roles?: { user_id: string; role: DemoUserRole }[];
 }
 
 const now = () => new Date().toISOString();
@@ -56,7 +77,7 @@ function loadState(): DemoState {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) return JSON.parse(raw) as DemoState;
   } catch {}
-  const base: DemoState = { users: [], bookings: [], messages: [], payments: [], vehicles: [] };
+  const base: DemoState = { users: [], bookings: [], messages: [], payments: [], payouts: [], vehicles: [], profiles: [], roles: [] };
   persist(base);
   return base;
 }
@@ -92,6 +113,8 @@ export function seedDemoData() {
     total_mxn_cents: 42000,
     client_id: client.id,
     assigned_user_id: guard1.id,
+  service_end_planned_ts: Date.now() + 2 * 3600_000,
+  hourly_rate_mxn: 350,
   };
 
   state = {
@@ -101,10 +124,23 @@ export function seedDemoData() {
       { id: 'm1', booking_id: booking2.id, sender_id: client.id, body: 'Hola, estoy en camino', created_at: now() },
       { id: 'm2', booking_id: booking2.id, sender_id: guard1.id, body: 'Perfecto, ETA 5min', created_at: now() },
     ],
-    payments: [],
+  payments: [],
+  payouts: [],
     vehicles: [
       { id: 'veh_1', label: 'SUV Blindada', plate: 'ABC-123', owner_user_id: company.id },
       { id: 'veh_2', label: 'Sedan Ejecutivo', plate: 'XYZ-789', owner_user_id: company.id },
+    ],
+    profiles: [
+      { id: client.id, full_name: client.name, role: 'client' },
+      { id: company.id, full_name: company.name, role: 'company' },
+      { id: guard1.id, full_name: guard1.name, role: 'guard' },
+      { id: guard2.id, full_name: guard2.name, role: 'guard' },
+    ],
+    roles: [
+      { user_id: client.id, role: 'client' },
+      { user_id: company.id, role: 'company' },
+      { user_id: guard1.id, role: 'guard' },
+      { user_id: guard2.id, role: 'guard' },
     ],
   };
   persist(state);
@@ -126,7 +162,9 @@ export const demoDb = {
     return state.bookings;
   },
   createBooking(input: Omit<BookingSeed, 'id' | 'status'>) {
-    const b: BookingSeed = { id: `b_${Date.now()}`, status: 'matching', ...input };
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const planned = input.end_ts ? new Date(input.end_ts).getTime() : undefined;
+  const b: BookingSeed = { id: `b_${Date.now()}`, status: 'assigned' in (input as any) ? 'assigned' : 'matching', armed_required: !!(input as any).armed_required, vehicle_required: !!(input as any).vehicle_required, vehicle_type: (input as any).vehicle_type, start_code: code, service_end_planned_ts: planned, hourly_rate_mxn: 350, ...input };
     state.bookings.push(b); persist(state); return b;
   },
   updateBooking(id: string, patch: Partial<BookingSeed>) {
@@ -148,7 +186,15 @@ export const demoDb = {
     state.payments.push(row); persist(state); return row;
   },
   listPayments() { return state.payments; }
+  , recordPayout(booking_id: string, guard_id: string, amount_cents: number) {
+    const row: PayoutRow = { id: `po_${Date.now()}`, booking_id, guard_id, amount_cents, status: 'succeeded', created_at: now() };
+    state.payouts.push(row); persist(state); return row;
+  }
+  , listPayouts() { return state.payouts; }
+  , listPayoutsByGuard(guard_id: string) { return state.payouts.filter(p => p.guard_id === guard_id); }
   , listVehicles() { return state.vehicles || []; }
+  , listProfiles() { return state.profiles || []; }
+  , listRoles() { return state.roles || []; }
 };
 
 // Simple pub/sub bus for demo realtime

@@ -17,9 +17,10 @@ import VehicleFormPage from './pages/VehicleFormPage';
 import FreelancerApplyPage from './pages/FreelancerApplyPage';
 import SecurityDashboardPage from './pages/SecurityDashboardPage';
 import AuditTrailPage from './pages/AuditTrailPage';
+import JobDetailPage from './pages/JobDetailPage';
 
 const GuardRouter = () => {
-  const { user, loading, hasRole } = useAuth();
+  const { user, hasRole } = useAuth();
   const [currentPath, setCurrentPath] = useState(window.location.hash.slice(1) || '/home');
 
   useEffect(() => {
@@ -36,13 +37,7 @@ const GuardRouter = () => {
     setCurrentPath(path);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-      </div>
-    );
-  }
+  // In demo mode, auth seeds very quickly; skip explicit loading state
 
   if (!user) {
     return <AuthPage />;
@@ -92,6 +87,10 @@ const GuardRouter = () => {
       if (basePath.startsWith('/assignment/')) {
         const assignmentId = pathParts[2];
         return <AssignmentDetailPage navigate={navigate} assignmentId={assignmentId} />;
+      }
+      if (basePath.startsWith('/job/')) {
+        const bookingId = pathParts[2];
+        return <JobDetailPage navigate={navigate} bookingId={bookingId} />;
       }
       if (basePath.startsWith('/company-staff/')) {
         const staffId = pathParts[2];

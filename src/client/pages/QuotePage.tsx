@@ -115,9 +115,14 @@ const QuotePage = ({ navigate }: QuotePageProps) => {
         throw error;
       }
 
-      // Redirect to Stripe checkout
+      // Redirect to checkout/success
       if (data?.url) {
-        window.open(data.url, '_blank');
+        if (import.meta.env.VITE_DEMO_MODE === 'true') {
+          // In demo, use same-tab navigation to the success page to avoid popup blockers
+          window.location.href = data.url;
+        } else {
+          window.open(data.url, '_blank');
+        }
       } else {
         throw new Error('No payment URL received');
       }

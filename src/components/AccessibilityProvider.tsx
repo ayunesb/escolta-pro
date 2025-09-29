@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import * as React from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 interface AccessibilitySettings {
   reduceMotion: boolean;
@@ -204,17 +205,26 @@ export const AccessibilityProvider = ({ children }: AccessibilityProviderProps) 
   );
 };
 
+const demoFallbackAccessibility = {
+  settings: {
+    reduceMotion: false,
+    highContrast: false,
+    fontSize: 'normal' as const,
+    voiceoverEnabled: false,
+    focusVisible: true,
+  },
+  updateSetting: () => {},
+  announceToScreenReader: () => {},
+};
+
 export const useAccessibility = () => {
   const context = useContext(AccessibilityContext);
   if (context === undefined) {
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      return demoFallbackAccessibility;
+    }
     if (typeof window !== 'undefined') {
-      // Log the React tree and call stack for debugging
       console.error('useAccessibility context missing! Call stack:', new Error().stack);
-      // Optionally, log the nearest parent nodes
-      const root = document.getElementById('root');
-      if (root) {
-        console.error('Root innerHTML:', root.innerHTML.slice(0, 1000));
-      }
     }
     throw new Error('useAccessibility must be used within an AccessibilityProvider');
   }
